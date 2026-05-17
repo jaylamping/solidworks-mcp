@@ -1,0 +1,28 @@
+{
+  "name": "solidworks-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server for SolidWorks automation with a Windows .NET COM worker.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "npm run build:worker && tsc -p tsconfig.json",
+    "build:worker": "dotnet build workers/SolidWorksComWorker/SolidWorksComWorker.csproj",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "worker:status": "node scripts/worker-status.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "tsx": "^4.22.1",
+    "typescript": "^6.0.3"
+  }
+}
