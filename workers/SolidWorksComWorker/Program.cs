@@ -1,6 +1,8 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Diagnostics;
+using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swconst;
 
 internal sealed record WorkerRequest(string Command, JsonElement? Args);
 
@@ -57,8 +59,8 @@ internal static class Program
     private static object Status(JsonElement? args)
     {
         bool startIfMissing = BoolArg(args, "start_if_missing");
-        dynamic app = AttachSolidWorks(startIfMissing);
-        object? version = Try(() => app.RevisionNumber()) ?? Try(() => app.RevisionNumber);
+        ISldWorks app = AttachSolidWorks(startIfMissing);
+        object? version = Try(() => app.RevisionNumber());
         if (version is null)
         {
             throw new InvalidOperationException(
@@ -84,9 +86,9 @@ internal static class Program
             throw new FileNotFoundException("CAD document does not exist.", path);
         }
 
-        dynamic app = AttachSolidWorks(startIfMissing);
-        dynamic doc = OpenDocument(app, path);
-        return DescribeDocument(doc);
+        ISldWorks app = AttachSolidWorks(startIfMissing);
+        ModelDoc2 doc = OpenDocument(app, path);
+        return DescribeDocument(doc) ?? new { path };
     }
 
     private static object Export(JsonElement? args)
@@ -97,8 +99,8 @@ internal static class Program
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? ".");
 
-        dynamic app = AttachSolidWorks(startIfMissing);
-        dynamic doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc : OpenDocument(app, inputPath);
+        ISldWorks app = AttachSolidWorks(startIfMissing);
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
         if (doc is null)
         {
             throw new InvalidOperationException("No active SolidWorks document to export.");
@@ -106,8 +108,13 @@ internal static class Program
 
         int errors = 0;
         int warnings = 0;
-        dynamic extension = doc.Extension;
-        bool ok = extension.SaveAs(outputPath, 0, 1, null, ref errors, ref warnings);
+        if (IsPreviewExport(outputPath))
+        {
+            PreparePreview(app, doc);
+        }
+
+        ModelDocExtension extension = doc.Extension;
+        bool ok = extension.SaveAs(outputPath, 0, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref errors, ref warnings);
 
         return new
         {
@@ -119,33 +126,109 @@ internal static class Program
         };
     }
 
+    private static bool IsPreviewExport(string outputPath)
+    {
+        string ext = Path.GetExtension(outputPath).ToLowerInvariant();
+        return ext is ".png" or ".jpg" or ".jpeg";
+    }
+
+    private static void PreparePreview(ISldWorks app, ModelDoc2 doc)
+    {
+        HideReferenceGeometryForPreview(app);
+        TryVoid(() => doc.ClearSelection2(true));
+        SelectReferenceFeatures(doc);
+        TryVoid(() => doc.BlankRefGeom());
+        TryVoid(() => doc.ClearSelection2(true));
+        TryVoid(() => doc.BlankSketch());
+        TryVoid(() => doc.ShowNamedView2("*Isometric", (int)swStandardViews_e.swIsometricView));
+        TryVoid(() => doc.ViewZoomtofit2());
+
+        ModelView? view = Try(() => doc.ActiveView) as ModelView;
+        if (view is not null)
+        {
+            TryVoid(() => view.FrameState = (int)swWindowState_e.swWindowMaximized);
+            Try(() => view.EnableGraphicsUpdate = true);
+        }
+
+        TryVoid(() => doc.GraphicsRedraw2());
+    }
+
+    private static void SelectReferenceFeatures(ModelDoc2 doc)
+    {
+        object? feature = Try(() => doc.FirstFeature());
+        bool append = false;
+        int guard = 0;
+        while (feature is not null && guard++ < 1000)
+        {
+            dynamic current = feature;
+            string? type = Try(() => current.GetTypeName2()) as string;
+            if (type is "RefPlane" or "RefAxis" or "RefPoint" or "CoordSys")
+            {
+                bool selected = Try(() => current.Select2(append, 0)) as bool? ?? false;
+                append = append || selected;
+            }
+
+            feature = Try(() => current.GetNextFeature());
+        }
+    }
+
+    private static void HideReferenceGeometryForPreview(ISldWorks app)
+    {
+        swUserPreferenceToggle_e[] toggles =
+        [
+            swUserPreferenceToggle_e.swDisplayPlanes,
+            swUserPreferenceToggle_e.swDisplayAxes,
+            swUserPreferenceToggle_e.swDisplayTemporaryAxes,
+            swUserPreferenceToggle_e.swDisplayCoordSystems,
+            swUserPreferenceToggle_e.swDisplayOrigins,
+            swUserPreferenceToggle_e.swDisplaySketches,
+            swUserPreferenceToggle_e.swDisplaySketchPlanes,
+        ];
+
+        foreach (swUserPreferenceToggle_e toggle in toggles)
+        {
+            TryVoid(() => app.SetUserPreferenceToggle((int)toggle, false));
+        }
+    }
+
     private static object Measure(JsonElement? args)
     {
         string? inputPath = StringArg(args, "path");
-        dynamic app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
-        dynamic doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc : OpenDocument(app, inputPath);
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
         if (doc is null)
         {
             throw new InvalidOperationException("No active SolidWorks document to measure.");
         }
 
-        dynamic? massProperty = Try(() => doc.Extension.CreateMassProperty());
+        MassProperty? massProperty = Try(() => doc.Extension.CreateMassProperty()) as MassProperty;
+        object? boundingBox = BoundingBox(doc);
 
         return new
         {
             document = DescribeDocument(doc),
-            boundingBox = Normalize(Try(() => doc.GetPartBox(true)) ?? Try(() => doc.GetBox(1))),
+            boundingBox = Normalize(boundingBox),
             mass = Normalize(Try(() => massProperty?.Mass)),
             centerOfMass = Normalize(Try(() => massProperty?.CenterOfMass)),
             momentsOfInertia = Normalize(Try(() => massProperty?.GetMomentOfInertia(0))),
         };
     }
 
+    private static object? BoundingBox(ModelDoc2 doc)
+    {
+        return doc.GetType() switch
+        {
+            (int)swDocumentTypes_e.swDocPART => Try(() => ((IPartDoc)doc).GetPartBox(true)),
+            (int)swDocumentTypes_e.swDocASSEMBLY => Try(() => ((IAssemblyDoc)doc).GetBox(1)),
+            _ => null,
+        };
+    }
+
     private static object ListFeatures(JsonElement? args)
     {
         string? inputPath = StringArg(args, "path");
-        dynamic app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
-        dynamic doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc : OpenDocument(app, inputPath);
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
         if (doc is null)
         {
             throw new InvalidOperationException("No active SolidWorks document.");
@@ -173,7 +256,7 @@ internal static class Program
         };
     }
 
-    private static dynamic AttachSolidWorks(bool startIfMissing)
+    private static ISldWorks AttachSolidWorks(bool startIfMissing)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -192,7 +275,7 @@ internal static class Program
         {
             try
             {
-                return RunningObjectTable.GetActiveObject(classId);
+                return (ISldWorks)RunningObjectTable.GetActiveObject(classId);
             }
             catch when (startIfMissing)
             {
@@ -212,7 +295,7 @@ internal static class Program
                 throw new InvalidOperationException("Failed to start SolidWorks via COM.");
             }
 
-            dynamic app = created;
+            ISldWorks app = (ISldWorks)created;
             app.Visible = true;
             return app;
         }
@@ -222,24 +305,64 @@ internal static class Program
 
     private static bool IsSolidWorksProcessRunning()
     {
-        int currentProcessId = Environment.ProcessId;
+        int currentProcessId = System.Environment.ProcessId;
         return Process.GetProcesses().Any(process =>
             process.Id != currentProcessId
             && process.ProcessName.Equals("SLDWORKS", StringComparison.OrdinalIgnoreCase));
     }
 
-    private static dynamic OpenDocument(dynamic app, string path)
+    private static ModelDoc2 OpenDocument(ISldWorks app, string path)
     {
         int errors = 0;
         int warnings = 0;
+        if (IsNeutralCad(path))
+        {
+            object? importData = Try(() => app.GetImportFileData(path));
+            ModelDoc2? imported = app.LoadFile4(path, "r", importData, ref errors);
+            if (imported is null || errors != 0)
+            {
+                throw new InvalidOperationException(
+                    $"SolidWorks failed to import {path}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
+            }
+
+            return imported;
+        }
+
         int docType = DocumentType(path);
-        dynamic doc = app.OpenDoc6(path, docType, 1, "", ref errors, ref warnings);
+        ModelDoc2? doc = app.OpenDoc6(path, docType, (int)swOpenDocOptions_e.swOpenDocOptions_Silent, "", ref errors, ref warnings) as ModelDoc2;
         if (doc is null || errors != 0)
         {
-            throw new InvalidOperationException($"SolidWorks failed to open {path}. errors={errors}, warnings={warnings}");
+            throw new InvalidOperationException(
+                $"SolidWorks failed to open {path}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
         }
 
         return doc;
+    }
+
+    private static bool IsNeutralCad(string path)
+    {
+        string ext = Path.GetExtension(path).ToLowerInvariant();
+        return ext is ".step" or ".stp" or ".iges" or ".igs";
+    }
+
+    private static string DecodeFileLoadErrors(int errors)
+    {
+        if (errors == 0)
+        {
+            return "none";
+        }
+
+        var names = new List<string>();
+        foreach (swFileLoadError_e value in Enum.GetValues<swFileLoadError_e>())
+        {
+            int flag = (int)value;
+            if (flag != 0 && (errors & flag) == flag)
+            {
+                names.Add(value.ToString());
+            }
+        }
+
+        return names.Count == 0 ? "unknown" : string.Join("|", names);
     }
 
     private static int DocumentType(string path)
@@ -261,6 +384,16 @@ internal static class Program
         if (doc is null)
         {
             return null;
+        }
+
+        if (doc is ModelDoc2 modelDoc)
+        {
+            return new
+            {
+                title = Try(() => modelDoc.GetTitle()),
+                path = Try(() => modelDoc.GetPathName()),
+                type = Try(() => modelDoc.GetType()),
+            };
         }
 
         dynamic d = doc;
@@ -302,6 +435,18 @@ internal static class Program
         catch
         {
             return null;
+        }
+    }
+
+    private static void TryVoid(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch
+        {
+            // Preview preparation is best-effort.
         }
     }
 

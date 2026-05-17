@@ -11,7 +11,7 @@ Observed symptom:
 }
 ```
 
-This means the `SldWorks.Application` ProgID exists, but calls such as `RevisionNumber` fail. Common causes:
+This means the `SldWorks.Application` ProgID exists, but dynamic COM calls such as `RevisionNumber` fail. Common causes:
 
 - SolidWorks is not actually running in the current desktop session.
 - SolidWorks COM/type-library registration is stale or incomplete.
@@ -33,3 +33,20 @@ Manual repair path:
 4. If still broken, repair/re-register SolidWorks COM from the installed SolidWorks tools or installer.
 
 Do not design from guessed actuator dimensions while this is broken. Use staged STEP files and mark native import as pending.
+
+Resolved local path:
+
+- Dynamic COM dispatch failed with `TYPE_E_ELEMENTNOTFOUND`.
+- Typed SolidWorks .NET interop from `C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS\api\redist` works.
+- Worker references `SolidWorks.Interop.sldworks.dll` and `SolidWorks.Interop.swconst.dll` directly and copies them locally at build time.
+
+## STEP/STP Import
+
+Do not use `OpenDoc6` for neutral CAD imports. SolidWorks can return `swFileRequiresRepairError` for valid STEP files.
+
+Use:
+
+- `ISldWorks.GetImportFileData(path)`
+- `ISldWorks.LoadFile4(path, "r", importData, ref errors)`
+
+Then save as `.SLDPRT` with `ModelDocExtension.SaveAs`.

@@ -36,7 +36,7 @@ const openSchema = z.object({
 const exportSchema = z.object({
   path: z.string().min(1).optional(),
   output_path: z.string().min(1),
-  format: z.enum(["step", "stp", "stl", "pdf", "png"]),
+  format: z.enum(["sldprt", "sldasm", "step", "stp", "stl", "pdf", "png"]),
   start_if_missing: z.boolean().optional(),
 });
 
