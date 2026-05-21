@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 
-import { workerProjectPath } from "./config.js";
+import { packageRoot, workerProjectPath } from "./config.js";
 
 export type WorkerCommand =
   | "status"
@@ -29,7 +29,7 @@ export async function runWorker(request: WorkerRequest): Promise<unknown> {
     "dotnet",
     ["run", "--project", workerProjectPath(), "--no-launch-profile"],
     {
-      cwd: process.cwd(),
+      cwd: packageRoot(),
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,
     },
