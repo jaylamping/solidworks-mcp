@@ -12,7 +12,9 @@
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "worker:status": "node scripts/worker-status.mjs",
-    "validate:tools": "node scripts/validate-tools.mjs"
+    "validate:tools": "node scripts/validate-tools.mjs",
+    "set:vendor-props": "node scripts/set-vendor-custom-props.mjs",
+    "promote:corner-bracket": "node scripts/promote-corner-bracket-vendor.mjs"
   },
   "keywords": [],
   "author": "",

@@ -334,6 +334,40 @@ export async function main(): Promise<void> {
     },
   );
 
+  const setCustomPropertiesSchema = z.object({
+    path: z.string().min(1),
+    properties: z.record(z.string(), z.string()),
+    save: z.boolean().optional(),
+  });
+
+  server.registerTool(
+    "solidworks_set_custom_properties",
+    {
+      title: "Set custom properties",
+      description:
+        "Set Marengo custom properties (process, material, revision, owner) on a part or assembly and optionally save.",
+      inputSchema: setCustomPropertiesSchema,
+      annotations: { readOnlyHint: false },
+    },
+    async (args: z.infer<typeof setCustomPropertiesSchema>) => {
+      try {
+        const filePath = assertAllowedPath(args.path);
+        return jsonResult(
+          await runWorker({
+            command: "set_custom_properties",
+            args: {
+              path: filePath,
+              properties: args.properties,
+              save: args.save ?? true,
+            },
+          }),
+        );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
   server.registerTool(
     "solidworks_align_component_to_feature",
     {

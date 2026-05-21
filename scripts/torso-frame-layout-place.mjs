@@ -20,7 +20,8 @@ const root = "c:/code/solidworks-mcp";
 const workerProject = `${root}/workers/SolidWorksComWorker`;
 const FRAME = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm_revA.SLDASM";
 const VENDOR = "C:/code/marengo/hardware/cad/vendor/vendor_2020_black_extrusion.SLDPRT";
-const BRACKET_PART = "C:/code/marengo/hardware/cad/vendor/incoming/2020_corner_bracket.SLDPRT";
+const BRACKET_PART =
+  "C:/code/marengo/hardware/cad/vendor/vendor_2028_corner_bracket_vendor.SLDPRT";
 const LAYOUT = "marengo_torso_layout_revA";
 
 function run(command, args) {

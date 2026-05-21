@@ -32,7 +32,9 @@ export type WorkerCommand =
   | "align_component_to_feature"
   | "probe_feature_faces"
   | "torso_frame_build_mates"
-  | "save_document";
+  | "save_document"
+  | "set_custom_properties"
+  | "replace_components_by_path";
 
 export interface WorkerRequest {
   command: WorkerCommand;

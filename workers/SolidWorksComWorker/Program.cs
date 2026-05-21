@@ -66,6 +66,8 @@ internal static class Program
                 "probe_feature_faces" => ProbeFeatureFaces(request.Args),
                 "torso_frame_build_mates" => TorsoFrameBuildMates(request.Args),
                 "save_document" => SaveDocument(request.Args),
+                "set_custom_properties" => SetCustomProperties(request.Args),
+                "replace_components_by_path" => ReplaceComponentsByPath(request.Args),
                 _ => throw new InvalidOperationException($"Unknown worker command: {request.Command}"),
             };
 
@@ -2343,6 +2345,183 @@ internal static class Program
         };
     }
 
+    private static object SetCustomProperties(JsonElement? args)
+    {
+        string path = RequiredStringArg(args, "path");
+        bool save = BoolArg(args, "save", defaultValue: true);
+        IReadOnlyDictionary<string, string> properties = PropertiesArg(args);
+
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException("CAD document does not exist.", path);
+        }
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, path);
+        CustomPropertyManager? manager = Try(() => doc.Extension.CustomPropertyManager[""]) as CustomPropertyManager;
+        if (manager is null)
+        {
+            throw new InvalidOperationException("CustomPropertyManager is unavailable on this document.");
+        }
+
+        var applied = new List<object>();
+        foreach (KeyValuePair<string, string> entry in properties)
+        {
+            if (string.IsNullOrWhiteSpace(entry.Key))
+            {
+                continue;
+            }
+
+            string value = entry.Value ?? "";
+            TryVoid(() =>
+            {
+                manager.Add3(
+                    entry.Key,
+                    (int)swCustomInfoType_e.swCustomInfoText,
+                    value,
+                    1);
+            });
+
+            applied.Add(new { name = entry.Key, value });
+        }
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+            if (!saved || errors != 0)
+            {
+                throw new InvalidOperationException($"Save failed after setting properties. errors={errors}, warnings={warnings}");
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            applied,
+            saved,
+            errors,
+            warnings,
+            customProperties = ListCustomProperties(doc),
+        };
+    }
+
+    private static object ReplaceComponentsByPath(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string fromPartPath = Path.GetFullPath(RequiredStringArg(args, "from_part_path"));
+        string toPartPath = Path.GetFullPath(RequiredStringArg(args, "to_part_path"));
+        string configName = StringArg(args, "configuration") ?? "Default";
+        bool save = BoolArg(args, "save", defaultValue: true);
+
+        if (!File.Exists(toPartPath))
+        {
+            throw new FileNotFoundException("Replacement part does not exist.", toPartPath);
+        }
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("replace_components_by_path requires an assembly document.");
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)doc;
+        var replaced = new List<object>();
+
+        foreach (Component2 component in EnumerateAllComponents(assembly))
+        {
+            string? componentPath = Try(() => component.GetPathName()) as string;
+            if (string.IsNullOrWhiteSpace(componentPath))
+            {
+                continue;
+            }
+
+            string fullPath = Path.GetFullPath(componentPath);
+            if (!fullPath.Equals(fromPartPath, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            string? previousName = Try(() => component.Name2) as string;
+            doc.ClearSelection2(true);
+            bool selected = Try(() => component.Select4(false, null, false)) as bool? ?? false;
+            if (!selected)
+            {
+                throw new InvalidOperationException($"Could not select component for replace: {previousName}");
+            }
+
+            bool ok = false;
+            TryVoid(() =>
+            {
+                ok = assembly.ReplaceComponents2(
+                    toPartPath,
+                    configName,
+                    true,
+                    0,
+                    true);
+            });
+
+            replaced.Add(new
+            {
+                name = previousName,
+                fromPath = componentPath,
+                toPath = toPartPath,
+                ok,
+            });
+        }
+
+        if (replaced.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"No components reference part path: {fromPartPath}");
+        }
+
+        doc.ClearSelection2(true);
+        doc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+            if (!saved || errors != 0)
+            {
+                throw new InvalidOperationException($"Save failed after replace. errors={errors}, warnings={warnings}");
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            replacedCount = replaced.Count,
+            replaced,
+            saved,
+            errors,
+            warnings,
+        };
+    }
+
+    private static IEnumerable<Component2> EnumerateAllComponents(IAssemblyDoc assembly)
+    {
+        object[]? roots = Try(() => assembly.GetComponents(true)) as object[];
+        if (roots is null)
+        {
+            yield break;
+        }
+
+        foreach (object entry in roots)
+        {
+            if (entry is Component2 component)
+            {
+                yield return component;
+            }
+        }
+    }
+
     private static Component2? FindComponent(IAssemblyDoc assembly, Component2? parent, string nameOrPrefix)
     {
         if (parent is null)
@@ -2707,6 +2886,39 @@ internal static class Program
         return args.Value.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
+    }
+
+    private static IReadOnlyDictionary<string, string> PropertiesArg(JsonElement? args)
+    {
+        if (args is null || args.Value.ValueKind != JsonValueKind.Object)
+        {
+            throw new ArgumentException("properties object is required.");
+        }
+
+        if (!args.Value.TryGetProperty("properties", out JsonElement props) || props.ValueKind != JsonValueKind.Object)
+        {
+            throw new ArgumentException("properties object is required.");
+        }
+
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (JsonProperty prop in props.EnumerateObject())
+        {
+            result[prop.Name] = prop.Value.ValueKind switch
+            {
+                JsonValueKind.String => prop.Value.GetString() ?? "",
+                JsonValueKind.Number => prop.Value.GetRawText(),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                _ => prop.Value.GetRawText(),
+            };
+        }
+
+        if (result.Count == 0)
+        {
+            throw new ArgumentException("properties object must contain at least one entry.");
+        }
+
+        return result;
     }
 
     private static bool BoolArg(JsonElement? args, string name, bool defaultValue = false)
