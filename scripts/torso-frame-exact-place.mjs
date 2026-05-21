@@ -1,8 +1,9 @@
-/** @deprecated Use torso-frame-layout-place.mjs */
-import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-
-const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "torso-frame-layout-place.mjs");
-const r = spawnSync(process.execPath, [script], { stdio: "inherit", encoding: "utf8" });
-process.exit(r.status ?? 1);
+/**
+ * @deprecated Renamed — use torso-frame-layout-place.mjs with --confirm (manual only).
+ */
+console.error(
+  "torso-frame-exact-place.mjs no longer runs placement automatically.\n" +
+    "To snap the frame to layout ICE when YOU choose:\n" +
+    "  node scripts/torso-frame-layout-place.mjs --confirm",
+);
+process.exit(1);

@@ -1,8 +1,20 @@
 /**
- * Place 12×2020 rails + 16× inside corner brackets from marengo_torso_layout_revA ICE.
- * Run: node scripts/torso-frame-layout-place.mjs
+ * DESTRUCTIVE: overwrites transforms on 12 rails + 16 brackets in the frame assembly.
+ * Only run when you explicitly want a layout snap — never from agents or wrapper scripts by default.
+ *
+ *   node scripts/torso-frame-layout-place.mjs --confirm
  */
 import { spawnSync } from "node:child_process";
+
+const argv = process.argv.slice(2);
+if (!argv.includes("--confirm")) {
+  console.error(
+    "Refusing to run: torso-frame-layout-place.mjs moves and fixes frame components in SolidWorks.\n" +
+      "Pass --confirm only when you intend to apply layout ICE placement:\n" +
+      "  node scripts/torso-frame-layout-place.mjs --confirm",
+  );
+  process.exit(1);
+}
 
 const root = "c:/code/solidworks-mcp";
 const workerProject = `${root}/workers/SolidWorksComWorker`;

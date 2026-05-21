@@ -392,7 +392,7 @@ export async function main(): Promise<void> {
     {
       title: "Build Marengo torso frame mates",
       description:
-        "Align 12×2020 extrusions to layout ICE (bottom_rail_*, top_rail_*), add mates, snap 16× brackets to envelope corners, save.",
+        "DESTRUCTIVE — only when the user explicitly asked. Requires confirm: true. Aligns 12×2020 + 16× brackets to layout ICE and saves the frame assembly.",
       inputSchema: assemblyToolSchemas.torsoFrameBuildSchema,
       annotations: { readOnlyHint: false },
     },

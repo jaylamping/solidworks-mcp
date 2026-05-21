@@ -1,6 +1,12 @@
+/** DESTRUCTIVE — requires --confirm. */
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+if (!process.argv.slice(2).includes("--confirm")) {
+  console.error("Refusing to run without --confirm.");
+  process.exit(1);
+}
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const workerProject = path.join(root, "workers/SolidWorksComWorker");

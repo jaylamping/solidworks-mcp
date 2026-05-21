@@ -15,8 +15,9 @@ Pipeline for `marengo_torso_frame_asm_revA`:
 4. Place 16× `bracket_2028_corner` at **inside** joint corners (2 per corner, bottom + top bands).
 5. Hide layout jig, save.
 
-**Reliable script (layout ICE, no hardcoded envelope):**  
-`node scripts/torso-frame-layout-place.mjs` — uses `corner_posts` + `bottom_rail_*` / `top_rail_*` centers (340 mm posts from `waist_bay_top` at Y=155 mm, not outer envelope Y=115 mm).
+**Manual layout snap (destructive — opt-in only):**  
+`node scripts/torso-frame-layout-place.mjs --confirm`  
+Refuses to run without `--confirm`. Do **not** run from agents unless the user explicitly asked. Same for `torso-frame-autobuild.mjs --confirm` and MCP `marengo_torso_frame_build` with `confirm: true`.
 
 **Constraint modes**
 
@@ -25,7 +26,7 @@ Pipeline for `marengo_torso_frame_asm_revA`:
 | `mates` | `AddMate5` succeeds | Normal SolidWorks mate features |
 | `fixed` | Mate API returns no mate (current SW quirk) | Components fixed at layout-aligned transforms — stable for BOM/export |
 
-Script: `node scripts/torso-frame-autobuild.mjs`
+Script: `node scripts/torso-frame-autobuild.mjs --confirm`
 
 ## Primitives (novel building blocks)
 

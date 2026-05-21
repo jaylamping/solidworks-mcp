@@ -29,6 +29,8 @@ const alignSchema = assemblyPathSchema.extend({
 });
 
 const torsoFrameBuildSchema = assemblyPathSchema.extend({
+  /** Must be true — destructive layout snap; only call when the user explicitly asked. */
+  confirm: z.literal(true),
   include_brackets: z.boolean().optional(),
   rebuild_configs: z.boolean().optional(),
 });
@@ -104,6 +106,11 @@ export async function mateParallel(args: z.infer<typeof mateRefsSchema>) {
 }
 
 export async function torsoFrameBuildMates(args: z.infer<typeof torsoFrameBuildSchema>) {
+  if (args.confirm !== true) {
+    throw new Error(
+      "Refusing torso frame build: pass confirm: true only when the user explicitly requested layout placement.",
+    );
+  }
   const filePath = assertAllowedPath(args.path);
   return runWorker({
     command: "torso_frame_build_mates",

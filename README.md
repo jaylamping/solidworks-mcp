@@ -66,7 +66,7 @@ Optional override: `MARENGO_ROOT=C:/code/marengo`.
 
 | Tool | Role |
 |------|------|
-| `marengo_torso_frame_build` | Align 12×2020 + 16× brackets to `marengo_torso_layout_revA` ICE, save frame asm |
+| `marengo_torso_frame_build` | **Destructive (opt-in):** requires `confirm: true`; aligns frame to layout ICE |
 | `solidworks_align_component_to_feature` | Translate one component to a layout feature |
 | `solidworks_mate_coincident` | Coincident mate between two references |
 | `solidworks_mate_parallel` | Parallel mate between two references |

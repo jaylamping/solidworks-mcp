@@ -1,8 +1,9 @@
-/** @deprecated Use torso-frame-layout-place.mjs */
-import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-
-const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "torso-frame-layout-place.mjs");
-const r = spawnSync(process.execPath, [script], { stdio: "inherit", encoding: "utf8" });
-process.exit(r.status ?? 1);
+/**
+ * @deprecated Brackets are placed by torso-frame-layout-place.mjs (requires --confirm).
+ */
+console.error(
+  "torso-frame-place-inside-brackets.mjs no longer runs placement automatically.\n" +
+    "To place rails and brackets when YOU choose:\n" +
+    "  node scripts/torso-frame-layout-place.mjs --confirm",
+);
+process.exit(1);
