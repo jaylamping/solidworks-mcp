@@ -63,22 +63,34 @@ export async function cadConventionsCheck(args: {
     }
   }
 
-  if (args.inspectCustomProperties && files.some((f) => f.toLowerCase().endsWith(".sldprt"))) {
-    const inspected = await runWorker({
-      command: "inspect_document",
-      args: { path: args.path },
-    });
-    const props = extractCustomPropertyNames(inspected);
-    for (const required of conventions.requiredCustomProperties) {
-      if (!props.has(required.toLowerCase())) {
-        findings.push(
-          finding(
-            "fail",
-            "missing_custom_property",
-            `Active document missing custom property: ${required}`,
-            args.path,
-          ),
-        );
+  if (args.inspectCustomProperties) {
+    const partPaths = await resolveInspectablePartPaths(target, files);
+    for (const partPath of partPaths) {
+      const inspected = await runWorker({
+        command: "inspect_document",
+        args: { path: partPath },
+      });
+      const props = extractCustomPropertyNames(inspected);
+      for (const required of conventions.requiredCustomProperties) {
+        if (!props.has(required.toLowerCase())) {
+          findings.push(
+            finding(
+              "fail",
+              "missing_custom_property",
+              `Missing custom property '${required}' on ${path.basename(partPath)}`,
+              partPath,
+            ),
+          );
+        } else {
+          findings.push(
+            finding(
+              "pass",
+              "custom_property",
+              `Custom property present on ${path.basename(partPath)}: ${required}`,
+              partPath,
+            ),
+          );
+        }
       }
     }
   }
@@ -172,12 +184,21 @@ export async function designReview(args: {
   path?: string;
   packageId?: string;
 }): Promise<unknown> {
-  const conventions = await cadConventionsCheck({ path: args.path });
+  const conventions = await cadConventionsCheck({
+    path: args.path,
+    inspectCustomProperties: Boolean(args.path),
+  });
   const packageResult = await designPackageValidate({ path: args.path, packageId: args.packageId });
   const checklist = [
     { item: "CAD under hardware/cad/", done: true },
     { item: "Filenames match cad-conventions.json", done: (conventions as { summary: { fail: number } }).summary.fail === 0 },
     { item: "Design package tree requirements", done: (packageResult as { summary: { fail: number } }).summary.fail === 0 },
+    {
+      item: "Required custom properties on assembly parts",
+      done: (conventions as { findings: AuditFinding[] }).findings.every(
+        (entry) => entry.code !== "missing_custom_property",
+      ),
+    },
     { item: "See hardware/docs/cad-standards.md for URDF ref names before export", done: false },
   ];
 
@@ -202,6 +223,10 @@ function summarize(findings: AuditFinding[]): { pass: number; warn: number; fail
   return { pass, warn, fail, ok: fail === 0 };
 }
 
+function isSolidWorksLockFile(name: string): boolean {
+  return name.startsWith("~$");
+}
+
 async function resolveCadTargets(target: string): Promise<string[]> {
   const stat = await fs.stat(target);
   if (stat.isFile()) {
@@ -211,10 +236,41 @@ async function resolveCadTargets(target: string): Promise<string[]> {
   return listCadFiles(target);
 }
 
+async function resolveInspectablePartPaths(target: string, files: string[]): Promise<string[]> {
+  const ext = path.extname(target).toLowerCase();
+  if (ext === ".sldprt") {
+    return [target];
+  }
+
+  if (ext === ".sldasm") {
+    const components = (await runWorker({
+      command: "list_components",
+      args: { path: target },
+    })) as { components?: Array<{ path?: string | null; suppressed?: boolean | null }> };
+
+    const partPaths = new Set<string>();
+    for (const component of components.components ?? []) {
+      if (component.suppressed || !component.path) {
+        continue;
+      }
+      if (path.extname(component.path).toLowerCase() === ".sldprt") {
+        partPaths.add(component.path);
+      }
+    }
+    return [...partPaths];
+  }
+
+  return files.filter((file) => path.extname(file).toLowerCase() === ".sldprt");
+}
+
 async function listCadFiles(dir: string): Promise<string[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const files: string[] = [];
   for (const entry of entries) {
+    if (isSolidWorksLockFile(entry.name)) {
+      continue;
+    }
+
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (entry.name === "exports") {

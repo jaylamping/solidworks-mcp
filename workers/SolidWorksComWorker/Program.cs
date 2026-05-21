@@ -42,6 +42,12 @@ internal static class Program
                 "list_components" => ListComponents(request.Args),
                 "list_reference_geometry" => ListReferenceGeometry(request.Args),
                 "list_bom" => ListBom(request.Args),
+                "list_mates" => ListMates(request.Args),
+                "set_component_visible" => SetComponentVisible(request.Args),
+                "set_component_fixed" => SetComponentFixed(request.Args),
+                "rename_component" => RenameComponent(request.Args),
+                "mate_coord_sys" => MateCoordSys(request.Args),
+                "save_document" => SaveDocument(request.Args),
                 _ => throw new InvalidOperationException($"Unknown worker command: {request.Command}"),
             };
 
@@ -368,6 +374,377 @@ internal static class Program
         };
     }
 
+    private static object ListMates(JsonElement? args)
+    {
+        string? inputPath = StringArg(args, "path");
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
+        if (doc is null)
+        {
+            throw new InvalidOperationException("No active SolidWorks document.");
+        }
+
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("list_mates requires an assembly document.");
+        }
+
+        var mates = new List<object>();
+        Feature? mateGroup = FindFeatureByName(doc, "Mates");
+        if (mateGroup is not null)
+        {
+            object? subFeature = Try(() => mateGroup.GetFirstSubFeature());
+            int guard = 0;
+            while (subFeature is not null && guard++ < 200)
+            {
+                dynamic current = subFeature;
+                mates.Add(new
+                {
+                    name = Try(() => current.Name),
+                    type = Try(() => current.GetTypeName2()),
+                });
+                subFeature = Try(() => current.GetNextSubFeature());
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            mates,
+            mateCount = mates.Count,
+        };
+    }
+
+    private static object SetComponentVisible(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string componentName = RequiredStringArg(args, "component_name");
+        bool visible = BoolArg(args, "visible", defaultValue: true);
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("set_component_visible requires an assembly document.");
+        }
+
+        Component2? component = FindComponent((IAssemblyDoc)doc, null, componentName)
+            ?? throw new InvalidOperationException($"Component not found: {componentName}");
+
+        int state = visible
+            ? (int)swComponentVisibilityState_e.swComponentVisible
+            : (int)swComponentVisibilityState_e.swComponentHidden;
+        component.Visible = state;
+        doc.EditRebuild3();
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            component = Try(() => component.Name2),
+            visible,
+        };
+    }
+
+    private static object SetComponentFixed(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string componentName = RequiredStringArg(args, "component_name");
+        bool fixedState = BoolArg(args, "fixed", defaultValue: true);
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("set_component_fixed requires an assembly document.");
+        }
+
+        Component2? component = FindComponent((IAssemblyDoc)doc, null, componentName)
+            ?? throw new InvalidOperationException($"Component not found: {componentName}");
+
+        if (fixedState)
+        {
+            component.Select4(false, null, false);
+            ((IAssemblyDoc)doc).FixComponent();
+        }
+        else
+        {
+            component.Select4(false, null, false);
+            ((IAssemblyDoc)doc).UnfixComponent();
+        }
+
+        doc.ClearSelection2(true);
+        doc.EditRebuild3();
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            component = Try(() => component.Name2),
+            fixedState = Try(() => component.IsFixed()),
+        };
+    }
+
+    private static object RenameComponent(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string fromName = RequiredStringArg(args, "from");
+        string toName = RequiredStringArg(args, "to");
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("rename_component requires an assembly document.");
+        }
+
+        Component2? component = FindComponent((IAssemblyDoc)doc, null, fromName)
+            ?? throw new InvalidOperationException($"Component not found: {fromName}");
+
+        string? previous = Try(() => component.Name2) as string;
+        doc.ClearSelection2(true);
+        bool selected = Try(() => component.Select4(false, null, false)) as bool? ?? false;
+        if (!selected)
+        {
+            throw new InvalidOperationException($"Could not select component for rename: {fromName}");
+        }
+
+        bool renamed = Try(() => ((dynamic)component).SetName(toName)) as bool? ?? false;
+        if (!renamed)
+        {
+            component.Name2 = toName;
+        }
+
+        doc.ClearSelection2(true);
+        doc.EditRebuild3();
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            from = previous,
+            to = Try(() => component.Name2),
+            renamed,
+        };
+    }
+
+    private static object MateCoordSys(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string component1 = RequiredStringArg(args, "component_1");
+        string ref1 = RequiredStringArg(args, "ref_1");
+        string component2 = RequiredStringArg(args, "component_2");
+        string ref2 = RequiredStringArg(args, "ref_2");
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("mate_coord_sys requires an assembly document.");
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)doc;
+        Component2? first = FindComponent(assembly, null, component1)
+            ?? throw new InvalidOperationException($"Component not found: {component1}");
+        Component2? second = FindComponent(assembly, null, component2)
+            ?? throw new InvalidOperationException($"Component not found: {component2}");
+
+        doc.ClearSelection2(true);
+        if (!SelectComponentReference(doc, first, ref1, append: false, mark: 1))
+        {
+            throw new InvalidOperationException($"Failed to select {ref1} on {component1}");
+        }
+
+        if (!SelectComponentReference(doc, second, ref2, append: true, mark: 2))
+        {
+            throw new InvalidOperationException($"Failed to select {ref2} on {component2}");
+        }
+
+        Mate2? mate = assembly.AddMate5(
+            (int)swMateType_e.swMateCOORDINATE,
+            (int)swMateAlign_e.swMateAlignALIGNED,
+            false,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            false,
+            false,
+            0,
+            out int mateError) as Mate2;
+
+        if (mateError != 0 && mateError != 4)
+        {
+            throw new InvalidOperationException($"AddMate5 failed with error code {mateError}.");
+        }
+
+        if (mate is null && mateError == 0)
+        {
+            throw new InvalidOperationException("AddMate5 returned no mate.");
+        }
+
+        doc.EditRebuild3();
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            component1 = Try(() => first.Name2),
+            component2 = Try(() => second.Name2),
+            ref1,
+            ref2,
+            mateError,
+            mateCreated = mate is not null,
+            alreadyConstrained = mateError == 4,
+        };
+    }
+
+    private static bool SelectComponentReference(
+        ModelDoc2 assemblyDoc,
+        Component2 component,
+        string referenceName,
+        bool append,
+        int mark)
+    {
+        ModelDoc2? componentDoc = Try(() => component.GetModelDoc2()) as ModelDoc2;
+        if (componentDoc is null)
+        {
+            return false;
+        }
+
+        Feature? feature = FindFeatureByName(componentDoc, referenceName);
+        if (feature is null)
+        {
+            return false;
+        }
+
+        string? componentName = Try(() => component.Name2) as string;
+        if (componentName is null)
+        {
+            return false;
+        }
+
+        string selectName = $"{referenceName}@{componentName}";
+        bool selected = assemblyDoc.Extension.SelectByID2(
+            selectName,
+            "COORDSYS",
+            0,
+            0,
+            0,
+            append,
+            mark,
+            null,
+            0);
+
+        if (selected)
+        {
+            return true;
+        }
+
+        selected = Try(() => component.Select4(append, null, false)) as bool? ?? false;
+        if (!selected)
+        {
+            return false;
+        }
+
+        return Try(() => feature.Select2(append, mark)) as bool? ?? false;
+    }
+
+    private static Feature? FindFeatureByName(ModelDoc2 doc, string name)
+    {
+        object? feature = Try(() => doc.FirstFeature());
+        int guard = 0;
+        while (feature is not null && guard++ < 1000)
+        {
+            dynamic current = feature;
+            string? featureName = Try(() => current.Name) as string;
+            if (featureName is not null && featureName.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                return feature as Feature;
+            }
+
+            feature = Try(() => current.GetNextFeature());
+        }
+
+        return null;
+    }
+
+    private static object SaveDocument(JsonElement? args)
+    {
+        string? inputPath = StringArg(args, "path");
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
+        if (doc is null)
+        {
+            throw new InvalidOperationException("No active SolidWorks document to save.");
+        }
+
+        int errors = 0;
+        int warnings = 0;
+        bool saved = doc.Save3(
+            (int)swSaveAsOptions_e.swSaveAsOptions_Silent,
+            ref errors,
+            ref warnings);
+
+        if (!saved || errors != 0)
+        {
+            throw new InvalidOperationException($"Save failed. errors={errors}, warnings={warnings}");
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            saved = true,
+            errors,
+            warnings,
+        };
+    }
+
+    private static Component2? FindComponent(IAssemblyDoc assembly, Component2? parent, string nameOrPrefix)
+    {
+        if (parent is null)
+        {
+            Component2? direct = Try(() => assembly.GetComponentByName(nameOrPrefix)) as Component2;
+            if (direct is not null)
+            {
+                return direct;
+            }
+        }
+
+        object[]? roots = parent is null
+            ? Try(() => assembly.GetComponents(true)) as object[]
+            : Try(() => parent.GetChildren()) as object[];
+
+        if (roots is null)
+        {
+            return null;
+        }
+
+        foreach (object entry in roots)
+        {
+            if (entry is not Component2 component)
+            {
+                continue;
+            }
+
+            string? name = Try(() => component.Name2) as string;
+            if (name is not null
+                && (name.Equals(nameOrPrefix, StringComparison.OrdinalIgnoreCase)
+                    || name.StartsWith(nameOrPrefix, StringComparison.OrdinalIgnoreCase)))
+            {
+                return component;
+            }
+
+            Component2? nested = FindComponent(assembly, component, nameOrPrefix);
+            if (nested is not null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
+    }
+
     private static void CollectComponentTree(IAssemblyDoc assembly, Component2? parent, List<object> output, int depth)
     {
         object[]? roots = parent is null
@@ -394,7 +771,7 @@ internal static class Program
     private static void CollectBomLines(IAssemblyDoc assembly, Component2? parent, List<object> output)
     {
         object[]? roots = parent is null
-            ? Try(() => assembly.GetComponents(false)) as object[]
+            ? Try(() => assembly.GetComponents(true)) as object[]
             : Try(() => parent.GetChildren()) as object[];
 
         if (roots is null)

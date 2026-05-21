@@ -22,6 +22,46 @@ interface BomRow {
   description: string;
 }
 
+/** Leaf SW instance name (strip sub-asm path prefix). */
+function leafInstanceName(name: string): string {
+  const slash = name.lastIndexOf("/");
+  return slash >= 0 ? name.slice(slash + 1) : name;
+}
+
+function dedupeInstanceNames(names: string[]): string[] {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const name of names) {
+    const leaf = leafInstanceName(name).toLowerCase();
+    if (seen.has(leaf)) {
+      continue;
+    }
+    seen.add(leaf);
+    unique.push(name);
+  }
+  return unique;
+}
+
+function matchesPartId(instanceName: string, partId: string): boolean {
+  const leaf = leafInstanceName(instanceName).toLowerCase();
+  const id = partId.toLowerCase();
+
+  if (leaf.includes(id)) {
+    return true;
+  }
+
+  // frame_2020_vertical_340 → frame_2020_vertical_{back|front}_{left|right}_340
+  if (id === "frame_2020_vertical_340") {
+    return /^frame_2020_vertical_(?:back|front)_(?:left|right)_340(?:-\d+)?$/.test(leaf);
+  }
+
+  return false;
+}
+
+function countMatchingInstances(instanceNames: string[], partId: string): number {
+  return instanceNames.filter((name) => matchesPartId(name, partId)).length;
+}
+
 export async function hardwareCoverage(args: { path?: string }): Promise<unknown> {
   const root = await marengoRoot();
   const vendor = await loadVendorAssets();
@@ -33,7 +73,9 @@ export async function hardwareCoverage(args: { path?: string }): Promise<unknown
     args: { path: args.path },
   })) as { lines?: Array<{ name?: string | null; path?: string | null }> };
 
-  const bomNames = (bom.lines ?? []).map((line) => (line.name ?? "").toLowerCase()).filter(Boolean);
+  const bomNames = dedupeInstanceNames(
+    (bom.lines ?? []).map((line) => (line.name ?? "").toLowerCase()).filter(Boolean),
+  );
   const bomPaths = (bom.lines ?? []).map((line) => (line.path ?? "").toLowerCase()).filter(Boolean);
 
   for (const asset of vendor.assets) {
@@ -75,7 +117,7 @@ export async function hardwareCoverage(args: { path?: string }): Promise<unknown
       continue;
     }
 
-    const instances = bomNames.filter((name) => name.includes(row.partId.toLowerCase())).length;
+    const instances = countMatchingInstances(bomNames, row.partId);
     if (!asset) {
       if (instances < row.qty) {
         findings.push(

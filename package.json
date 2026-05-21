@@ -1,6 +1,6 @@
 {
   "name": "solidworks-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "MCP server for SolidWorks automation with a Windows .NET COM worker.",
   "type": "module",
@@ -11,7 +11,8 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "worker:status": "node scripts/worker-status.mjs"
+    "worker:status": "node scripts/worker-status.mjs",
+    "validate:tools": "node scripts/validate-tools.mjs"
   },
   "keywords": [],
   "author": "",

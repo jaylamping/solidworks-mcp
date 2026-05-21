@@ -34,6 +34,17 @@ Manual repair path:
 
 Do not design from guessed actuator dimensions while this is broken. Use staged STEP files and mark native import as pending.
 
+## Stale MCP server after `npm run build`
+
+Symptom: tools respond but omit new fields (e.g. `marengo_urdf_readiness` missing `scopesScanned` / `referenceLocations`), or `solidworks_status` has no `mcpVersion`.
+
+Cursor keeps the MCP Node process alive across builds. Fix:
+
+1. Run `npm run build` in `solidworks-mcp`.
+2. Restart the SolidWorks MCP server in Cursor (MCP settings → restart) or **Developer: Reload Window**.
+3. Confirm with `solidworks_status` — expect `mcpVersion: "0.2.0"` (or current package version).
+4. Optional smoke test: `npm run validate:tools` (SolidWorks must be running).
+
 Resolved local path:
 
 - Dynamic COM dispatch failed with `TYPE_E_ELEMENTNOTFOUND`.

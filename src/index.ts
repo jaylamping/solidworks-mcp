@@ -2,7 +2,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-import { assertAllowedPath } from "./config.js";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { assertAllowedPath, packageRoot } from "./config.js";
 import { cadConventionsCheck, designPackageValidate, designReview } from "./marengo/cad-audit.js";
 import { hardwareCoverage } from "./marengo/coverage.js";
 import { kinematicsConsistency, urdfExportPostcheck, urdfReadiness } from "./marengo/urdf-audit.js";
@@ -25,6 +29,13 @@ function errorResult(error: unknown) {
     content: [{ type: "text" as const, text: message }],
     isError: true as const,
   };
+}
+
+function mcpBuildInfo(): { mcpVersion: string; buildId: string } {
+  const pkgPath = path.join(packageRoot(), "package.json");
+  const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { version?: string };
+  const buildId = path.basename(fileURLToPath(import.meta.url));
+  return { mcpVersion: pkg.version ?? "0.0.0", buildId };
 }
 
 const optionalPathSchema = z.object({
@@ -160,7 +171,8 @@ export async function main(): Promise<void> {
     },
     async (args) => {
       try {
-        return jsonResult(await runWorker({ command: "status", args }));
+        const data = await runWorker({ command: "status", args });
+        return jsonResult({ ...(data as Record<string, unknown>), ...mcpBuildInfo() });
       } catch (error) {
         return errorResult(error);
       }
