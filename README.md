@@ -65,7 +65,7 @@ Optional override: `MARENGO_ROOT=C:/code/marengo`.
 | `marengo_cad_conventions_check` | Filename/layout vs `cad-conventions.json` |
 | `marengo_design_package_validate` | Assembly tree vs `design-packages.json` |
 | `marengo_design_review` | Combined report + checklist |
-| `marengo_urdf_readiness` | URDF reference geometry before Brawner export |
+| `marengo_urdf_readiness` | URDF reference geometry before Brawner export; walks assembly component trees |
 | `marengo_kinematics_consistency` | `kinematics.md` vs assembly instance names |
 | `marengo_urdf_export_postcheck` | Exported URDF vs kinematics + `config/motors.yaml` |
 | `marengo_vendor_registry_summary` | Vendor registry under `hardware/manifests/` |
@@ -85,4 +85,4 @@ Legacy aliases: `vendor_registry_summary`, `vendor_stage_local_asset` (default r
 - Real-component-first: vendor CAD for actuators, fasteners, boards, bearings before designing around guesses.
 - Native SolidWorks parts/assemblies are source of truth.
 - URDF export is **manual** (Brawner) → `assets/urdf/marengo.urdf`; MCP audits only.
-- MCP does not auto-mate, insert components, or write URDF yet.
+- MCP does not auto-mate, insert components, move features, or write URDF yet.

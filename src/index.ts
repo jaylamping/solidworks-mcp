@@ -314,7 +314,8 @@ export async function main(): Promise<void> {
     "marengo_urdf_readiness",
     {
       title: "Marengo URDF readiness",
-      description: "Check named URDF reference geometry against cad-conventions and kinematics.md.",
+      description:
+        "Check named URDF reference geometry against cad-conventions and kinematics.md. For assemblies, scans the full component tree (not just top-level assembly features).",
       inputSchema: optionalPathSchema,
       annotations: { readOnlyHint: true },
     },
