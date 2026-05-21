@@ -55,6 +55,22 @@ function matchesPartId(instanceName: string, partId: string): boolean {
     return /^frame_2020_vertical_(?:back|front)_(?:left|right)_340(?:-\d+)?$/.test(leaf);
   }
 
+  if (id === "frame_2020_bottom_left_085" || id === "frame_2020_bottom_left_100") {
+    return /^frame_2020_bottom_left_(?:085|100)(?:-\d+)?$/.test(leaf);
+  }
+
+  if (id === "frame_2020_bottom_right_085" || id === "frame_2020_bottom_right_100") {
+    return /^frame_2020_bottom_right_(?:085|100)(?:-\d+)?$/.test(leaf);
+  }
+
+  if (id === "frame_2020_top_left_085" || id === "frame_2020_top_left_100") {
+    return /^frame_2020_top_left_(?:085|100)(?:-\d+)?$/.test(leaf);
+  }
+
+  if (id === "frame_2020_top_right_085" || id === "frame_2020_top_right_100") {
+    return /^frame_2020_top_right_(?:085|100)(?:-\d+)?$/.test(leaf);
+  }
+
   return false;
 }
 

@@ -15,6 +15,17 @@ import {
   registrySummary,
   stageLocalVendorAsset,
 } from "./vendor-registry.js";
+import {
+  alignComponentToFeature,
+  assemblyToolSchemas,
+  getFeatureBox,
+  listMates,
+  mateCoincident,
+  mateParallel,
+  probeFeatureFaces,
+  saveDocument,
+  torsoFrameBuildMates,
+} from "./assembly-tools.js";
 import { runWorker } from "./worker.js";
 
 function jsonResult(data: unknown) {
@@ -75,7 +86,7 @@ async function registrySummaryHandler(registryPath?: string) {
 }
 
 export async function main(): Promise<void> {
-  const server = new McpServer({ name: "solidworks", version: "0.2.0" });
+  const server = new McpServer({ name: "solidworks", version: "0.3.0" });
 
   const registerReadOnlyWorker = (
     name: string,
@@ -261,6 +272,137 @@ export async function main(): Promise<void> {
     "List assembly BOM lines",
     "Return a flat component list with paths (BOM precursor).",
     "list_bom",
+  );
+  registerReadOnlyWorker(
+    "solidworks_list_mates",
+    "List assembly mates",
+    "Return mate feature names/types for an assembly.",
+    "list_mates",
+  );
+  server.registerTool(
+    "solidworks_probe_feature_faces",
+    {
+      title: "Probe feature faces",
+      description: "List face count/area/planarity for a component feature (ICE, extrusion, etc.).",
+      inputSchema: assemblyToolSchemas.featureProbeSchema,
+      annotations: { readOnlyHint: true },
+    },
+    async (args: z.infer<typeof assemblyToolSchemas.featureProbeSchema>) => {
+      try {
+        return jsonResult(await probeFeatureFaces(args));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "solidworks_get_feature_box",
+    {
+      title: "Feature bounding box",
+      description: "Return assembly-space bounding box for a named feature on a component.",
+      inputSchema: assemblyToolSchemas.featureProbeSchema,
+      annotations: { readOnlyHint: true },
+    },
+    async (args: z.infer<typeof assemblyToolSchemas.featureProbeSchema>) => {
+      try {
+        return jsonResult(await getFeatureBox(args));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "solidworks_save_document",
+    {
+      title: "Save CAD document",
+      description: "Save active or specified SolidWorks document.",
+      inputSchema: optionalPathSchema,
+      annotations: { readOnlyHint: false },
+    },
+    async (args: z.infer<typeof optionalPathSchema>) => {
+      try {
+        const filePath = args.path ? assertAllowedPath(args.path) : undefined;
+        if (!filePath) {
+          throw new Error("path is required for save_document");
+        }
+        return jsonResult(await saveDocument(filePath));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "solidworks_align_component_to_feature",
+    {
+      title: "Align component to layout feature",
+      description:
+        "Translate a component so a reference plane aligns to the center of a layout ICE/reference feature.",
+      inputSchema: assemblyToolSchemas.alignSchema,
+      annotations: { readOnlyHint: false },
+    },
+    async (args: z.infer<typeof assemblyToolSchemas.alignSchema>) => {
+      try {
+        return jsonResult(await alignComponentToFeature(args));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "solidworks_mate_coincident",
+    {
+      title: "Coincident mate",
+      description:
+        "Add a coincident mate between named references (planes, coord sys) or feature faces on two components.",
+      inputSchema: assemblyToolSchemas.mateRefsSchema,
+      annotations: { readOnlyHint: false },
+    },
+    async (args: z.infer<typeof assemblyToolSchemas.mateRefsSchema>) => {
+      try {
+        return jsonResult(await mateCoincident(args));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "solidworks_mate_parallel",
+    {
+      title: "Parallel mate",
+      description: "Add a parallel mate between references or feature faces on two components.",
+      inputSchema: assemblyToolSchemas.mateRefsSchema,
+      annotations: { readOnlyHint: false },
+    },
+    async (args: z.infer<typeof assemblyToolSchemas.mateRefsSchema>) => {
+      try {
+        return jsonResult(await mateParallel(args));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "marengo_torso_frame_build",
+    {
+      title: "Build Marengo torso frame mates",
+      description:
+        "Align 12×2020 extrusions to layout ICE (bottom_rail_*, top_rail_*), add mates, snap 16× brackets to envelope corners, save.",
+      inputSchema: assemblyToolSchemas.torsoFrameBuildSchema,
+      annotations: { readOnlyHint: false },
+    },
+    async (args: z.infer<typeof assemblyToolSchemas.torsoFrameBuildSchema>) => {
+      try {
+        return jsonResult(await torsoFrameBuildMates(args));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
   );
 
   server.registerTool(

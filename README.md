@@ -57,6 +57,21 @@ Optional override: `MARENGO_ROOT=C:/code/marengo`.
 | `solidworks_list_components` | Assembly tree |
 | `solidworks_list_reference_geometry` | Named planes, axes, coord systems |
 | `solidworks_list_bom` | Flat assembly component list |
+| `solidworks_list_mates` | Mate feature list |
+| `solidworks_probe_feature_faces` | Face diagnostics on component features |
+| `solidworks_get_feature_box` | Feature bounding box in assembly space |
+| `solidworks_save_document` | Save document |
+
+## Marengo assembly build (write)
+
+| Tool | Role |
+|------|------|
+| `marengo_torso_frame_build` | Align 12×2020 + 16× brackets to `marengo_torso_layout_revA` ICE, save frame asm |
+| `solidworks_align_component_to_feature` | Translate one component to a layout feature |
+| `solidworks_mate_coincident` | Coincident mate between two references |
+| `solidworks_mate_parallel` | Parallel mate between two references |
+
+See [docs/cad-automation.md](docs/cad-automation.md).
 
 ## Marengo audit tools (read-only)
 

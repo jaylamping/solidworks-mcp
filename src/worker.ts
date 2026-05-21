@@ -11,7 +11,28 @@ export type WorkerCommand =
   | "inspect_document"
   | "list_components"
   | "list_reference_geometry"
-  | "list_bom";
+  | "list_bom"
+  | "list_mates"
+  | "set_component_visible"
+  | "set_component_fixed"
+  | "rename_component"
+  | "mate_coord_sys"
+  | "delete_all_mates"
+  | "set_component_configuration"
+  | "mate_component_origin"
+  | "list_configurations"
+  | "add_configuration_copy"
+  | "get_component_box"
+  | "transform_component"
+  | "set_dimension"
+  | "mate_planes"
+  | "get_feature_box"
+  | "mate_coincident"
+  | "mate_parallel"
+  | "align_component_to_feature"
+  | "probe_feature_faces"
+  | "torso_frame_build_mates"
+  | "save_document";
 
 export interface WorkerRequest {
   command: WorkerCommand;
