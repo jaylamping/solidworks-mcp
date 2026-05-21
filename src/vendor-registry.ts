@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { assertAllowedPath } from "./config.js";
 
-const DEFAULT_REGISTRY = "C:/code/robot-cad/manifests/vendor-assets.json";
+const DEFAULT_REGISTRY = "C:/code/marengo/hardware/manifests/vendor-assets.json";
 
 interface VendorRegistry {
   assets: VendorAsset[];
@@ -120,8 +120,14 @@ async function loadRegistry(registryPath: string): Promise<VendorRegistry> {
 }
 
 function findVaultRoot(registryPath: string): string {
-  const marker = `${path.sep}manifests${path.sep}`;
   const normalized = path.resolve(registryPath);
+  const hardwareManifests = `${path.sep}hardware${path.sep}manifests${path.sep}`;
+  const hardwareIndex = normalized.toLowerCase().lastIndexOf(hardwareManifests);
+  if (hardwareIndex >= 0) {
+    return normalized.slice(0, hardwareIndex);
+  }
+
+  const marker = `${path.sep}manifests${path.sep}`;
   const index = normalized.toLowerCase().lastIndexOf(marker);
   if (index < 0) {
     return path.dirname(path.dirname(normalized));

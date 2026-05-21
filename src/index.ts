@@ -3,6 +3,9 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 
 import { assertAllowedPath } from "./config.js";
+import { cadConventionsCheck, designPackageValidate, designReview } from "./marengo/cad-audit.js";
+import { hardwareCoverage } from "./marengo/coverage.js";
+import { kinematicsConsistency, urdfExportPostcheck, urdfReadiness } from "./marengo/urdf-audit.js";
 import {
   defaultRegistryPath,
   registrySummary,
@@ -50,8 +53,43 @@ const stageVendorAssetSchema = registryPathSchema.extend({
   dry_run: z.boolean().optional(),
 });
 
+const marengoPathSchema = optionalPathSchema.extend({
+  package_id: z.string().min(1).optional(),
+  inspect_custom_properties: z.boolean().optional(),
+});
+
+async function registrySummaryHandler(registryPath?: string) {
+  const resolved = registryPath ? assertAllowedPath(registryPath) : defaultRegistryPath();
+  return registrySummary(resolved);
+}
+
 export async function main(): Promise<void> {
-  const server = new McpServer({ name: "solidworks", version: "0.1.0" });
+  const server = new McpServer({ name: "solidworks", version: "0.2.0" });
+
+  const registerReadOnlyWorker = (
+    name: string,
+    title: string,
+    description: string,
+    command: Parameters<typeof runWorker>[0]["command"],
+  ) => {
+    server.registerTool(
+      name,
+      {
+        title,
+        description,
+        inputSchema: optionalPathSchema,
+        annotations: { readOnlyHint: true },
+      },
+      async (args: z.infer<typeof optionalPathSchema>) => {
+        try {
+          const filePath = args.path ? assertAllowedPath(args.path) : undefined;
+          return jsonResult(await runWorker({ command, args: { path: filePath } }));
+        } catch (error) {
+          return errorResult(error);
+        }
+      },
+    );
+  };
 
   server.registerTool(
     "vendor_registry_summary",
@@ -63,9 +101,24 @@ export async function main(): Promise<void> {
     },
     async (args: z.infer<typeof registryPathSchema>) => {
       try {
-        return jsonResult(
-          await registrySummary(args.registry_path ? assertAllowedPath(args.registry_path) : defaultRegistryPath()),
-        );
+        return jsonResult(await registrySummaryHandler(args.registry_path));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "marengo_vendor_registry_summary",
+    {
+      title: "Marengo vendor registry summary",
+      description: "Summarize Marengo hardware/manifests/vendor-assets.json readiness.",
+      inputSchema: registryPathSchema,
+      annotations: { readOnlyHint: true },
+    },
+    async (args: z.infer<typeof registryPathSchema>) => {
+      try {
+        return jsonResult(await registrySummaryHandler(args.registry_path));
       } catch (error) {
         return errorResult(error);
       }
@@ -161,18 +214,60 @@ export async function main(): Promise<void> {
     },
   );
 
-  server.registerTool(
+  registerReadOnlyWorker(
     "solidworks_measure",
+    "Measure CAD document",
+    "Return bounding box and mass-property metadata for active or specified CAD document.",
+    "measure",
+  );
+  registerReadOnlyWorker(
+    "solidworks_list_features",
+    "List CAD features",
+    "List top-level feature tree entries for active or specified CAD document.",
+    "list_features",
+  );
+  registerReadOnlyWorker(
+    "solidworks_inspect_document",
+    "Inspect CAD document",
+    "Return document type, path, saved state, units, and custom properties.",
+    "inspect_document",
+  );
+  registerReadOnlyWorker(
+    "solidworks_list_components",
+    "List assembly components",
+    "Return assembly component tree (name, path, quantity, suppressed, fixed).",
+    "list_components",
+  );
+  registerReadOnlyWorker(
+    "solidworks_list_reference_geometry",
+    "List reference geometry",
+    "List named reference planes, axes, coordinate systems, and points.",
+    "list_reference_geometry",
+  );
+  registerReadOnlyWorker(
+    "solidworks_list_bom",
+    "List assembly BOM lines",
+    "Return a flat component list with paths (BOM precursor).",
+    "list_bom",
+  );
+
+  server.registerTool(
+    "marengo_cad_conventions_check",
     {
-      title: "Measure CAD document",
-      description: "Return bounding box and mass-property metadata for active or specified CAD document.",
-      inputSchema: optionalPathSchema,
+      title: "Marengo CAD conventions check",
+      description: "Validate paths and filenames under hardware/cad against cad-conventions.json.",
+      inputSchema: marengoPathSchema,
       annotations: { readOnlyHint: true },
     },
-    async (args: z.infer<typeof optionalPathSchema>) => {
+    async (args: z.infer<typeof marengoPathSchema>) => {
       try {
         const filePath = args.path ? assertAllowedPath(args.path) : undefined;
-        return jsonResult(await runWorker({ command: "measure", args: { path: filePath } }));
+        return jsonResult(
+          await cadConventionsCheck({
+            path: filePath,
+            inspectCustomProperties: args.inspect_custom_properties,
+          }),
+        );
       } catch (error) {
         return errorResult(error);
       }
@@ -180,17 +275,106 @@ export async function main(): Promise<void> {
   );
 
   server.registerTool(
-    "solidworks_list_features",
+    "marengo_design_package_validate",
     {
-      title: "List CAD features",
-      description: "List top-level feature tree entries for active or specified CAD document.",
+      title: "Marengo design package validate",
+      description: "Compare open assembly tree to hardware/manifests/design-packages.json.",
+      inputSchema: marengoPathSchema,
+      annotations: { readOnlyHint: true },
+    },
+    async (args: z.infer<typeof marengoPathSchema>) => {
+      try {
+        const filePath = args.path ? assertAllowedPath(args.path) : undefined;
+        return jsonResult(await designPackageValidate({ path: filePath, packageId: args.package_id }));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "marengo_design_review",
+    {
+      title: "Marengo design review",
+      description: "Combined conventions + design package report with cad-standards checklist.",
+      inputSchema: marengoPathSchema,
+      annotations: { readOnlyHint: true },
+    },
+    async (args: z.infer<typeof marengoPathSchema>) => {
+      try {
+        const filePath = args.path ? assertAllowedPath(args.path) : undefined;
+        return jsonResult(await designReview({ path: filePath, packageId: args.package_id }));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "marengo_urdf_readiness",
+    {
+      title: "Marengo URDF readiness",
+      description: "Check named URDF reference geometry against cad-conventions and kinematics.md.",
       inputSchema: optionalPathSchema,
       annotations: { readOnlyHint: true },
     },
     async (args: z.infer<typeof optionalPathSchema>) => {
       try {
         const filePath = args.path ? assertAllowedPath(args.path) : undefined;
-        return jsonResult(await runWorker({ command: "list_features", args: { path: filePath } }));
+        return jsonResult(await urdfReadiness({ path: filePath }));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "marengo_kinematics_consistency",
+    {
+      title: "Marengo kinematics consistency",
+      description: "Compare hardware/docs/kinematics.md joint names to assembly component names.",
+      inputSchema: optionalPathSchema,
+      annotations: { readOnlyHint: true },
+    },
+    async (args: z.infer<typeof optionalPathSchema>) => {
+      try {
+        const filePath = args.path ? assertAllowedPath(args.path) : undefined;
+        return jsonResult(await kinematicsConsistency({ path: filePath }));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "marengo_urdf_export_postcheck",
+    {
+      title: "Marengo URDF export postcheck",
+      description: "After manual Brawner export, compare assets/urdf/marengo.urdf to kinematics.md and config/motors.yaml.",
+      inputSchema: z.object({}),
+      annotations: { readOnlyHint: true },
+    },
+    async () => {
+      try {
+        return jsonResult(await urdfExportPostcheck());
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "marengo_hardware_coverage",
+    {
+      title: "Marengo hardware coverage",
+      description: "Compare assembly BOM lines to vendor-assets.json and hardware/bom/master-bom.csv.",
+      inputSchema: optionalPathSchema,
+      annotations: { readOnlyHint: true },
+    },
+    async (args: z.infer<typeof optionalPathSchema>) => {
+      try {
+        const filePath = args.path ? assertAllowedPath(args.path) : undefined;
+        return jsonResult(await hardwareCoverage({ path: filePath }));
       } catch (error) {
         return errorResult(error);
       }

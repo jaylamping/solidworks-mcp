@@ -7,7 +7,11 @@ export type WorkerCommand =
   | "open"
   | "export"
   | "measure"
-  | "list_features";
+  | "list_features"
+  | "inspect_document"
+  | "list_components"
+  | "list_reference_geometry"
+  | "list_bom";
 
 export interface WorkerRequest {
   command: WorkerCommand;

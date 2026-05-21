@@ -38,6 +38,10 @@ internal static class Program
                 "export" => Export(request.Args),
                 "measure" => Measure(request.Args),
                 "list_features" => ListFeatures(request.Args),
+                "inspect_document" => InspectDocument(request.Args),
+                "list_components" => ListComponents(request.Args),
+                "list_reference_geometry" => ListReferenceGeometry(request.Args),
+                "list_bom" => ListBom(request.Args),
                 _ => throw new InvalidOperationException($"Unknown worker command: {request.Command}"),
             };
 
@@ -254,6 +258,217 @@ internal static class Program
             features,
             truncated = guard >= 500,
         };
+    }
+
+    private static object InspectDocument(JsonElement? args)
+    {
+        string? inputPath = StringArg(args, "path");
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
+        if (doc is null)
+        {
+            throw new InvalidOperationException("No active SolidWorks document.");
+        }
+
+        string? pathName = Try(() => doc.GetPathName()) as string;
+        bool saved = !string.IsNullOrWhiteSpace(pathName);
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            saved,
+            units = DescribeUnits(app, doc),
+            customProperties = ListCustomProperties(doc),
+        };
+    }
+
+    private static object ListComponents(JsonElement? args)
+    {
+        string? inputPath = StringArg(args, "path");
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
+        if (doc is null)
+        {
+            throw new InvalidOperationException("No active SolidWorks document.");
+        }
+
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("list_components requires an assembly document.");
+        }
+
+        var tree = new List<object>();
+        CollectComponentTree((IAssemblyDoc)doc, null, tree, 0);
+        return new
+        {
+            document = DescribeDocument(doc),
+            components = tree,
+        };
+    }
+
+    private static object ListReferenceGeometry(JsonElement? args)
+    {
+        string? inputPath = StringArg(args, "path");
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
+        if (doc is null)
+        {
+            throw new InvalidOperationException("No active SolidWorks document.");
+        }
+
+        var items = new List<object>();
+        object? feature = Try(() => doc.FirstFeature());
+        int guard = 0;
+        while (feature is not null && guard++ < 1000)
+        {
+            dynamic current = feature;
+            string? type = Try(() => current.GetTypeName2()) as string;
+            if (type is "RefPlane" or "RefAxis" or "RefPoint" or "CoordSys")
+            {
+                items.Add(new
+                {
+                    name = Try(() => current.Name),
+                    type,
+                });
+            }
+
+            feature = Try(() => current.GetNextFeature());
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            referenceGeometry = items,
+            truncated = guard >= 1000,
+        };
+    }
+
+    private static object ListBom(JsonElement? args)
+    {
+        string? inputPath = StringArg(args, "path");
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
+        if (doc is null)
+        {
+            throw new InvalidOperationException("No active SolidWorks document.");
+        }
+
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("list_bom requires an assembly document.");
+        }
+
+        var flat = new List<object>();
+        CollectBomLines((IAssemblyDoc)doc, null, flat);
+        return new
+        {
+            document = DescribeDocument(doc),
+            lines = flat,
+            lineCount = flat.Count,
+        };
+    }
+
+    private static void CollectComponentTree(IAssemblyDoc assembly, Component2? parent, List<object> output, int depth)
+    {
+        object[]? roots = parent is null
+            ? Try(() => assembly.GetComponents(false)) as object[]
+            : Try(() => parent.GetChildren()) as object[];
+
+        if (roots is null)
+        {
+            return;
+        }
+
+        foreach (object entry in roots)
+        {
+            if (entry is not Component2 component)
+            {
+                continue;
+            }
+
+            output.Add(DescribeComponent(component, depth));
+            CollectComponentTree(assembly, component, output, depth + 1);
+        }
+    }
+
+    private static void CollectBomLines(IAssemblyDoc assembly, Component2? parent, List<object> output)
+    {
+        object[]? roots = parent is null
+            ? Try(() => assembly.GetComponents(false)) as object[]
+            : Try(() => parent.GetChildren()) as object[];
+
+        if (roots is null)
+        {
+            return;
+        }
+
+        foreach (object entry in roots)
+        {
+            if (entry is not Component2 component)
+            {
+                continue;
+            }
+
+            output.Add(DescribeComponent(component, depth: 0));
+            CollectBomLines(assembly, component, output);
+        }
+    }
+
+    private static object DescribeComponent(Component2 component, int depth)
+    {
+        return new
+        {
+            name = Try(() => component.Name2),
+            path = Try(() => component.GetPathName()),
+            configuration = Try(() => component.ReferencedConfiguration),
+            suppressed = Try(() => component.IsSuppressed()),
+            isFixed = Try(() => component.IsFixed()),
+            visible = Try(() => component.Visible),
+            depth,
+        };
+    }
+
+    private static object DescribeUnits(ISldWorks app, ModelDoc2 doc)
+    {
+        int? lengthUnit = Try(() => app.GetUserPreferenceIntegerValue((int)swUserPreferenceIntegerValue_e.swUnitsLinear)) as int?;
+        int? massUnit = Try(() => app.GetUserPreferenceIntegerValue((int)swUserPreferenceIntegerValue_e.swUnitsMassPropMass)) as int?;
+
+        return new
+        {
+            length = lengthUnit,
+            mass = massUnit,
+            documentType = Try(() => doc.GetType()),
+        };
+    }
+
+    private static IReadOnlyList<object> ListCustomProperties(ModelDoc2 doc)
+    {
+        var properties = new List<object>();
+        CustomPropertyManager? manager = Try(() => doc.Extension.CustomPropertyManager[""]) as CustomPropertyManager;
+        if (manager is null)
+        {
+            return properties;
+        }
+
+        string[]? names = Try(() => manager.GetNames()) as string[];
+        if (names is null)
+        {
+            return properties;
+        }
+
+        foreach (string name in names)
+        {
+            string value = "";
+            string resolved = "";
+            TryVoid(() => manager.Get2(name, out value, out resolved));
+            properties.Add(new
+            {
+                name,
+                value = string.IsNullOrWhiteSpace(resolved) ? value : resolved,
+            });
+        }
+
+        return properties;
     }
 
     private static ISldWorks AttachSolidWorks(bool startIfMissing)

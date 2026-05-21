@@ -4,9 +4,10 @@ Windows-only MCP server for SolidWorks automation. The MCP front door is TypeScr
 
 ## Repos
 
-- `C:\code\solidworks-mcp`: MCP server and automation tooling.
-- `C:\code\robot-cad`: Git LFS CAD vault for source CAD, vendor CAD, exports, and manifests.
-- `C:\code\rudy`: downstream ROS/software consumer.
+- `C:\code\solidworks-mcp`: MCP server and COM worker.
+- `C:\code\marengo`: Mechanics + runtime; CAD under `hardware/cad/`, manifests under `hardware/manifests/`.
+
+Open **`C:\code\marengo\marengo.code-workspace`** for both repos in one Cursor session.
 
 ## Build
 
@@ -25,7 +26,7 @@ If COM is registered but not responsive, see `docs/troubleshooting.md`.
 
 ## Cursor MCP Config
 
-Use a user or workspace MCP config entry like:
+Workspace config lives in marengo:
 
 ```json
 {
@@ -34,35 +35,54 @@ Use a user or workspace MCP config entry like:
       "command": "node",
       "args": ["C:/code/solidworks-mcp/dist/index.js"],
       "env": {
-        "SOLIDWORKS_MCP_ALLOWED_ROOTS": "C:/code/robot-cad;C:/Users/joeyl/OneDrive/Desktop/robot"
+        "SOLIDWORKS_MCP_ALLOWED_ROOTS": "C:/code/marengo"
       }
     }
   }
 }
 ```
 
-## Initial Tools
+Optional override: `MARENGO_ROOT=C:/code/marengo`.
 
-- `vendor_registry_summary`: summarize vendor CAD assets and import readiness.
-- `vendor_stage_local_asset`: copy local vendor CAD into the CAD vault and record checksums; defaults to dry run.
-- `solidworks_status`: attach to running SolidWorks and report active document metadata.
-- `solidworks_open`: open `.SLDPRT`, `.SLDASM`, `.SLDDRW`, `.STEP`, or `.STP` from allowed CAD roots.
-- `solidworks_export`: export active or specified document to `STEP`, `STL`, `PDF`, or `PNG`.
-- `solidworks_measure`: collect bounding box and mass-property metadata.
-- `solidworks_list_features`: list top-level feature tree entries.
+## SolidWorks tools
 
-## Vendor CAD Workflow
+| Tool | Role |
+|------|------|
+| `solidworks_status` | Attach and report version / active document |
+| `solidworks_open` | Open `.SLDPRT`, `.SLDASM`, `.STEP`, `.STP` from allowed roots |
+| `solidworks_export` | Export STEP, STL, PDF, PNG |
+| `solidworks_measure` | Bounding box and mass properties |
+| `solidworks_list_features` | Top-level feature tree |
+| `solidworks_inspect_document` | Type, path, saved, units, custom properties |
+| `solidworks_list_components` | Assembly tree |
+| `solidworks_list_reference_geometry` | Named planes, axes, coord systems |
+| `solidworks_list_bom` | Flat assembly component list |
 
-1. Add or update an entry in `C:\code\robot-cad\manifests\vendor-assets.json`.
-2. Run `vendor_stage_local_asset` for local files, or add a downloader/fetcher for trusted supplier URLs.
-3. Import the staged STEP/STP into SolidWorks.
-4. Add named reference geometry: axes, mounting faces, cable exits, keepouts, and tool access.
-5. Update registry `cad.nativePath` once the SolidWorks part is saved.
+## Marengo audit tools (read-only)
 
-## Design Policy
+| Tool | Role |
+|------|------|
+| `marengo_cad_conventions_check` | Filename/layout vs `cad-conventions.json` |
+| `marengo_design_package_validate` | Assembly tree vs `design-packages.json` |
+| `marengo_design_review` | Combined report + checklist |
+| `marengo_urdf_readiness` | URDF reference geometry before Brawner export |
+| `marengo_kinematics_consistency` | `kinematics.md` vs assembly instance names |
+| `marengo_urdf_export_postcheck` | Exported URDF vs kinematics + `config/motors.yaml` |
+| `marengo_vendor_registry_summary` | Vendor registry under `hardware/manifests/` |
+| `marengo_hardware_coverage` | Assembly BOM vs registry + `master-bom.csv` |
 
-- Real-component-first: import vendor CAD for RobStride actuators, fasteners, sensors, Raspberry Pi boards, bearings, inserts, connectors, and extrusions before designing around them.
+Legacy aliases: `vendor_registry_summary`, `vendor_stage_local_asset` (default registry path is Marengo).
+
+## Vendor CAD workflow
+
+1. Add or update `C:\code\marengo\hardware\manifests\vendor-assets.json`.
+2. Stage STEP under `hardware/cad/vendor/`.
+3. Import in SolidWorks; add named reference geometry per `hardware/docs/cad-standards.md`.
+4. Run `marengo_design_review` before saving assemblies.
+
+## Design policy
+
+- Real-component-first: vendor CAD for actuators, fasteners, boards, bearings before designing around guesses.
 - Native SolidWorks parts/assemblies are source of truth.
-- Use `STEP` for neutral solid exchange and `STL`/`GLB` only for mesh consumers.
-- Do not design from guessed dimensions when vendor geometry exists.
-- Placeholders must be labeled in manifests with owner, date, and replacement target.
+- URDF export is **manual** (Brawner) → `assets/urdf/marengo.urdf`; MCP audits only.
+- MCP does not auto-mate, insert components, or write URDF yet.

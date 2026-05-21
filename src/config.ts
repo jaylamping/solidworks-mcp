@@ -1,9 +1,6 @@
 import path from "node:path";
 
-const DEFAULT_ALLOWED_ROOTS = [
-  "C:/code/robot-cad",
-  "C:/Users/joeyl/OneDrive/Desktop/robot",
-];
+const DEFAULT_ALLOWED_ROOTS = ["C:/code/marengo"];
 
 export function workerProjectPath(): string {
   return path.resolve("workers/SolidWorksComWorker/SolidWorksComWorker.csproj");
