@@ -61,7 +61,7 @@ export async function hardwareCoverage(args: { path?: string }): Promise<unknown
     if (stepPath && !stepExists) {
       findings.push(finding("fail", "vendor_step_missing", `Missing vendor STEP for ${asset.id}: ${stepPath}`));
     }
-    if (inTree && stepExists) {
+    if (inTree && (stepExists || !asset.cad.stepPath)) {
       findings.push(finding("pass", "vendor_covered", `Vendor asset present in tree and on disk: ${asset.id}`));
     }
   }
@@ -71,14 +71,33 @@ export async function hardwareCoverage(args: { path?: string }): Promise<unknown
       continue;
     }
     const asset = vendor.assets.find((a) => a.id === row.partId);
-    if (!asset) {
-      findings.push(
-        finding("warn", "bom_unknown_part_id", `master-bom.csv part_id not in vendor-assets.json: ${row.partId}`),
-      );
+    if (!asset && row.partId.startsWith("stock_")) {
       continue;
     }
 
     const instances = bomNames.filter((name) => name.includes(row.partId.toLowerCase())).length;
+    if (!asset) {
+      if (instances < row.qty) {
+        findings.push(
+          finding(
+            "fail",
+            "bom_qty_short",
+            `Assembly has ${instances} instance(s) matching ${row.partId}, BOM expects ${row.qty}`,
+          ),
+        );
+      } else if (instances > row.qty) {
+        findings.push(
+          finding(
+            "warn",
+            "bom_qty_high",
+            `Assembly has ${instances} instance(s) matching ${row.partId}, BOM expects ${row.qty}`,
+          ),
+        );
+      } else if (row.qty > 0) {
+        findings.push(finding("pass", "bom_qty_ok", `BOM quantity satisfied for ${row.partId}`));
+      }
+      continue;
+    }
     if (instances < row.qty) {
       findings.push(
         finding(
