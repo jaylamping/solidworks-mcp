@@ -43,7 +43,8 @@ export type WorkerCommand =
   | "apply_shoulder_roll_golden"
   | "mate_shoulder_roll_motor"
   | "vendor_add_rs03_urdf_frame"
-  | "insert_component";
+  | "insert_component"
+  | "cut_actuator_cavity";
 
 export interface WorkerRequest {
   command: WorkerCommand;
