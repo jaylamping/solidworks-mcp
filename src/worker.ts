@@ -35,7 +35,15 @@ export type WorkerCommand =
   | "torso_frame_build_mates"
   | "save_document"
   | "set_custom_properties"
-  | "replace_components_by_path";
+  | "replace_components_by_path"
+  | "layout_add_shoulder_mounts"
+  | "place_shoulder_roll_motors"
+  | "get_component_transform"
+  | "capture_shoulder_roll_golden"
+  | "apply_shoulder_roll_golden"
+  | "mate_shoulder_roll_motor"
+  | "vendor_add_rs03_urdf_frame"
+  | "insert_component";
 
 export interface WorkerRequest {
   command: WorkerCommand;

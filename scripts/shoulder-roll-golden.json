@@ -1,0 +1,72 @@
+{
+  "document": {
+    "title": "marengo_torso_asm_revA.SLDASM",
+    "path": "C:\\code\\marengo\\hardware\\cad\\assemblies\\marengo_torso_asm_revA.SLDASM",
+    "type": 2
+  },
+  "capturedAtUtc": "2026-05-23T04:43:57.4846012Z",
+  "convention": {
+    "axis": "assembly ICE: X width, Y up, Z depth",
+    "leftSide": "-X half, inner flange near -40.4 mm",
+    "rightSide": "+X half, inner flange near +40.4 mm",
+    "shoulderTopYM": 0.495
+  },
+  "left": {
+    "componentPrefix": "actuator_rs03_left_shoulder_roll",
+    "matrix": [
+      0,
+      -0.7077447767513793,
+      -0.7064682094624926,
+      0,
+      -0.7064682094624926,
+      0.7077447767513793,
+      -1,
+      0,
+      0,
+      -0.05949999999999998,
+      0.4248606675482006,
+      -0.00001412534398718187,
+      1,
+      0,
+      0,
+      0
+    ],
+    "boundingBoxM": [
+      -0.0970050009999,
+      0.3544887352430736,
+      -0.07038480673711689,
+      -0.040397499999999975,
+      0.49453907868921027,
+      0.06966428579702247
+    ]
+  },
+  "right": {
+    "componentPrefix": "actuator_rs03_right_shoulder_roll",
+    "matrix": [
+      0,
+      -0.7077447767513791,
+      -0.7064682094624929,
+      0,
+      0.7064682094624926,
+      -0.7077447767513795,
+      1,
+      0,
+      0,
+      0.0595,
+      0.42486066754820073,
+      -0.00001412534398718916,
+      1,
+      0,
+      0,
+      0
+    ],
+    "boundingBoxM": [
+      0.04039749999999999,
+      0.3544887352430737,
+      -0.07038480673711693,
+      0.09700500099990002,
+      0.4945390786892104,
+      0.06966428579702251
+    ]
+  }
+}

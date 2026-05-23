@@ -91,6 +91,14 @@ internal static class Program
                 "save_document" => SaveDocument(request.Args),
                 "set_custom_properties" => SetCustomProperties(request.Args),
                 "replace_components_by_path" => ReplaceComponentsByPath(request.Args),
+                "layout_add_shoulder_mounts" => LayoutAddShoulderMounts(request.Args),
+                "place_shoulder_roll_motors" => PlaceShoulderRollMotors(request.Args),
+                "get_component_transform" => GetComponentTransform(request.Args),
+                "capture_shoulder_roll_golden" => CaptureShoulderRollGolden(request.Args),
+                "apply_shoulder_roll_golden" => ApplyShoulderRollGolden(request.Args),
+                "mate_shoulder_roll_motor" => MateShoulderRollMotor(request.Args),
+                "vendor_add_rs03_urdf_frame" => VendorAddRs03UrdfFrame(request.Args),
+                "insert_component" => InsertComponent(request.Args),
                 _ => throw new InvalidOperationException($"Unknown worker command: {request.Command}"),
             };
 
@@ -1264,6 +1272,241 @@ internal static class Program
             fixedState = Try(() => component.IsFixed()),
             matrix,
         };
+    }
+
+    private static object GetComponentTransform(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string componentName = RequiredStringArg(args, "component_name");
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("get_component_transform requires an assembly document.");
+        }
+
+        Component2? component = FindComponent((IAssemblyDoc)doc, null, componentName)
+            ?? throw new InvalidOperationException($"Component not found: {componentName}");
+
+        double[] matrix = ReadComponentTransformMatrix(component);
+        object? box = Try(() => component.GetBox(false, false));
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            component = Try(() => component.Name2),
+            matrix,
+            boundingBoxM = Normalize(box),
+            isFixed = Try(() => component.IsFixed()),
+        };
+    }
+
+    private static object CaptureShoulderRollGolden(JsonElement? args)
+    {
+        string path = RequiredStringArg(args, "path");
+        string leftPrefix = StringArg(args, "left_component") ?? "actuator_rs03_left_shoulder_roll";
+        string rightPrefix = StringArg(args, "right_component") ?? "actuator_rs03_right_shoulder_roll";
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, path);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("capture_shoulder_roll_golden requires an assembly document.");
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)doc;
+        Component2? left = FindComponent(assembly, null, leftPrefix)
+            ?? throw new InvalidOperationException($"Left shoulder motor not found: {leftPrefix}");
+
+        Component2? right = FindComponent(assembly, null, rightPrefix)
+            ?? FindShoulderRollRightComponent(assembly, left);
+        if (right is null)
+        {
+            throw new InvalidOperationException($"Right shoulder motor not found: {rightPrefix}");
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            capturedAtUtc = DateTime.UtcNow.ToString("o"),
+            convention = new
+            {
+                axis = "assembly ICE: X width, Y up, Z depth",
+                leftSide = "-X half, inner flange near -40.4 mm",
+                rightSide = "+X half, inner flange near +40.4 mm",
+                shoulderTopYM = 0.495,
+            },
+            left = DescribeGoldenShoulderComponent(left),
+            right = DescribeGoldenShoulderComponent(right),
+        };
+    }
+
+    private static object ApplyShoulderRollGolden(JsonElement? args)
+    {
+        string path = RequiredStringArg(args, "path");
+        bool save = BoolArg(args, "save", defaultValue: true);
+        bool fix = BoolArg(args, "fix", defaultValue: true);
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, path);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("apply_shoulder_roll_golden requires an assembly document.");
+        }
+
+        if (args is null || args.Value.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidOperationException("apply_shoulder_roll_golden requires golden side payloads.");
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)doc;
+        var applied = new List<object>();
+
+        foreach (string side in new[] { "left", "right" })
+        {
+            if (!args.Value.TryGetProperty(side, out JsonElement sidePayload)
+                || sidePayload.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            string componentName = sidePayload.TryGetProperty("component", out JsonElement componentElement)
+                && componentElement.ValueKind == JsonValueKind.String
+                ? componentElement.GetString() ?? string.Empty
+                : string.Empty;
+            if (string.IsNullOrWhiteSpace(componentName))
+            {
+                componentName = sidePayload.TryGetProperty("componentPrefix", out JsonElement prefixElement)
+                    && prefixElement.ValueKind == JsonValueKind.String
+                    ? prefixElement.GetString() ?? string.Empty
+                    : side.Equals("left", StringComparison.OrdinalIgnoreCase)
+                        ? "actuator_rs03_left_shoulder_roll"
+                        : "actuator_rs03_right_shoulder_roll";
+            }
+
+            double[] matrix = sidePayload.TryGetProperty("matrix", out JsonElement matrixElement)
+                ? matrixElement.EnumerateArray().Select(entry => entry.GetDouble()).ToArray()
+                : throw new InvalidOperationException($"Missing matrix for {side}.");
+
+            Component2? component = FindComponent(assembly, null, componentName)
+                ?? throw new InvalidOperationException($"Component not found for {side}: {componentName}");
+
+            if (Try(() => component.IsFixed()) as bool? == true)
+            {
+                component.Select4(false, null, false);
+                assembly.UnfixComponent();
+                doc.ClearSelection2(true);
+            }
+
+            ApplyComponentTransformMatrix(component, matrix);
+
+            if (fix)
+            {
+                component.Select4(false, null, false);
+                assembly.FixComponent();
+                doc.ClearSelection2(true);
+            }
+
+            applied.Add(new
+            {
+                side,
+                component = Try(() => component.Name2),
+                matrix,
+                boundingBoxM = Normalize(Try(() => component.GetBox(false, false))),
+                isFixed = Try(() => component.IsFixed()),
+            });
+        }
+
+        doc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+            if (!saved || errors != 0)
+            {
+                throw new InvalidOperationException($"Save failed after golden apply. errors={errors}, warnings={warnings}");
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            applied,
+            saved,
+            errors,
+            warnings,
+        };
+    }
+
+    private static object DescribeGoldenShoulderComponent(Component2 component)
+    {
+        double[] matrix = ReadComponentTransformMatrix(component);
+        double[]? box = Try(() => component.GetBox(false, false)) as double[];
+
+        return new
+        {
+            component = Try(() => component.Name2),
+            componentPrefix = Try(() => component.Name2) as string,
+            matrix,
+            boundingBoxM = box,
+            minXM = box is { Length: >= 1 } ? box[0] : (double?)null,
+            maxXM = box is { Length: >= 4 } ? box[3] : (double?)null,
+            shoulderTopYM = box is { Length: >= 5 } ? box[4] : (double?)null,
+            isFixed = Try(() => component.IsFixed()),
+        };
+    }
+
+    private static Component2? FindShoulderRollRightComponent(IAssemblyDoc assembly, Component2 left)
+    {
+        string? leftName = Try(() => left.Name2) as string;
+        foreach (Component2 component in EnumerateAllComponents(assembly))
+        {
+            string? name = Try(() => component.Name2) as string;
+            if (name is null || name.Equals(leftName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!name.Contains("vendor_robstride_rs03_vendor", StringComparison.OrdinalIgnoreCase)
+                && !name.Contains("right_shoulder_roll", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (name.Contains("waist_yaw", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            double[]? box = Try(() => component.GetBox(false, false)) as double[];
+            if (box is { Length: >= 4 } && box[0] > 0)
+            {
+                return component;
+            }
+        }
+
+        return null;
+    }
+
+    private static double[] ReadComponentTransformMatrix(Component2 component)
+    {
+        if (component.Transform2 is not MathTransform transform)
+        {
+            throw new InvalidOperationException("Component transform unavailable.");
+        }
+
+        double[] matrix = Try(() => transform.ArrayData) as double[]
+            ?? throw new InvalidOperationException("Transform data unavailable.");
+        if (matrix.Length != 16)
+        {
+            throw new InvalidOperationException("Unexpected transform matrix size.");
+        }
+
+        return matrix;
     }
 
     private static object SetDimension(JsonElement? args)
@@ -2528,6 +2771,996 @@ internal static class Program
         };
     }
 
+    private static object LayoutAddShoulderMounts(JsonElement? args)
+    {
+        string path = RequiredStringArg(args, "path");
+        bool save = BoolArg(args, "save", defaultValue: true);
+        bool replaceExisting = BoolArg(args, "replace_existing", defaultValue: true);
+        double innerRailM = DoubleArg(args, "inner_rail_mm", 55.0) / 1000.0;
+        double outerPokeM = DoubleArg(args, "outer_poke_mm", 95.0) / 1000.0;
+        double depthOffsetM = DoubleArg(args, "depth_offset_mm", 0.0) / 1000.0;
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, path);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocPART)
+        {
+            throw new InvalidOperationException("layout_add_shoulder_mounts requires a part document.");
+        }
+
+        double[]? innerBox = GetFeatureBoundingBoxInPart(doc, "torso_inner_clear");
+        double[]? outerBox = GetFeatureBoundingBoxInPart(doc, "torso_outer_envelope");
+        if (innerBox is null || outerBox is null)
+        {
+            throw new InvalidOperationException(
+                "Layout part must contain torso_inner_clear and torso_outer_envelope ICE.");
+        }
+
+        double shoulderHeight = outerBox[4];
+        double midDepth = (innerBox[2] + innerBox[5]) / 2.0;
+        double depth = midDepth + depthOffsetM;
+        double jointLeftX = innerRailM / 2.0;
+        double jointRightX = -jointLeftX;
+
+        var created = new List<object>();
+        foreach ((string planeName, double offsetM) in new[]
+                 {
+                     ("shoulder_rail_inner_left", innerRailM),
+                     ("shoulder_rail_inner_right", -innerRailM),
+                     ("shoulder_poke_outer_left", outerPokeM),
+                     ("shoulder_poke_outer_right", -outerPokeM),
+                 })
+        {
+            if (replaceExisting)
+            {
+                DeleteFeatureByName(doc, planeName);
+            }
+            else if (FindFeatureByName(doc, planeName) is not null)
+            {
+                created.Add(new { name = planeName, type = "plane", skipped = true, reason = "already_exists" });
+                continue;
+            }
+
+            Feature? plane = InsertOffsetPlaneFromRight(doc, offsetM, planeName);
+            if (plane is null)
+            {
+                throw new InvalidOperationException($"Failed to create offset plane: {planeName}");
+            }
+
+            created.Add(new { name = planeName, type = "plane", offsetM = offsetM, skipped = false });
+        }
+
+        foreach ((string name, double jointX) in new[]
+                 {
+                     ("shoulder_mount_left", jointLeftX),
+                     ("shoulder_mount_right", jointRightX),
+                 })
+        {
+            if (replaceExisting)
+            {
+                DeleteFeatureByName(doc, name);
+            }
+            else if (FindFeatureByName(doc, name) is not null)
+            {
+                created.Add(new { name, type = "coord_sys", skipped = true, reason = "already_exists" });
+                continue;
+            }
+
+            Feature? coordFeature = CreateShoulderMountCoordSys(doc, name, jointX, shoulderHeight, depth);
+            if (coordFeature is null)
+            {
+                throw new InvalidOperationException($"Failed to create coordinate system: {name}");
+            }
+
+            created.Add(new
+            {
+                name,
+                type = "coord_sys",
+                role = "joint_axis",
+                originM = new[] { jointX, shoulderHeight, depth },
+                skipped = false,
+            });
+        }
+
+        doc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+            if (!saved || errors != 0)
+            {
+                throw new InvalidOperationException($"Save failed after shoulder mounts. errors={errors}, warnings={warnings}");
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            shoulderHeightM = shoulderHeight,
+            innerRailM = innerRailM,
+            outerPokeM = outerPokeM,
+            innerClearBoxM = innerBox,
+            created,
+            saved,
+            errors,
+            warnings,
+        };
+    }
+
+    private static object InsertComponent(JsonElement? args)
+    {
+        string path = RequiredStringArg(args, "path");
+        string partPath = RequiredStringArg(args, "part_path");
+        string? name = StringArg(args, "name");
+        string? configuration = StringArg(args, "configuration") ?? string.Empty;
+        bool save = BoolArg(args, "save", defaultValue: true);
+
+        string resolvedPartPath = Path.GetFullPath(partPath);
+        if (!File.Exists(resolvedPartPath))
+        {
+            throw new InvalidOperationException($"Part file not found: {resolvedPartPath}");
+        }
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, path);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("insert_component requires an assembly document.");
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)doc;
+        AssemblyDoc assemblyDoc = (AssemblyDoc)doc;
+        TryVoid(() => app.ActivateDoc3(doc.GetTitle(), true, 0, 0));
+
+        // Ensure the part loads before inserting into the assembly.
+        OpenDocument(app, resolvedPartPath);
+
+        var existingNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        object[]? beforeComponents = Try(() => assembly.GetComponents(false)) as object[];
+        if (beforeComponents is not null)
+        {
+            foreach (object entry in beforeComponents)
+            {
+                if (entry is Component2 existing && Try(() => existing.Name2) is string existingName)
+                {
+                    existingNames.Add(existingName);
+                }
+            }
+        }
+
+        Component2? component = null;
+        try
+        {
+            component = assemblyDoc.AddComponent5(
+                resolvedPartPath,
+                (int)swAddComponentConfigOptions_e.swAddComponentConfigOptions_CurrentSelectedConfig,
+                configuration,
+                false,
+                string.Empty,
+                0,
+                0,
+                0) as Component2;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"AddComponent5 failed for {resolvedPartPath}: {ex.Message}");
+        }
+
+        if (component is null)
+        {
+            object[]? afterComponents = Try(() => assembly.GetComponents(false)) as object[];
+            if (afterComponents is not null)
+            {
+                foreach (object entry in afterComponents)
+                {
+                    if (entry is not Component2 candidate)
+                    {
+                        continue;
+                    }
+
+                    string? candidateName = Try(() => candidate.Name2) as string;
+                    if (candidateName is not null && !existingNames.Contains(candidateName))
+                    {
+                        component = candidate;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (component is null)
+        {
+            throw new InvalidOperationException($"Failed to insert component: {resolvedPartPath}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            doc.ClearSelection2(true);
+            bool selected = Try(() => component.Select4(false, null, false)) as bool? ?? false;
+            if (!selected)
+            {
+                throw new InvalidOperationException($"Could not select inserted component for rename: {Try(() => component.Name2)}");
+            }
+
+            bool renamed = Try(() => ((dynamic)component).SetName(name)) as bool? ?? false;
+            if (!renamed)
+            {
+                TryVoid(() => component.Name2 = name);
+            }
+
+            doc.ClearSelection2(true);
+        }
+
+        doc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+            if (!saved || errors != 0)
+            {
+                throw new InvalidOperationException($"Save failed after insert. errors={errors}, warnings={warnings}");
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            component = Try(() => component.Name2),
+            partPath,
+            saved,
+            errors,
+            warnings,
+        };
+    }
+
+    private static object PlaceShoulderRollMotors(JsonElement? args)
+    {
+        string path = RequiredStringArg(args, "path");
+        string layoutComponent = StringArg(args, "layout_component") ?? "marengo_torso_layout_revA-1";
+        string leftComponent = StringArg(args, "left_component") ?? "actuator_rs03_left_shoulder_roll";
+        string rightComponent = StringArg(args, "right_component") ?? "actuator_rs03_right_shoulder_roll";
+        string side = StringArg(args, "side") ?? "both";
+        bool save = BoolArg(args, "save", defaultValue: true);
+        bool useGolden = BoolArg(args, "use_golden", defaultValue: false);
+        double innerRailM = DoubleArg(args, "inner_rail_mm", 55.0) / 1000.0;
+        double innerFlangeM = DoubleArg(args, "inner_flange_mm", 40.3975) / 1000.0;
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, path);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("place_shoulder_roll_motors requires an assembly document.");
+        }
+
+        if (useGolden)
+        {
+            return ApplyShoulderRollGolden(args);
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)doc;
+        Component2? layout = ResolveTorsoLayoutComponent(assembly)
+            ?? throw new InvalidOperationException($"Layout component not found: {layoutComponent}");
+
+        double[]? outerBox = GetFeatureBoundingBoxInAssembly(layout, "torso_outer_envelope")
+            ?? throw new InvalidOperationException("Layout torso_outer_envelope unavailable.");
+        double[]? innerBox = GetFeatureBoundingBoxInAssembly(layout, "torso_inner_clear")
+            ?? throw new InvalidOperationException("Layout torso_inner_clear unavailable.");
+        double shoulderY = outerBox[4];
+
+        var placed = new List<object>();
+        if (side is "left" or "both")
+        {
+            placed.Add(PlaceShoulderRollMotorSide(
+                doc,
+                assembly,
+                app,
+                leftComponent,
+                innerFlangeM,
+                innerBox,
+                shoulderY,
+                leftSide: true));
+        }
+
+        if (side is "right" or "both")
+        {
+            placed.Add(PlaceShoulderRollMotorSide(
+                doc,
+                assembly,
+                app,
+                rightComponent,
+                innerFlangeM,
+                innerBox,
+                shoulderY,
+                leftSide: false));
+        }
+
+        doc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+            if (!saved || errors != 0)
+            {
+                throw new InvalidOperationException($"Save failed after motor placement. errors={errors}, warnings={warnings}");
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            shoulderYM = shoulderY,
+            innerRailM,
+            innerFlangeM,
+            innerClearBoxM = innerBox,
+            placed,
+            saved,
+            errors,
+            warnings,
+        };
+    }
+
+    private static object PlaceShoulderRollMotorSide(
+        ModelDoc2 doc,
+        IAssemblyDoc assembly,
+        ISldWorks app,
+        string componentName,
+        double innerFlangeM,
+        double[] innerBox,
+        double shoulderY,
+        bool leftSide,
+        bool fixAtEnd = true)
+    {
+        Component2? component = FindComponent(assembly, null, componentName)
+            ?? throw new InvalidOperationException($"Component not found: {componentName}");
+
+        if (Try(() => component.IsFixed()) as bool? == true)
+        {
+            component.Select4(false, null, false);
+            assembly.UnfixComponent();
+            doc.ClearSelection2(true);
+        }
+
+        EnsureShoulderMotorOrientation(app, component, leftSide);
+        TryVoid(() => doc.EditRebuild3());
+
+        double[]? box = Try(() => component.GetBox(false, false)) as double[];
+        if (box is null || box.Length < 6)
+        {
+            throw new InvalidOperationException($"Bounding box unavailable for {componentName}");
+        }
+
+        double tx;
+        double ty = shoulderY - box[4];
+        double tz = -((box[2] + box[5]) / 2.0);
+
+        // User golden: left on -X (inner flange max-X ~ -40.4 mm), right on +X (min-X ~ +40.4 mm).
+        if (leftSide)
+        {
+            tx = -innerFlangeM - box[3];
+        }
+        else
+        {
+            tx = innerFlangeM - box[0];
+        }
+
+        ApplyComponentTranslation(component, tx, ty, tz);
+
+        box = Try(() => component.GetBox(false, false)) as double[];
+        if (fixAtEnd)
+        {
+            component.Select4(false, null, false);
+            assembly.FixComponent();
+            doc.ClearSelection2(true);
+        }
+
+        return new
+        {
+            component = Try(() => component.Name2),
+            leftSide,
+            translationM = new[] { tx, ty, tz },
+            boundingBoxM = box,
+            innerFlangeTargetM = leftSide ? -innerFlangeM : innerFlangeM,
+            insideInnerClear =
+                box is { Length: >= 6 } &&
+                box[0] >= innerBox[0] - 0.001 &&
+                box[3] <= innerBox[3] + 0.001 &&
+                box[2] >= innerBox[2] - 0.001 &&
+                box[5] <= innerBox[5] + 0.001,
+            fixedAtEnd = fixAtEnd,
+        };
+    }
+
+    private static object MateShoulderRollMotor(JsonElement? args)
+    {
+        string path = RequiredStringArg(args, "path");
+        string side = StringArg(args, "side") ?? "left";
+        bool leftSide = !side.Equals("right", StringComparison.OrdinalIgnoreCase);
+        string layoutComponent = StringArg(args, "layout_component") ?? "marengo_torso_layout_revA";
+        string motorComponent = StringArg(args, "motor_component")
+            ?? (leftSide ? "actuator_rs03_left_shoulder_roll" : "actuator_rs03_right_shoulder_roll");
+        bool save = BoolArg(args, "save", defaultValue: true);
+        bool preplace = BoolArg(args, "preplace", defaultValue: true);
+        double innerFlangeM = DoubleArg(args, "inner_flange_mm", 40.3975) / 1000.0;
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, path);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("mate_shoulder_roll_motor requires an assembly document.");
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)doc;
+        Component2? layout = ResolveTorsoLayoutComponent(assembly)
+            ?? throw new InvalidOperationException($"Layout component not found: {layoutComponent}");
+        Component2? motor = FindComponent(assembly, null, motorComponent)
+            ?? throw new InvalidOperationException($"Motor component not found: {motorComponent}");
+
+        TryVoid(() => layout.Visible = (int)swComponentVisibilityState_e.swComponentVisible);
+
+        if (Try(() => motor.IsFixed()) as bool? == true)
+        {
+            motor.Select4(false, null, false);
+            assembly.UnfixComponent();
+            doc.ClearSelection2(true);
+        }
+
+        object? placement = null;
+        if (preplace)
+        {
+            double[]? outerBox = GetFeatureBoundingBoxInAssembly(layout, "torso_outer_envelope")
+                ?? throw new InvalidOperationException("Layout torso_outer_envelope unavailable.");
+            double[]? innerBox = GetFeatureBoundingBoxInAssembly(layout, "torso_inner_clear")
+                ?? throw new InvalidOperationException("Layout torso_inner_clear unavailable.");
+            placement = PlaceShoulderRollMotorSide(
+                doc,
+                assembly,
+                app,
+                motorComponent,
+                innerFlangeM,
+                innerBox,
+                outerBox[4],
+                leftSide,
+                fixAtEnd: false);
+        }
+        else
+        {
+            EnsureShoulderMotorOrientation(app, motor, leftSide);
+            TryVoid(() => doc.EditRebuild3());
+        }
+
+        string railRef = leftSide ? "shoulder_rail_inner_left" : "shoulder_rail_inner_right";
+        string mountRef = leftSide ? "shoulder_mount_left" : "shoulder_mount_right";
+        var mates = new List<object>();
+
+        object coordMate = TryMateComponentReferences(
+            doc,
+            assembly,
+            layout,
+            mountRef,
+            motor,
+            "urdf_link_frame",
+            (int)swMateType_e.swMateCOORDINATE,
+            (int)swMateAlign_e.swMateAlignALIGNED);
+        mates.Add(new { kind = "coord_sys", mountRef, motorRef = "urdf_link_frame", result = coordMate });
+
+        bool coordOk = coordMate.GetType().GetProperty("mateCreated")?.GetValue(coordMate) as bool? == true
+            || coordMate.GetType().GetProperty("alreadyConstrained")?.GetValue(coordMate) as bool? == true;
+
+        if (!coordOk)
+        {
+            mates.Add(new
+            {
+                kind = "coincident_fallback",
+                result = TryMateComponentReferences(
+                    doc,
+                    assembly,
+                    layout,
+                    railRef,
+                    motor,
+                    "Front Plane",
+                    (int)swMateType_e.swMateCOINCIDENT,
+                    leftSide
+                        ? (int)swMateAlign_e.swMateAlignANTI_ALIGNED
+                        : (int)swMateAlign_e.swMateAlignALIGNED),
+            });
+
+            mates.Add(new
+            {
+                kind = "coincident_fallback",
+                result = TryMateComponentReferences(
+                    doc,
+                    assembly,
+                    layout,
+                    "shoulder_plane",
+                    motor,
+                    "Top Plane",
+                    (int)swMateType_e.swMateCOINCIDENT,
+                    (int)swMateAlign_e.swMateAlignALIGNED),
+            });
+
+            mates.Add(new
+            {
+                kind = "coincident_fallback",
+                result = TryMateComponentReferences(
+                    doc,
+                    assembly,
+                    layout,
+                    "Front Plane",
+                    motor,
+                    "Right Plane",
+                    (int)swMateType_e.swMateCOINCIDENT,
+                    (int)swMateAlign_e.swMateAlignALIGNED),
+            });
+        }
+
+        doc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+            if (!saved || errors != 0)
+            {
+                throw new InvalidOperationException($"Save failed after shoulder motor mate. errors={errors}, warnings={warnings}");
+            }
+        }
+
+        double[]? motorBox = Try(() => motor.GetBox(false, false)) as double[];
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            side = leftSide ? "left" : "right",
+            motor = Try(() => motor.Name2),
+            layout = Try(() => layout.Name2),
+            placement,
+            mates,
+            motorBoundingBoxM = motorBox,
+            motorFixed = Try(() => motor.IsFixed()),
+            saved,
+            errors,
+            warnings,
+        };
+    }
+
+    private static object TryMateComponentReferences(
+        ModelDoc2 doc,
+        IAssemblyDoc assembly,
+        Component2 first,
+        string ref1,
+        Component2 second,
+        string ref2,
+        int mateType,
+        int mateAlign)
+    {
+        try
+        {
+            doc.ClearSelection2(true);
+            if (!SelectComponentReference(doc, first, ref1, append: false, mark: 1))
+            {
+                return new { ref1, ref2, ok = false, error = $"selection_failed:{ref1}" };
+            }
+
+            if (!SelectComponentReference(doc, second, ref2, append: true, mark: 2))
+            {
+                return new { ref1, ref2, ok = false, error = $"selection_failed:{ref2}" };
+            }
+
+            return CreateMateFromSelection(doc, assembly, first, second, ref1, ref2, mateType, mateAlign);
+        }
+        catch (Exception ex)
+        {
+            return new { ref1, ref2, ok = false, error = ex.Message };
+        }
+    }
+
+    private static void EnsureShoulderMotorOrientation(ISldWorks app, Component2 component, bool leftSide)
+    {
+        if (component.Transform2 is null)
+        {
+            return;
+        }
+
+        // Pack roll on +X; vendor output on -Z → -X after rotY; flipY sends bolt face to +X.
+        double[] orientation = MultiplyTransformMatrix(FlipY180Matrix(), RotY90Matrix());
+        if (!leftSide)
+        {
+            orientation = MultiplyTransformMatrix(MirrorXMatrix(), orientation);
+        }
+
+        ApplyComponentTransformMatrix(component, orientation);
+    }
+
+    private static double[] FlipY180Matrix() =>
+    [
+        -1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, -1, 0,
+        0, 0, 0, 1,
+    ];
+
+    private static double[] RotY90Matrix() =>
+    [
+        0, 0, 1, 0,
+        0, 1, 0, 0,
+        -1, 0, 0, 0,
+        0, 0, 0, 1,
+    ];
+
+    private static double[] MirrorXMatrix() =>
+    [
+        -1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+    ];
+
+    private static void ApplyComponentTransformMatrix(Component2 component, double[] matrix)
+    {
+        if (component.Transform2 is not MathTransform transform)
+        {
+            throw new InvalidOperationException("Component transform unavailable.");
+        }
+
+        if (matrix.Length != 16)
+        {
+            throw new InvalidOperationException("Transform matrix must contain 16 numbers.");
+        }
+
+        transform.ArrayData = matrix;
+        component.Transform2 = transform;
+    }
+
+    private static double[] MultiplyTransformMatrix(double[] left, double[] right)
+    {
+        if (left.Length != 16 || right.Length != 16)
+        {
+            throw new InvalidOperationException("Transform matrix must contain 16 numbers.");
+        }
+
+        double[] result = new double[16];
+        for (int row = 0; row < 4; row++)
+        {
+            for (int col = 0; col < 4; col++)
+            {
+                double sum = 0;
+                for (int k = 0; k < 4; k++)
+                {
+                    sum += left[(row * 4) + k] * right[(k * 4) + col];
+                }
+
+                result[(row * 4) + col] = sum;
+            }
+        }
+
+        return result;
+    }
+
+    private static Feature? InsertOffsetPlaneFromRight(ModelDoc2 doc, double offsetM, string name)
+    {
+        FeatureManager featMgr = doc.FeatureManager;
+        doc.ClearSelection2(true);
+        if (!doc.Extension.SelectByID2("Right Plane", "PLANE", 0, 0, 0, false, 0, null, 0))
+        {
+            return null;
+        }
+
+        Feature? plane = Try(() => featMgr.InsertRefPlane(
+            (int)swRefPlaneReferenceConstraints_e.swRefPlaneReferenceConstraint_Distance,
+            offsetM,
+            0,
+            0.0,
+            0,
+            0.0)) as Feature;
+        doc.ClearSelection2(true);
+        if (plane is null)
+        {
+            return null;
+        }
+
+        TryVoid(() => plane.Name = name);
+        return plane;
+    }
+
+    private static object VendorAddRs03UrdfFrame(JsonElement? args)
+    {
+        string path = RequiredStringArg(args, "path");
+        bool save = BoolArg(args, "save", defaultValue: true);
+        bool replaceExisting = BoolArg(args, "replace_existing", defaultValue: true);
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, path);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocPART)
+        {
+            throw new InvalidOperationException("vendor_add_rs03_urdf_frame requires a part document.");
+        }
+
+        if (replaceExisting)
+        {
+            DeleteFeatureByName(doc, "urdf_link_frame");
+            DeleteFeatureByName(doc, "joint_axis");
+        }
+        else if (FindFeatureByName(doc, "urdf_link_frame") is not null)
+        {
+            return new
+            {
+                document = DescribeDocument(doc),
+                skipped = true,
+                reason = "urdf_link_frame already exists",
+            };
+        }
+
+        double[]? box = Try(() => ((IPartDoc)doc).GetPartBox(true)) as double[];
+        if (box is null || box.Length < 6)
+        {
+            throw new InvalidOperationException("RS03 vendor part bounding box unavailable.");
+        }
+
+        double originX = (box[0] + box[3]) / 2.0;
+        double originY = (box[1] + box[4]) / 2.0;
+        double originZ = box[5] - 0.005;
+
+        Feature? coordFeature = CreateRs03UrdfLinkFrame(doc, originX, originY, originZ);
+        if (coordFeature is null)
+        {
+            throw new InvalidOperationException("Failed to create urdf_link_frame on RS03 vendor part.");
+        }
+
+        doc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+            if (!saved || errors != 0)
+            {
+                throw new InvalidOperationException($"Save failed after RS03 urdf frame. errors={errors}, warnings={warnings}");
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            originM = new[] { originX, originY, originZ },
+            saved,
+            errors,
+            warnings,
+        };
+    }
+
+    private static Feature? CreateRs03UrdfLinkFrame(
+        ModelDoc2 doc,
+        double originX,
+        double originY,
+        double originZ)
+    {
+        FeatureManager featMgr = doc.FeatureManager;
+        SketchManager skMgr = doc.SketchManager;
+
+        skMgr.Insert3DSketch(true);
+        SketchPoint? sketchPoint = Try(() => skMgr.CreatePoint(originX, originY, originZ)) as SketchPoint;
+        skMgr.Insert3DSketch(true);
+        if (sketchPoint is null)
+        {
+            throw new InvalidOperationException("urdf_link_frame: 3D sketch point creation failed.");
+        }
+
+        doc.ClearSelection2(true);
+        bool originSelected = doc.Extension.SelectByID2(
+            string.Empty,
+            "EXTSKETCHPOINT",
+            originX,
+            originY,
+            originZ,
+            false,
+            1,
+            null,
+            0);
+        if (!originSelected)
+        {
+            SelectData? originMark = CreateSelectData(doc, 1);
+            originSelected = originMark is not null
+                && (Try(() => sketchPoint.Select4(false, originMark)) as bool? ?? false);
+        }
+
+        if (!originSelected)
+        {
+            throw new InvalidOperationException("urdf_link_frame: could not select origin sketch point.");
+        }
+
+        // RS03 output axis is -Z in vendor coords; roll joint +X mates to layout shoulder_mount.
+        bool xSelected = doc.Extension.SelectByID2(
+            "Front Plane",
+            "PLANE",
+            0,
+            0,
+            0,
+            true,
+            2,
+            null,
+            0);
+        if (!xSelected)
+        {
+            throw new InvalidOperationException("urdf_link_frame: could not select Front Plane for output axis.");
+        }
+
+        bool ySelected = doc.Extension.SelectByID2(
+            "Top Plane",
+            "PLANE",
+            0,
+            0,
+            0,
+            true,
+            4,
+            null,
+            0);
+        if (!ySelected)
+        {
+            throw new InvalidOperationException("urdf_link_frame: could not select Top Plane for +Y.");
+        }
+
+        Feature? coordFeature = Try(() => featMgr.InsertCoordinateSystem(true, false, false)) as Feature;
+        doc.ClearSelection2(true);
+        if (coordFeature is null)
+        {
+            throw new InvalidOperationException("urdf_link_frame: InsertCoordinateSystem returned null.");
+        }
+
+        TryVoid(() => coordFeature.Name = "urdf_link_frame");
+        return coordFeature;
+    }
+
+    private static Feature? CreateShoulderMountCoordSys(
+        ModelDoc2 doc,
+        string name,
+        double originX,
+        double originY,
+        double originZ)
+    {
+        FeatureManager featMgr = doc.FeatureManager;
+        SketchManager skMgr = doc.SketchManager;
+
+        skMgr.Insert3DSketch(true);
+        SketchPoint? sketchPoint = Try(() => skMgr.CreatePoint(originX, originY, originZ)) as SketchPoint;
+        skMgr.Insert3DSketch(true);
+        if (sketchPoint is null)
+        {
+            throw new InvalidOperationException($"{name}: 3D sketch point creation failed.");
+        }
+
+        doc.ClearSelection2(true);
+        bool originSelected = doc.Extension.SelectByID2(
+            string.Empty,
+            "EXTSKETCHPOINT",
+            originX,
+            originY,
+            originZ,
+            false,
+            1,
+            null,
+            0);
+        if (!originSelected)
+        {
+            SelectData? originMark = CreateSelectData(doc, 1);
+            originSelected = originMark is not null
+                && (Try(() => sketchPoint.Select4(false, originMark)) as bool? ?? false);
+        }
+
+        if (!originSelected)
+        {
+            throw new InvalidOperationException($"{name}: could not select origin sketch point.");
+        }
+
+        bool xSelected = doc.Extension.SelectByID2(
+            "Right Plane",
+            "PLANE",
+            0,
+            0,
+            0,
+            true,
+            2,
+            null,
+            0);
+        if (!xSelected)
+        {
+            throw new InvalidOperationException($"{name}: could not select Right Plane for roll axis (+X).");
+        }
+
+        bool ySelected = doc.Extension.SelectByID2(
+            "Top Plane",
+            "PLANE",
+            0,
+            0,
+            0,
+            true,
+            4,
+            null,
+            0);
+        if (!ySelected)
+        {
+            throw new InvalidOperationException($"{name}: could not select Top Plane for +Y up.");
+        }
+
+        Feature? coordFeature = Try(() => featMgr.InsertCoordinateSystem(false, false, false)) as Feature;
+        doc.ClearSelection2(true);
+        if (coordFeature is null)
+        {
+            throw new InvalidOperationException($"{name}: InsertCoordinateSystem returned null.");
+        }
+
+        TryVoid(() => coordFeature.Name = name);
+        return coordFeature;
+    }
+
+    private static void DeleteFeatureByName(ModelDoc2 doc, string featureName)
+    {
+        Feature? feature = FindFeatureByName(doc, featureName);
+        if (feature is null)
+        {
+            return;
+        }
+
+        doc.ClearSelection2(true);
+        if (Try(() => feature.Select2(false, -1)) as bool? != true)
+        {
+            return;
+        }
+
+        TryVoid(() => doc.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Children));
+    }
+
+    private static double[]? GetFeatureBoundingBoxInPart(ModelDoc2 doc, string featureName)
+    {
+        Feature? feature = FindFeatureByName(doc, featureName);
+        if (feature is null)
+        {
+            return null;
+        }
+
+        object? bodyObj = Try(() => feature.GetBody());
+        if (bodyObj is Body2 body)
+        {
+            return Try(() => body.GetBodyBox()) as double[];
+        }
+
+        object? facesObj = Try(() => feature.GetFaces());
+        if (facesObj is object[] faces && faces.Length > 0)
+        {
+            double[]? merged = null;
+            foreach (object entry in faces)
+            {
+                if (entry is not Face2 face)
+                {
+                    continue;
+                }
+
+                double[]? partBox = Try(() => face.GetBox()) as double[];
+                if (partBox is null)
+                {
+                    continue;
+                }
+
+                merged = merged is null ? partBox : MergeBoxes(merged, partBox);
+            }
+
+            return merged;
+        }
+
+        return null;
+    }
+
     private static IEnumerable<Component2> EnumerateAllComponents(IAssemblyDoc assembly)
     {
         object[]? roots = Try(() => assembly.GetComponents(true)) as object[];
@@ -2543,6 +3776,21 @@ internal static class Program
                 yield return component;
             }
         }
+    }
+
+    private static Component2? ResolveTorsoLayoutComponent(IAssemblyDoc assembly)
+    {
+        Component2? frame = FindComponent(assembly, null, "marengo_torso_frame_asm_revA");
+        if (frame is not null)
+        {
+            Component2? nested = FindComponent(assembly, frame, "marengo_torso_layout_revA");
+            if (nested is not null)
+            {
+                return nested;
+            }
+        }
+
+        return FindComponent(assembly, null, "marengo_torso_layout_revA");
     }
 
     private static Component2? FindComponent(IAssemblyDoc assembly, Component2? parent, string nameOrPrefix)
