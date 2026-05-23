@@ -1,5 +1,39 @@
 # Troubleshooting
 
+## SolidWorks crashes during MCP audits
+
+Observed when multiple MCP tools or scripts hit SolidWorks at once (for example parallel `marengo_design_review`, `list_components`, and `solidworks_open`).
+
+Symptoms:
+
+- SolidWorks dialog: "encountered a problem and needs to close"
+- MCP error: `The remote procedure call failed. (0x800706BE)`
+- Partial tool output (null `document`, truncated component lists)
+
+Root cause:
+
+- SolidWorks COM is **STA and single-process**. Each MCP tool spawns a .NET worker that attaches via COM.
+- **Concurrent workers** re-open assemblies and traverse the feature tree at the same time → SolidWorks crash.
+- **`dotnet run` per call** can also race MSBuild if workers start while a build is in progress.
+
+Fix (solidworks-mcp ≥ 0.3.1):
+
+1. Workers are **serialized** in the MCP server (`worker.ts` queue).
+2. A **global named mutex** in the .NET worker blocks cross-process COM overlap (MCP + scripts).
+3. **`OpenDocument` reuses** already-open files instead of calling `OpenDoc6` again.
+
+After pulling the fix:
+
+```powershell
+cd C:\code\solidworks-mcp
+npm run build
+# Restart SolidWorks MCP in Cursor
+```
+
+Agent rule: **never parallelize SolidWorks MCP tool calls** against the same session. Run audits sequentially even with the lock — it keeps SW responsive while you model.
+
+If SolidWorks still crashes, check `%LOCALAPPDATA%\CrashDumps\SLDWORKS*.dmp` and Windows Event Viewer → Application for `SLDWORKS.exe`.
+
 ## SolidWorks COM Object Found, API Not Responding
 
 Observed symptom:

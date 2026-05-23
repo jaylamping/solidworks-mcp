@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Diagnostics;
+using System.Threading;
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 
@@ -8,6 +9,9 @@ internal sealed record WorkerRequest(string Command, JsonElement? Args);
 
 internal static class Program
 {
+    private const string ComLockName = @"Global\MarengoSolidWorksComWorker";
+    private static readonly TimeSpan ComLockTimeout = TimeSpan.FromMinutes(5);
+
     private static readonly JsonSerializerOptions ReadJson = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -21,6 +25,25 @@ internal static class Program
 
     [STAThread]
     private static int Main()
+    {
+        using Mutex comLock = new(false, ComLockName);
+        if (!comLock.WaitOne(ComLockTimeout))
+        {
+            return WriteError(
+                "Timed out waiting for SolidWorks COM lock. Another worker or script is using SolidWorks.");
+        }
+
+        try
+        {
+            return RunWorker();
+        }
+        finally
+        {
+            comLock.ReleaseMutex();
+        }
+    }
+
+    private static int RunWorker()
     {
         try
         {
@@ -2727,6 +2750,20 @@ internal static class Program
 
     private static ModelDoc2 OpenDocument(ISldWorks app, string path)
     {
+        string fullPath = Path.GetFullPath(path);
+        ModelDoc2? existing = FindOpenDocument(app, fullPath);
+        if (existing is not null)
+        {
+            int activateErrors = 0;
+            string? title = Try(() => existing.GetTitle()) as string;
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                Try(() => app.ActivateDoc3(title, false, (int)swRebuildOnActivation_e.swDontRebuildActiveDoc, ref activateErrors));
+            }
+
+            return existing;
+        }
+
         int errors = 0;
         int warnings = 0;
         if (IsNeutralCad(path))
@@ -2750,14 +2787,40 @@ internal static class Program
                 $"SolidWorks failed to open {path}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
         }
 
-        string? title = Try(() => doc.GetTitle()) as string;
-        if (!string.IsNullOrWhiteSpace(title))
+        string? openedTitle = Try(() => doc.GetTitle()) as string;
+        if (!string.IsNullOrWhiteSpace(openedTitle))
         {
             int activateErrors = 0;
-            Try(() => app.ActivateDoc3(title, false, (int)swRebuildOnActivation_e.swDontRebuildActiveDoc, ref activateErrors));
+            Try(() => app.ActivateDoc3(openedTitle, false, (int)swRebuildOnActivation_e.swDontRebuildActiveDoc, ref activateErrors));
         }
 
         return doc;
+    }
+
+    private static ModelDoc2? FindOpenDocument(ISldWorks app, string fullPath)
+    {
+        ModelDoc2? byPath = Try(() => app.GetOpenDocumentByName(fullPath)) as ModelDoc2;
+        if (byPath is not null)
+        {
+            return byPath;
+        }
+
+        string fileName = Path.GetFileName(fullPath);
+        ModelDoc2? byName = Try(() => app.GetOpenDocumentByName(fileName)) as ModelDoc2;
+        if (byName is null)
+        {
+            return null;
+        }
+
+        string? openPath = Try(() => byName.GetPathName()) as string;
+        if (string.IsNullOrWhiteSpace(openPath))
+        {
+            return null;
+        }
+
+        return string.Equals(Path.GetFullPath(openPath), fullPath, StringComparison.OrdinalIgnoreCase)
+            ? byName
+            : null;
     }
 
     private static bool IsNeutralCad(string path)

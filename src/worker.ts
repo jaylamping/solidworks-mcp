@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 
-import { packageRoot, workerProjectPath } from "./config.js";
+import { packageRoot, workerDllPath, workerProjectPath } from "./config.js";
 
 export type WorkerCommand =
   | "status"
@@ -47,10 +48,24 @@ interface WorkerResponse {
   error?: string;
 }
 
+/** Serialize COM calls — SolidWorks is STA; concurrent workers crash it. */
+let workerQueue: Promise<unknown> = Promise.resolve();
+
 export async function runWorker(request: WorkerRequest): Promise<unknown> {
+  const run = workerQueue.then(() => spawnWorkerOnce(request));
+  workerQueue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+async function spawnWorkerOnce(request: WorkerRequest): Promise<unknown> {
+  const dll = workerDllPath();
+  const useDll = fs.existsSync(dll);
   const child = spawn(
     "dotnet",
-    ["run", "--project", workerProjectPath(), "--no-launch-profile"],
+    useDll ? ["exec", dll] : ["run", "--project", workerProjectPath(), "--no-launch-profile"],
     {
       cwd: packageRoot(),
       stdio: ["pipe", "pipe", "pipe"],

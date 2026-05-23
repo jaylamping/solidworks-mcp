@@ -12,6 +12,14 @@ export function workerProjectPath(): string {
   return path.join(packageRoot(), "workers/SolidWorksComWorker/SolidWorksComWorker.csproj");
 }
 
+/** Prebuilt worker DLL — use `dotnet exec` instead of `dotnet run` to avoid MSBuild races. */
+export function workerDllPath(): string {
+  return path.join(
+    packageRoot(),
+    "workers/SolidWorksComWorker/bin/Debug/net8.0-windows/SolidWorksComWorker.dll",
+  );
+}
+
 export function allowedRoots(): string[] {
   const raw = process.env.SOLIDWORKS_MCP_ALLOWED_ROOTS;
   const roots = raw
