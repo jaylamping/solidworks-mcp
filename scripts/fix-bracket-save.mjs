@@ -5,13 +5,9 @@
  * - Copies the last known good bracket bytes if _bracket_save_test exists
  * - Saves assembly
  */
-import { spawnSync } from "node:child_process";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { runWorker } from "./lib/worker-client.mjs";
 
-const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const workerProject = path.join(root, "workers/SolidWorksComWorker");
+
 
 const TORSO_ASM =
   "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
@@ -21,30 +17,6 @@ const TEST_PART =
   "C:/code/marengo/hardware/cad/parts/_bracket_save_test.SLDPRT";
 const COMPONENT = "marengo_shoulder_roll_mount_bracket_right_revA";
 
-function runWorker(command, args) {
-  const payload = JSON.stringify({ command, args });
-  const result = spawnSync(
-    "dotnet",
-    ["run", "--project", workerProject, "--no-launch-profile"],
-    {
-      cwd: root,
-      input: payload,
-      encoding: "utf8",
-      windowsHide: true,
-    },
-  );
-
-  if (result.status !== 0) {
-    throw new Error(`Worker exited ${result.status}: ${result.stderr || result.stdout}`);
-  }
-
-  const parsed = JSON.parse(result.stdout.trim());
-  if (!parsed.ok) {
-    throw new Error(parsed.error ?? "Worker failed");
-  }
-
-  return parsed.data;
-}
 
 const steps = [];
 

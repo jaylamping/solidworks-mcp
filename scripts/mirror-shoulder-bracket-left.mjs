@@ -1,9 +1,6 @@
-import { spawnSync } from "node:child_process";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { runWorker } from "./lib/worker-client.mjs";
 
-const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const workerProject = path.join(root, "workers/SolidWorksComWorker");
+
 
 const TORSO_ASM =
   "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
@@ -13,33 +10,9 @@ const LEFT_PART =
   "C:/code/marengo/hardware/cad/parts/marengo_shoulder_roll_mount_bracket_left_revA.SLDPRT";
 const LEFT_COMPONENT = "marengo_shoulder_roll_mount_bracket_left_revA";
 
-// Mirror about assembly YZ plane (negate X) — same as MirrorXMatrix in worker.
+// Mirror about assembly YZ plane (negate X) â€” same as MirrorXMatrix in worker.
 const MIRROR_X = [-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
-function runWorker(command, args) {
-  const payload = JSON.stringify({ command, args });
-  const result = spawnSync(
-    "dotnet",
-    ["run", "--project", workerProject, "--no-launch-profile"],
-    {
-      cwd: root,
-      input: payload,
-      encoding: "utf8",
-      windowsHide: true,
-    },
-  );
-
-  if (result.status !== 0) {
-    throw new Error(`Worker exited ${result.status}: ${result.stderr || result.stdout}`);
-  }
-
-  const parsed = JSON.parse(result.stdout.trim());
-  if (!parsed.ok) {
-    throw new Error(parsed.error ?? "Worker failed");
-  }
-
-  return parsed.data;
-}
 
 const steps = [];
 

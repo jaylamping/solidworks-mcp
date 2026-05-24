@@ -1,10 +1,4 @@
-import { spawn } from "node:child_process";
+import { runWorker } from "./lib/worker-client.mjs";
 
-const child = spawn(
-  "dotnet",
-  ["run", "--project", "workers/SolidWorksComWorker/SolidWorksComWorker.csproj", "--no-launch-profile"],
-  { stdio: ["pipe", "inherit", "inherit"], windowsHide: true },
-);
-
-child.stdin.end(`${JSON.stringify({ command: "status", args: { start_if_missing: false } })}\n`);
-child.on("close", (code) => process.exit(code ?? 1));
+const result = runWorker("status", { start_if_missing: false });
+console.log(JSON.stringify({ ok: true, data: result }, null, 2));

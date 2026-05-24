@@ -4,10 +4,8 @@
  *
  * Requires SolidWorks running on Windows.
  */
-import { mkdir } from "node:fs/promises";
-import { spawn } from "node:child_process";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { runWorker } from "./lib/worker-client.mjs";
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(__dirname, "..");
@@ -63,7 +61,7 @@ async function runWorker(request) {
 }
 
 async function main() {
-  console.log("1) Save incoming → canonical vendor part (SolidWorks SaveAs)");
+  console.log("1) Save incoming â†’ canonical vendor part (SolidWorks SaveAs)");
   await mkdir(path.dirname(CANONICAL), { recursive: true });
   console.log(
     JSON.stringify(
@@ -88,7 +86,7 @@ async function main() {
     ),
   );
 
-  console.log("3) Replace assembly references (incoming → canonical)");
+  console.log("3) Replace assembly references (incoming â†’ canonical)");
   console.log(
     JSON.stringify(
       await runWorker({
@@ -106,7 +104,7 @@ async function main() {
     ),
   );
 
-  console.log("4) Rename instances → bracket_2028_corner (BOM id)");
+  console.log("4) Rename instances â†’ bracket_2028_corner (BOM id)");
   const renames = [];
   for (const prefix of ["2020_corner_bracket", "vendor_2028_corner_bracket_vendor"]) {
     for (let i = 0; i < 32; i++) {
