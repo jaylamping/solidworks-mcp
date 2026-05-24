@@ -44,7 +44,9 @@ export type WorkerCommand =
   | "mate_shoulder_roll_motor"
   | "vendor_add_rs03_urdf_frame"
   | "insert_component"
-  | "cut_actuator_cavity";
+  | "cut_actuator_cavity"
+  | "build_torso_compute_shelf"
+  | "mate_torso_compute_shelf";
 
 export interface WorkerRequest {
   command: WorkerCommand;

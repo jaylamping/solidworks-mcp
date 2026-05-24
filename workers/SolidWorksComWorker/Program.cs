@@ -71,6 +71,8 @@ internal static class Program
                 "rename_component" => RenameComponent(request.Args),
                 "mate_coord_sys" => MateCoordSys(request.Args),
                 "delete_all_mates" => DeleteAllMates(request.Args),
+                "delete_mates_in_range" => DeleteMatesInRange(request.Args),
+                "unfix_all_components" => UnfixAllComponents(request.Args),
                 "set_component_configuration" => SetComponentConfiguration(request.Args),
                 "mate_component_origin" => MateComponentOrigin(request.Args),
                 "list_configurations" => ListConfigurations(request.Args),
@@ -106,6 +108,9 @@ internal static class Program
                 "vendor_add_rs03_urdf_frame" => VendorAddRs03UrdfFrame(request.Args),
                 "insert_component" => InsertComponent(request.Args),
                 "cut_actuator_cavity" => CutActuatorCavity(request.Args),
+                "build_torso_compute_shelf" => BuildTorsoComputeShelf(request.Args),
+                "mate_torso_compute_shelf" => MateTorsoComputeShelf(request.Args),
+                "debug_mate_entities" => DebugMateEntities(request.Args),
                 _ => throw new InvalidOperationException($"Unknown worker command: {request.Command}"),
             };
 
@@ -721,6 +726,11 @@ internal static class Program
         }
 
         string? refType = Try(() => feature.GetTypeName2()) as string;
+        if (refType == "RefPlane")
+        {
+            return SelectComponentPlaneFeature(assemblyDoc, component, feature, append, mark);
+        }
+
         string selectionType = refType switch
         {
             "CoordSys" => "COORDSYS",
@@ -746,15 +756,100 @@ internal static class Program
             return true;
         }
 
-        SelectData? selectData = CreateSelectData(assemblyDoc, mark);
-        selected = selectData is not null
-            && (Try(() => component.Select4(append, selectData, false)) as bool? ?? false);
-        if (!selected)
+        return false;
+    }
+
+    private static bool SelectComponentPlaneFeature(
+        ModelDoc2 assemblyDoc,
+        Component2 component,
+        Feature planeFeature,
+        bool append,
+        int mark)
+    {
+        string? componentName = Try(() => component.Name2) as string;
+        string? planeName = Try(() => planeFeature.Name) as string;
+        if (componentName is not null && planeName is not null
+            && assemblyDoc.Extension.SelectByID2(
+                $"{planeName}@{componentName}",
+                "PLANE",
+                0,
+                0,
+                0,
+                append,
+                mark,
+                null,
+                0))
         {
-            return false;
+            return true;
         }
 
-        return Try(() => feature.Select2(append, mark)) as bool? ?? false;
+        object? facesObj = Try(() => planeFeature.GetFaces());
+        if (facesObj is object[] planeFaces && planeFaces.Length > 0 && planeFaces[0] is Face2 planeFace)
+        {
+            SelectData? selectData = CreateSelectData(assemblyDoc, mark);
+            Entity? entity = planeFace as Entity;
+            if (entity is not null && selectData is not null
+                && (Try(() => entity.Select4(append, selectData)) as bool? ?? false))
+            {
+                return true;
+            }
+
+            if (SelectFeatureFaceByRay(assemblyDoc, component, planeFace, append, mark))
+            {
+                return true;
+            }
+        }
+
+        if (Try(() => planeFeature.GetSpecificFeature2()) is RefPlane refPlane)
+        {
+            MathTransform? planeTransform = Try(() => refPlane.Transform) as MathTransform;
+            MathTransform? componentTransform = Try(() => component.Transform2) as MathTransform;
+            if (planeTransform?.ArrayData is double[] planeMatrix && componentTransform is not null)
+            {
+                double[] normalized = NormalizeTransformMatrix(planeMatrix);
+                double[] asmOrigin = TransformPointManual(
+                    componentTransform,
+                    normalized[9],
+                    normalized[10],
+                    normalized[11]);
+                double[] asmNormal = TransformDirectionManual(
+                    componentTransform,
+                    normalized[6],
+                    normalized[7],
+                    normalized[8]);
+                foreach (double sign in new[] { 1.0, -1.0 })
+                {
+                    if (assemblyDoc.Extension.SelectByRay(
+                            asmOrigin[0] + (asmNormal[0] * 0.01 * sign),
+                            asmOrigin[1] + (asmNormal[1] * 0.01 * sign),
+                            asmOrigin[2] + (asmNormal[2] * 0.01 * sign),
+                            asmNormal[0] * sign,
+                            asmNormal[1] * sign,
+                            asmNormal[2] * sign,
+                            0.001,
+                            mark,
+                            append,
+                            0,
+                            0))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static double[] TransformDirectionManual(MathTransform transform, double x, double y, double z)
+    {
+        double[] matrix = Try(() => transform.ArrayData) as double[] ?? [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+        return
+        [
+            matrix[0] * x + matrix[1] * y + matrix[2] * z,
+            matrix[3] * x + matrix[4] * y + matrix[5] * z,
+            matrix[6] * x + matrix[7] * y + matrix[8] * z,
+        ];
     }
 
     private static Feature? FindFeatureByName(ModelDoc2 doc, string name)
@@ -791,23 +886,71 @@ internal static class Program
             throw new InvalidOperationException("delete_all_mates requires an assembly document.");
         }
 
-        var mateFeatures = new List<Feature>();
-        Feature? mateGroup = FindFeatureByName(doc, "Mates");
-        if (mateGroup is not null)
+        object result = DeleteAllMatesInternal(doc);
+        return new
         {
-            object? subFeature = Try(() => mateGroup.GetFirstSubFeature());
-            int guard = 0;
-            while (subFeature is not null && guard++ < 200)
-            {
-                if (subFeature is Feature feature)
-                {
-                    mateFeatures.Add(feature);
-                }
+            document = DescribeDocument(doc),
+            deleted = result.GetType().GetProperty("deleted")?.GetValue(result),
+            mateCountBefore = result.GetType().GetProperty("mateCountBefore")?.GetValue(result),
+            mateCountAfter = result.GetType().GetProperty("mateCountAfter")?.GetValue(result),
+        };
+    }
 
-                subFeature = Try(() => ((dynamic)subFeature).GetNextSubFeature());
-            }
+    private static object UnfixAllComponents(JsonElement? args)
+    {
+        string? inputPath = StringArg(args, "path");
+        string? exceptPrefix = StringArg(args, "except_prefix");
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
+        if (doc is null)
+        {
+            throw new InvalidOperationException("No active SolidWorks document.");
         }
 
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("unfix_all_components requires an assembly document.");
+        }
+
+        object unfixResult = UnfixAllComponentsInternal((IAssemblyDoc)doc, exceptPrefix);
+        return new
+        {
+            document = DescribeDocument(doc),
+            unfixed = unfixResult.GetType().GetProperty("unfixed")?.GetValue(unfixResult),
+            unfixedCount = unfixResult.GetType().GetProperty("unfixedCount")?.GetValue(unfixResult),
+        };
+    }
+
+    private static object RepairTorsoFrame_DISABLED(JsonElement? args)
+    {
+        string assemblyPath = RequiredStringArg(args, "path");
+        bool includeBrackets = BoolArg(args, "include_brackets", defaultValue: true);
+        bool rebuildConfigs = BoolArg(args, "rebuild_configs", defaultValue: true);
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, assemblyPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("repair_torso_frame requires an assembly document.");
+        }
+
+        object deleteResult = DeleteAllMatesInternal(doc);
+        object unfixResult = UnfixAllComponentsInternal((IAssemblyDoc)doc, exceptPrefix: null);
+        object buildResult = TorsoFrameBuildMates(args);
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            deleteResult,
+            unfixResult,
+            buildResult,
+        };
+    }
+
+    private static object DeleteAllMatesInternal(ModelDoc2 doc)
+    {
+        var mateFeatures = CollectMateFeatures(doc);
         int deleted = 0;
         foreach (Feature mate in mateFeatures)
         {
@@ -830,10 +973,161 @@ internal static class Program
 
         return new
         {
-            document = DescribeDocument(doc),
             deleted,
             mateCountBefore = mateFeatures.Count,
+            mateCountAfter = CountAssemblyMates(doc),
         };
+    }
+
+    private static object UnfixAllComponentsInternal(IAssemblyDoc assembly, string? exceptPrefix)
+    {
+        ModelDoc2 doc = (ModelDoc2)assembly;
+        var unfixed = new List<string>();
+        object[]? roots = Try(() => assembly.GetComponents(true)) as object[];
+        if (roots is not null)
+        {
+            foreach (object entry in roots)
+            {
+                if (entry is not Component2 component)
+                {
+                    continue;
+                }
+
+                string? name = Try(() => component.Name2) as string;
+                if (name is not null
+                    && !string.IsNullOrWhiteSpace(exceptPrefix)
+                    && name.Contains(exceptPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (Try(() => component.IsFixed()) as bool? != true)
+                {
+                    continue;
+                }
+
+                component.Select4(false, null, false);
+                assembly.UnfixComponent();
+                doc.ClearSelection2(true);
+                if (name is not null)
+                {
+                    unfixed.Add(name);
+                }
+            }
+        }
+
+        doc.EditRebuild3();
+
+        return new
+        {
+            unfixed,
+            unfixedCount = unfixed.Count,
+        };
+    }
+
+    private static List<Feature> CollectMateFeatures(ModelDoc2 doc)
+    {
+        var mateFeatures = new List<Feature>();
+        Feature? mateGroup = FindFeatureByName(doc, "Mates");
+        if (mateGroup is not null)
+        {
+            object? subFeature = Try(() => mateGroup.GetFirstSubFeature());
+            int guard = 0;
+            while (subFeature is not null && guard++ < 500)
+            {
+                if (subFeature is Feature feature)
+                {
+                    mateFeatures.Add(feature);
+                }
+
+                subFeature = Try(() => ((dynamic)subFeature).GetNextSubFeature());
+            }
+        }
+
+        return mateFeatures;
+    }
+
+    private static object DeleteMatesInRange(JsonElement? args)
+    {
+        string? inputPath = StringArg(args, "path");
+        int minNumber = (int)DoubleArg(args, "min_number", 0);
+        int maxNumber = (int)DoubleArg(args, "max_number", 0);
+        bool save = BoolArg(args, "save", defaultValue: true);
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
+        if (doc is null)
+        {
+            throw new InvalidOperationException("No active SolidWorks document.");
+        }
+
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("delete_mates_in_range requires an assembly document.");
+        }
+
+        var deletedNames = new List<string>();
+        foreach (Feature mate in CollectMateFeatures(doc))
+        {
+            string? name = Try(() => mate.Name) as string;
+            if (name is null || !TryParseMateNumber(name, out int number))
+            {
+                continue;
+            }
+
+            if (number < minNumber || number > maxNumber)
+            {
+                continue;
+            }
+
+            doc.ClearSelection2(true);
+            if (Try(() => mate.Select2(false, -1)) as bool? != true)
+            {
+                continue;
+            }
+
+            if (Try(() => doc.Extension.DeleteSelection2(
+                    (int)swDeleteSelectionOptions_e.swDelete_Children)) as bool? == true)
+            {
+                deletedNames.Add(name);
+            }
+        }
+
+        doc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            minNumber,
+            maxNumber,
+            deleted = deletedNames,
+            deletedCount = deletedNames.Count,
+            mateCountAfter = CountAssemblyMates(doc),
+            saved,
+            errors,
+            warnings,
+        };
+    }
+
+    private static bool TryParseMateNumber(string mateName, out int number)
+    {
+        number = 0;
+        if (!mateName.StartsWith("Coincident", StringComparison.OrdinalIgnoreCase)
+            && !mateName.StartsWith("Parallel", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        int prefixLength = mateName.StartsWith("Coincident", StringComparison.OrdinalIgnoreCase) ? 10 : 8;
+        return int.TryParse(mateName[prefixLength..], out number);
     }
 
     private static object SetComponentConfiguration(JsonElement? args)
@@ -1651,6 +1945,46 @@ internal static class Program
             ? 0
             : Try(() => selectionMgr.GetSelectedObjectCount2(-1)) as int? ?? 0;
 
+        (bool created, string method, int mateError, bool alreadyConstrained) = TryCreateMate(
+            assembly,
+            doc,
+            mateType,
+            mateAlign);
+
+        if (!created && mateError != 0 && mateError != 4)
+        {
+            throw new InvalidOperationException($"Mate creation failed with error code {mateError}.");
+        }
+
+        doc.EditRebuild3();
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            component1 = Try(() => first.Name2),
+            component2 = Try(() => second.Name2),
+            ref1,
+            ref2,
+            selectedCount,
+            mateError,
+            mateCreated = created,
+            alreadyConstrained,
+            mateMethod = method,
+        };
+    }
+
+    private static (bool Created, string Method, int MateError, bool AlreadyConstrained) TryCreateMate(
+        IAssemblyDoc assembly,
+        ModelDoc2 doc,
+        int mateType,
+        int mateAlign)
+    {
+        Feature? mateFeature = CreateMateViaFeatureData(assembly, doc, mateType, mateAlign);
+        if (mateFeature is not null)
+        {
+            return (true, "CreateMate", 0, false);
+        }
+
         Mate2? mate = assembly.AddMate5(
             mateType,
             mateAlign,
@@ -1668,25 +2002,129 @@ internal static class Program
             0,
             out int mateError) as Mate2;
 
-        if (mateError != 0 && mateError != 4)
+        if (mate is not null)
         {
-            throw new InvalidOperationException($"AddMate5 failed with error code {mateError}.");
+            return (true, "AddMate5", mateError, mateError == 4);
+        }
+
+        return (false, "none", mateError, mateError == 4);
+    }
+
+    private static object DebugMateEntities(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string component1 = RequiredStringArg(args, "component_1");
+        string ref1 = RequiredStringArg(args, "ref_1");
+        string component2 = RequiredStringArg(args, "component_2");
+        string ref2 = RequiredStringArg(args, "ref_2");
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        IAssemblyDoc assembly = (IAssemblyDoc)doc;
+        Component2? first = FindComponent(assembly, null, component1)
+            ?? throw new InvalidOperationException($"Component not found: {component1}");
+        Component2? second = FindComponent(assembly, null, component2)
+            ?? throw new InvalidOperationException($"Component not found: {component2}");
+
+        doc.ClearSelection2(true);
+        bool sel1 = SelectComponentReference(doc, first, ref1, append: false, mark: 1);
+        bool sel2 = SelectComponentReference(doc, second, ref2, append: true, mark: 2);
+        SelectionMgr? selectionMgr = Try(() => doc.SelectionManager) as SelectionMgr;
+        object? entity1 = Try(() => selectionMgr?.GetSelectedObject6(1, 1))
+            ?? Try(() => selectionMgr?.GetSelectedObject6(1, -1));
+        object? entity2 = Try(() => selectionMgr?.GetSelectedObject6(2, 2))
+            ?? Try(() => selectionMgr?.GetSelectedObject6(2, -1));
+
+        object? mateDataObj = Try(() => assembly.CreateMateData((int)swMateType_e.swMateCOINCIDENT));
+        string? mateDataType = mateDataObj?.GetType().FullName;
+
+        Feature? mateFeature = null;
+        string? createMateError = null;
+        int errorStatus = -1;
+        try
+        {
+            if (mateDataObj is ICoincidentMateFeatureData coincident && entity1 is not null && entity2 is not null)
+            {
+                coincident.EntitiesToMate = new object[] { entity1, entity2 };
+                coincident.MateAlignment = (int)swMateAlign_e.swMateAlignALIGNED;
+            }
+
+            mateFeature = assembly.CreateMate(mateDataObj) as Feature;
+            if (mateDataObj is IMateFeatureData mateData)
+            {
+                errorStatus = Try(() => mateData.ErrorStatus) as int? ?? -1;
+            }
+        }
+        catch (Exception ex)
+        {
+            createMateError = ex.Message;
         }
 
         doc.EditRebuild3();
 
+        int? type1 = Try(() => selectionMgr?.GetSelectedObjectType3(1, 1)) as int?;
+        int? type2 = Try(() => selectionMgr?.GetSelectedObjectType3(2, 2)) as int?;
+
         return new
         {
             document = DescribeDocument(doc),
-            component1 = Try(() => first.Name2),
-            component2 = Try(() => second.Name2),
-            ref1,
-            ref2,
-            selectedCount,
-            mateError,
-            mateCreated = mate is not null,
-            alreadyConstrained = mateError == 4,
+            sel1,
+            sel2,
+            entity1Type = entity1?.GetType().FullName,
+            entity2Type = entity2?.GetType().FullName,
+            entity1IsFace = entity1 is Face2,
+            entity2IsFace = entity2 is Face2,
+            selectionType1 = type1,
+            selectionType2 = type2,
+            mateDataType,
+            mateFeatureName = Try(() => mateFeature?.Name),
+            createMateError,
+            errorStatus,
+            mateCount = CountAssemblyMates(doc),
         };
+    }
+
+    private static Feature? CreateMateViaFeatureData(
+        IAssemblyDoc assembly,
+        ModelDoc2 doc,
+        int mateType,
+        int mateAlign)
+    {
+        SelectionMgr? selectionMgr = Try(() => doc.SelectionManager) as SelectionMgr;
+        if (selectionMgr is null)
+        {
+            return null;
+        }
+
+        object? entity1 = Try(() => selectionMgr.GetSelectedObject6(1, -1));
+        object? entity2 = Try(() => selectionMgr.GetSelectedObject6(2, -1));
+        if (entity1 is null || entity2 is null)
+        {
+            return null;
+        }
+
+        object? mateDataObj = Try(() => assembly.CreateMateData(mateType));
+        if (mateDataObj is null)
+        {
+            return null;
+        }
+
+        object[] entities = [entity1, entity2];
+        switch (mateDataObj)
+        {
+            case ICoincidentMateFeatureData coincident:
+                coincident.EntitiesToMate = entities;
+                coincident.MateAlignment = mateAlign;
+                break;
+            case IParallelMateFeatureData parallel:
+                parallel.EntitiesToMate = entities;
+                parallel.MateAlignment = mateAlign;
+                break;
+            default:
+                return null;
+        }
+
+        return Try(() => assembly.CreateMate(mateDataObj)) as Feature;
     }
 
     private static object GetFeatureBox(JsonElement? args)
@@ -2361,6 +2799,58 @@ internal static class Program
         return bestIndex;
     }
 
+    private static int GetTopPlanarFaceIndex(Component2 component, string featureName)
+    {
+        ModelDoc2? componentDoc = Try(() => component.GetModelDoc2()) as ModelDoc2;
+        if (componentDoc is null)
+        {
+            return 0;
+        }
+
+        Feature? feature = FindFeatureByName(componentDoc, featureName);
+        if (feature is null)
+        {
+            return 0;
+        }
+
+        object? facesObj = Try(() => feature.GetFaces());
+        if (facesObj is not object[] faces || faces.Length == 0)
+        {
+            return 0;
+        }
+
+        int bestIndex = 0;
+        double bestY = double.NegativeInfinity;
+        for (int i = 0; i < faces.Length; i++)
+        {
+            if (faces[i] is not Face2 face)
+            {
+                continue;
+            }
+
+            double area = Try(() => face.GetArea()) as double? ?? 0;
+            if (area < 0.001)
+            {
+                continue;
+            }
+
+            double[]? box = Try(() => face.GetBox()) as double[];
+            if (box is not { Length: >= 6 })
+            {
+                continue;
+            }
+
+            double centerY = (box[1] + box[4]) / 2.0;
+            if (centerY > bestY)
+            {
+                bestY = centerY;
+                bestIndex = i;
+            }
+        }
+
+        return bestIndex;
+    }
+
     private static Face2? GetFeatureFaceByIndex(Feature feature, int faceIndex)
     {
         object? facesObj = Try(() => feature.GetFaces());
@@ -2485,12 +2975,92 @@ internal static class Program
 
         if (componentDoc is IPartDoc partDoc)
         {
+            double[]? origin = GetComponentRefPlaneOriginInAssembly(component, planeName);
+            if (origin is { Length: >= 3 })
+            {
+                const double slab = 0.0001;
+                return
+                [
+                    origin[0] - slab,
+                    origin[1] - slab,
+                    origin[2] - slab,
+                    origin[0] + slab,
+                    origin[1] + slab,
+                    origin[2] + slab,
+                ];
+            }
+
             double[]? partBox = Try(() => partDoc.GetPartBox(true)) as double[];
             return partBox is null ? null : TransformPartBoxToAssembly(component, partBox);
         }
 
         return null;
     }
+
+    private static double[]? GetComponentRefPlaneOriginInAssembly(Component2 component, string planeName)
+    {
+        ModelDoc2? componentDoc = Try(() => component.GetModelDoc2()) as ModelDoc2;
+        if (componentDoc is null)
+        {
+            return null;
+        }
+
+        Feature? plane = FindFeatureByName(componentDoc, planeName);
+        if (plane is null)
+        {
+            return null;
+        }
+
+        if (Try(() => plane.GetSpecificFeature2()) is RefPlane refPlane)
+        {
+            MathTransform? planeTransform = Try(() => refPlane.Transform) as MathTransform;
+            if (planeTransform?.ArrayData is double[] planeMatrix)
+            {
+                double[] normalized = NormalizeTransformMatrix(planeMatrix);
+                MathTransform? componentTransform = Try(() => component.Transform2) as MathTransform;
+                if (componentTransform is null)
+                {
+                    return [normalized[9], normalized[10], normalized[11]];
+                }
+
+                return TransformPointManual(
+                    componentTransform,
+                    normalized[9],
+                    normalized[10],
+                    normalized[11]);
+            }
+        }
+
+        object? facesObj = Try(() => plane.GetFaces());
+        if (facesObj is object[] faces && faces.Length > 0 && faces[0] is Face2 face)
+        {
+            double[]? partBox = Try(() => face.GetBox()) as double[];
+            if (partBox is { Length: >= 6 })
+            {
+                MathTransform? componentTransform = Try(() => component.Transform2) as MathTransform;
+                if (componentTransform is null)
+                {
+                    return BoxCenter(partBox);
+                }
+
+                return TransformPointManual(
+                    componentTransform,
+                    (partBox[0] + partBox[3]) / 2.0,
+                    (partBox[1] + partBox[4]) / 2.0,
+                    (partBox[2] + partBox[5]) / 2.0);
+            }
+        }
+
+        return null;
+    }
+
+    private static double[] IdentityTransformMatrix() =>
+    [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+    ];
 
     private static double[]? AggregateFaceBoxesInAssembly(Component2 component, object[] faces)
     {
@@ -4600,9 +5170,23 @@ internal static class Program
 
     private static Feature? InsertOffsetPlaneFromRight(ModelDoc2 doc, double offsetM, string name)
     {
+        return InsertOffsetPlaneFromReference(doc, "Right Plane", offsetM, name);
+    }
+
+    private static Feature? InsertOffsetPlaneFromTop(ModelDoc2 doc, double offsetM, string name)
+    {
+        return InsertOffsetPlaneFromReference(doc, "Top Plane", offsetM, name);
+    }
+
+    private static Feature? InsertOffsetPlaneFromReference(
+        ModelDoc2 doc,
+        string referencePlane,
+        double offsetM,
+        string name)
+    {
         FeatureManager featMgr = doc.FeatureManager;
         doc.ClearSelection2(true);
-        if (!doc.Extension.SelectByID2("Right Plane", "PLANE", 0, 0, 0, false, 0, null, 0))
+        if (!doc.Extension.SelectByID2(referencePlane, "PLANE", 0, 0, 0, false, 0, null, 0))
         {
             return null;
         }
@@ -4622,6 +5206,890 @@ internal static class Program
 
         TryVoid(() => plane.Name = name);
         return plane;
+    }
+
+    private static object BuildTorsoComputeShelf(JsonElement? args)
+    {
+        string assemblyPath = RequiredStringArg(args, "path");
+        string partPath = StringArg(args, "part_path")
+            ?? Path.Combine(
+                Path.GetDirectoryName(assemblyPath) ?? ".",
+                "..",
+                "parts",
+                "marengo_torso_compute_shelf_upper_revA.SLDPRT");
+        partPath = Path.GetFullPath(partPath);
+        string shelfComponent = StringArg(args, "shelf_component") ?? "marengo_torso_compute_shelf_upper_revA";
+        string layoutComponent = StringArg(args, "layout_component") ?? "marengo_torso_layout_revA";
+        string leftActuator = StringArg(args, "left_actuator") ?? "actuator_rs03_left_shoulder_roll";
+        string rightActuator = StringArg(args, "right_actuator") ?? "actuator_rs03_right_shoulder_roll";
+        double thicknessM = DoubleArg(args, "thickness_mm", 4.0) / 1000.0;
+        double clearanceM = DoubleArg(args, "clearance_mm", 1.0) / 1000.0;
+        bool mateInAssembly = BoolArg(args, "mate_in_assembly", defaultValue: true);
+        bool save = BoolArg(args, "save", defaultValue: true);
+        string owner = StringArg(args, "owner") ?? "Joey Lamping";
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 asmDoc = OpenDocument(app, assemblyPath);
+        if (asmDoc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("build_torso_compute_shelf requires an assembly document.");
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)asmDoc;
+        Component2? layout = ResolveTorsoLayoutComponent(assembly)
+            ?? FindComponent(assembly, null, layoutComponent)
+            ?? throw new InvalidOperationException($"Layout component not found: {layoutComponent}");
+        Component2? leftMotor = FindComponent(assembly, null, leftActuator)
+            ?? throw new InvalidOperationException($"Left actuator not found: {leftActuator}");
+        Component2? rightMotor = FindComponent(assembly, null, rightActuator)
+            ?? throw new InvalidOperationException($"Right actuator not found: {rightActuator}");
+
+        double[]? innerAsm = GetFeatureBoundingBoxInAssembly(layout, "torso_inner_clear")
+            ?? throw new InvalidOperationException("Layout torso_inner_clear unavailable in assembly.");
+        double[]? leftBox = Try(() => leftMotor.GetBox(false, false)) as double[];
+        double[]? rightBox = Try(() => rightMotor.GetBox(false, false)) as double[];
+        if (leftBox is null || rightBox is null || leftBox.Length < 6 || rightBox.Length < 6)
+        {
+            throw new InvalidOperationException("Shoulder actuator bounding boxes unavailable.");
+        }
+
+        double shelfSeatAssemblyY = Math.Min(leftBox[1], rightBox[1]);
+        double halfWidthX = (innerAsm[3] - innerAsm[0]) / 2.0;
+        double halfDepthZ = (innerAsm[5] - innerAsm[2]) / 2.0;
+        double centerX = (innerAsm[0] + innerAsm[3]) / 2.0;
+        double centerZ = (innerAsm[2] + innerAsm[5]) / 2.0;
+
+        var notchRects = new List<(double X0, double X1, double Z0, double Z1)>();
+        foreach (double[] motorBox in new[] { leftBox, rightBox })
+        {
+            (double X0, double X1, double Z0, double Z1)? notch = ClipActuatorNotchOnShelf(
+                motorBox,
+                centerX,
+                centerZ,
+                halfWidthX,
+                halfDepthZ,
+                clearanceM);
+            if (notch is not null)
+            {
+                notchRects.Add(notch.Value);
+            }
+        }
+
+        string layoutPartPath = Try(() => layout.GetPathName()) as string
+            ?? throw new InvalidOperationException("Layout component path unavailable.");
+        layoutPartPath = Path.GetFullPath(layoutPartPath);
+
+        double[]? innerPart = null;
+        ModelDoc2 layoutDoc = OpenDocument(app, layoutPartPath);
+        innerPart = GetFeatureBoundingBoxInPart(layoutDoc, "torso_inner_clear");
+        double shelfSeatLayoutY = shelfSeatAssemblyY;
+        if (innerPart is not null && innerPart.Length >= 6)
+        {
+            shelfSeatLayoutY = innerPart[1] + (shelfSeatAssemblyY - innerAsm[1]);
+        }
+
+        object layoutPlaneResult = EnsureLayoutComputeShelfSeat(layoutDoc, shelfSeatLayoutY, save: false);
+        object partBuildResult = RebuildComputeShelfPartFile(
+            app,
+            partPath,
+            halfWidthX,
+            halfDepthZ,
+            thicknessM,
+            notchRects,
+            owner,
+            save: false);
+
+        if (save)
+        {
+            int layoutErrors = 0;
+            int layoutWarnings = 0;
+            bool layoutSaved = layoutDoc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref layoutErrors, ref layoutWarnings);
+            if (!layoutSaved || layoutErrors != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Layout save failed after compute_shelf_seat. errors={layoutErrors}, warnings={layoutWarnings}");
+            }
+        }
+
+        asmDoc = OpenDocument(app, assemblyPath);
+        assembly = (IAssemblyDoc)asmDoc;
+        asmDoc.EditRebuild3();
+
+        Component2? shelf = FindComponent(assembly, null, shelfComponent);
+        object? placementResult = null;
+        object? mateResult = null;
+        if (shelf is not null)
+        {
+            layout = ResolveTorsoLayoutComponent(assembly)
+                ?? FindComponent(assembly, null, layoutComponent);
+            if (layout is not null)
+            {
+                placementResult = PlaceComputeShelfComponent(
+                    asmDoc,
+                    assembly,
+                    shelf,
+                    layout,
+                    centerX,
+                    centerZ,
+                    shelfSeatAssemblyY);
+            }
+
+            if (mateInAssembly && layout is not null)
+            {
+                mateResult = MateComputeShelfToLayout(asmDoc, assembly, shelf, layout);
+            }
+        }
+
+        bool asmSaved = false;
+        int asmErrors = 0;
+        int asmWarnings = 0;
+        if (save)
+        {
+            asmSaved = asmDoc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref asmErrors, ref asmWarnings);
+            if (!asmSaved || asmErrors != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Assembly save failed after compute shelf build. errors={asmErrors}, warnings={asmWarnings}");
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(asmDoc),
+            partPath,
+            shelfComponent = Try(() => shelf?.Name2),
+            shelfSeatAssemblyYM = shelfSeatAssemblyY,
+            shelfSeatLayoutYM = shelfSeatLayoutY,
+            innerClearAssemblyM = Normalize(innerAsm),
+            halfWidthXM = halfWidthX,
+            halfDepthZM = halfDepthZ,
+            notchCount = notchRects.Count,
+            notches = notchRects.Select(
+                notch => new
+                {
+                    xMinM = notch.X0,
+                    xMaxM = notch.X1,
+                    zMinM = notch.Z0,
+                    zMaxM = notch.Z1,
+                }).ToArray(),
+            layoutPlaneResult,
+            partBuildResult,
+            placementResult,
+            mateResult,
+            saved = asmSaved,
+            asmErrors,
+            asmWarnings,
+        };
+    }
+
+    private static object MateTorsoComputeShelf(JsonElement? args)
+    {
+        string assemblyPath = RequiredStringArg(args, "path");
+        string shelfComponent = StringArg(args, "shelf_component") ?? "marengo_torso_compute_shelf_upper_revA";
+        string layoutComponent = StringArg(args, "layout_component") ?? "marengo_torso_layout_revA";
+        string leftActuator = StringArg(args, "left_actuator") ?? "actuator_rs03_left_shoulder_roll";
+        string rightActuator = StringArg(args, "right_actuator") ?? "actuator_rs03_right_shoulder_roll";
+        bool save = BoolArg(args, "save", defaultValue: true);
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 asmDoc = OpenDocument(app, assemblyPath);
+        if (asmDoc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("mate_torso_compute_shelf requires an assembly document.");
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)asmDoc;
+        Component2? layout = ResolveTorsoLayoutComponent(assembly)
+            ?? FindComponent(assembly, null, layoutComponent)
+            ?? throw new InvalidOperationException($"Layout component not found: {layoutComponent}");
+        Component2? shelf = FindComponent(assembly, null, shelfComponent)
+            ?? throw new InvalidOperationException($"Shelf component not found: {shelfComponent}");
+        Component2? leftMotor = FindComponent(assembly, null, leftActuator)
+            ?? throw new InvalidOperationException($"Left actuator not found: {leftActuator}");
+        Component2? rightMotor = FindComponent(assembly, null, rightActuator)
+            ?? throw new InvalidOperationException($"Right actuator not found: {rightActuator}");
+
+        double[]? innerAsm = GetFeatureBoundingBoxInAssembly(layout, "torso_inner_clear")
+            ?? throw new InvalidOperationException("Layout torso_inner_clear unavailable in assembly.");
+        double[]? leftBox = Try(() => leftMotor.GetBox(false, false)) as double[];
+        double[]? rightBox = Try(() => rightMotor.GetBox(false, false)) as double[];
+        if (leftBox is null || rightBox is null || leftBox.Length < 6 || rightBox.Length < 6)
+        {
+            throw new InvalidOperationException("Shoulder actuator bounding boxes unavailable.");
+        }
+
+        double shelfSeatAssemblyY = Math.Min(leftBox[1], rightBox[1]);
+        double centerX = (innerAsm[0] + innerAsm[3]) / 2.0;
+        double centerZ = (innerAsm[2] + innerAsm[5]) / 2.0;
+
+        string layoutPartPath = Try(() => layout.GetPathName()) as string
+            ?? throw new InvalidOperationException("Layout component path unavailable.");
+        layoutPartPath = Path.GetFullPath(layoutPartPath);
+        ModelDoc2 layoutDoc = OpenDocument(app, layoutPartPath);
+        double[]? innerPart = GetFeatureBoundingBoxInPart(layoutDoc, "torso_inner_clear");
+        double shelfSeatLayoutY = shelfSeatAssemblyY;
+        if (innerPart is not null && innerPart.Length >= 6)
+        {
+            shelfSeatLayoutY = innerPart[1] + (shelfSeatAssemblyY - innerAsm[1]);
+        }
+
+        object layoutPlaneResult = EnsureLayoutComputeShelfSeat(layoutDoc, shelfSeatLayoutY, save: false);
+
+        asmDoc = OpenDocument(app, assemblyPath);
+        assembly = (IAssemblyDoc)asmDoc;
+        layout = ResolveTorsoLayoutComponent(assembly)
+            ?? FindComponent(assembly, null, layoutComponent);
+        shelf = FindComponent(assembly, null, shelfComponent)
+            ?? throw new InvalidOperationException($"Shelf component not found after layout update: {shelfComponent}");
+
+        object placementResult = ResetComputeShelfComponent(
+            asmDoc,
+            assembly,
+            shelf);
+        object mateResult = MateComputeShelfToLayout(asmDoc, assembly, shelf, layout!);
+
+        bool layoutSaved = false;
+        int layoutErrors = 0;
+        int layoutWarnings = 0;
+        if (save)
+        {
+            layoutSaved = layoutDoc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref layoutErrors, ref layoutWarnings);
+        }
+
+        bool asmSaved = false;
+        int asmErrors = 0;
+        int asmWarnings = 0;
+        if (save)
+        {
+            asmSaved = asmDoc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref asmErrors, ref asmWarnings);
+            if (!asmSaved || asmErrors != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Assembly save failed after compute shelf mate. errors={asmErrors}, warnings={asmWarnings}");
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(asmDoc),
+            shelfComponent = Try(() => shelf.Name2),
+            layoutComponent = Try(() => layout?.Name2),
+            shelfSeatAssemblyYM = shelfSeatAssemblyY,
+            shelfSeatLayoutYM = shelfSeatLayoutY,
+            layoutPlaneResult,
+            placementResult,
+            mateResult,
+            layoutSaved,
+            layoutErrors,
+            layoutWarnings,
+            saved = asmSaved,
+            asmErrors,
+            asmWarnings,
+        };
+    }
+
+    private static (double X0, double X1, double Z0, double Z1)? ClipActuatorNotchOnShelf(
+        double[] motorBox,
+        double centerX,
+        double centerZ,
+        double halfWidthX,
+        double halfDepthZ,
+        double clearanceM)
+    {
+        double x0 = Math.Max(motorBox[0] - clearanceM - centerX, -halfWidthX);
+        double x1 = Math.Min(motorBox[3] + clearanceM - centerX, halfWidthX);
+        double z0 = Math.Max(motorBox[2] - clearanceM - centerZ, -halfDepthZ);
+        double z1 = Math.Min(motorBox[5] + clearanceM - centerZ, halfDepthZ);
+        if (x1 <= x0 + 0.0005 || z1 <= z0 + 0.0005)
+        {
+            return null;
+        }
+
+        return (x0, x1, z0, z1);
+    }
+
+    private static object EnsureLayoutComputeShelfSeat(ModelDoc2 layoutDoc, double shelfSeatLayoutY, bool save)
+    {
+        if (layoutDoc.GetType() != (int)swDocumentTypes_e.swDocPART)
+        {
+            throw new InvalidOperationException("ensure_layout_compute_shelf_seat requires a part document.");
+        }
+
+        DeleteFeatureByName(layoutDoc, "compute_shelf_seat");
+        Feature? plane = InsertOffsetPlaneFromTop(layoutDoc, shelfSeatLayoutY, "compute_shelf_seat");
+        if (plane is null)
+        {
+            throw new InvalidOperationException("Failed to create compute_shelf_seat on layout part.");
+        }
+
+        layoutDoc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = layoutDoc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+            if (!saved || errors != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Layout save failed after compute_shelf_seat. errors={errors}, warnings={warnings}");
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(layoutDoc),
+            shelfSeatLayoutYM = shelfSeatLayoutY,
+            saved,
+            errors,
+            warnings,
+        };
+    }
+
+    private static object RebuildComputeShelfPartFile(
+        ISldWorks app,
+        string partPath,
+        double halfWidthX,
+        double halfDepthZ,
+        double thicknessM,
+        IReadOnlyList<(double X0, double X1, double Z0, double Z1)> notchRects,
+        string owner,
+        bool save)
+    {
+        CloseDocumentIfOpen(app, partPath);
+
+        string template = Try(() => app.GetUserPreferenceStringValue((int)swUserPreferenceStringValue_e.swDefaultTemplatePart)) as string
+            ?? string.Empty;
+        ModelDoc2? doc = !string.IsNullOrWhiteSpace(template) && File.Exists(template)
+            ? Try(() => app.NewDocument(template, 0, 0, 0)) as ModelDoc2
+            : null;
+        doc ??= Try(() => app.NewDocument("", (int)swDocumentTypes_e.swDocPART, 0, 0)) as ModelDoc2;
+        if (doc is null)
+        {
+            throw new InvalidOperationException("Failed to create blank part for compute shelf rebuild.");
+        }
+
+        CreateComputeShelfSolid(doc, halfWidthX, halfDepthZ, thicknessM, notchRects);
+
+        DeleteFeatureByName(doc, "mount_face");
+        Feature? mountFace = InsertOffsetPlaneFromTop(doc, 0.0, "mount_face");
+        if (mountFace is null)
+        {
+            throw new InvalidOperationException("Failed to create mount_face on compute shelf part.");
+        }
+
+        doc.EditRebuild3();
+
+        Directory.CreateDirectory(Path.GetDirectoryName(partPath) ?? ".");
+        CloseDocumentIfOpen(app, partPath);
+
+        int saveErrors = 0;
+        int saveWarnings = 0;
+        bool partSaved = doc.Extension.SaveAs(
+            partPath,
+            0,
+            (int)swSaveAsOptions_e.swSaveAsOptions_Silent,
+            null,
+            ref saveErrors,
+            ref saveWarnings);
+        if (!partSaved || saveErrors != 0)
+        {
+            throw new InvalidOperationException(
+                $"Compute shelf part save failed. errors={saveErrors} ({DecodeSaveErrors(saveErrors)}), warnings={saveWarnings}");
+        }
+
+        object propsResult = SetCustomPropertiesOnOpenDocument(
+            app,
+            partPath,
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["process"] = "print",
+                ["material"] = "PETG",
+                ["revision"] = "A",
+                ["owner"] = owner,
+            },
+            save: false);
+
+        if (save)
+        {
+            ModelDoc2 savedDoc = OpenDocument(app, partPath);
+            int errors = 0;
+            int warnings = 0;
+            bool saved = savedDoc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+            if (!saved || errors != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Compute shelf part final save failed. errors={errors}, warnings={warnings}");
+            }
+        }
+
+        double[]? box = Try(() => ((IPartDoc)doc).GetPartBox(true)) as double[];
+        return new
+        {
+            partPath,
+            boundingBoxM = Normalize(box),
+            thicknessM,
+            halfWidthXM = halfWidthX,
+            halfDepthZM = halfDepthZ,
+            notchCount = notchRects.Count,
+            propsResult,
+            saved = partSaved,
+            saveErrors,
+            saveWarnings,
+        };
+    }
+
+    private static object SetCustomPropertiesOnOpenDocument(
+        ISldWorks app,
+        string path,
+        IReadOnlyDictionary<string, string> properties,
+        bool save)
+    {
+        ModelDoc2 doc = OpenDocument(app, path);
+        CustomPropertyManager? manager = Try(() => doc.Extension.CustomPropertyManager[""]) as CustomPropertyManager;
+        if (manager is null)
+        {
+            throw new InvalidOperationException("CustomPropertyManager is unavailable on this document.");
+        }
+
+        var applied = new List<object>();
+        foreach (KeyValuePair<string, string> entry in properties)
+        {
+            TryVoid(() =>
+            {
+                manager.Add3(
+                    entry.Key,
+                    (int)swCustomInfoType_e.swCustomInfoText,
+                    entry.Value ?? "",
+                    1);
+            });
+            applied.Add(new { name = entry.Key, value = entry.Value });
+        }
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+        }
+
+        return new { applied, saved, errors, warnings };
+    }
+
+    private static void CreateComputeShelfSolid(
+        ModelDoc2 doc,
+        double halfWidthX,
+        double halfDepthZ,
+        double thicknessM,
+        IReadOnlyList<(double X0, double X1, double Z0, double Z1)> notchRects)
+    {
+        SketchManager skMgr = doc.SketchManager;
+        FeatureManager featMgr = doc.FeatureManager;
+
+        doc.ClearSelection2(true);
+        if (!doc.Extension.SelectByID2("Top Plane", "PLANE", 0, 0, 0, false, 0, null, 0))
+        {
+            throw new InvalidOperationException("compute shelf: could not select Top Plane.");
+        }
+
+        skMgr.InsertSketch(true);
+        object? rectangle = Try(() => skMgr.CreateCornerRectangle(
+            -halfWidthX,
+            -halfDepthZ,
+            0.0,
+            halfWidthX,
+            halfDepthZ,
+            0.0));
+        if (rectangle is null)
+        {
+            throw new InvalidOperationException("compute shelf: plate sketch rectangle failed.");
+        }
+
+        skMgr.InsertSketch(true);
+        doc.ClearSelection2(true);
+        if (!doc.Extension.SelectByID2("Sketch1", "SKETCH", 0, 0, 0, false, 0, null, 0))
+        {
+            throw new InvalidOperationException("compute shelf: could not select Sketch1 for plate extrusion.");
+        }
+
+        Feature? boss = ExtrudeActiveSketch(featMgr, thicknessM, flip: true);
+        if (boss is null)
+        {
+            throw new InvalidOperationException("compute shelf: plate extrusion failed.");
+        }
+
+        TryVoid(() => boss.Name = "Boss-Extrude1");
+    }
+
+    private static Feature? ExtrudeActiveSketch(FeatureManager featMgr, double depthM, bool flip)
+    {
+        return Try(() => featMgr.FeatureExtrusion2(
+            true,
+            flip,
+            false,
+            (int)swEndConditions_e.swEndCondBlind,
+            0,
+            depthM,
+            0.0,
+            false,
+            false,
+            false,
+            false,
+            0.0,
+            0.0,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            0,
+            0.0,
+            false)) as Feature;
+    }
+
+    private static object ResetComputeShelfComponent(
+        ModelDoc2 doc,
+        IAssemblyDoc assembly,
+        Component2 shelf)
+    {
+        if (Try(() => shelf.IsFixed()) as bool? == true)
+        {
+            shelf.Select4(false, null, false);
+            assembly.UnfixComponent();
+            doc.ClearSelection2(true);
+        }
+
+        ApplyComponentTransformMatrix(shelf, IdentityTransformMatrix());
+        doc.EditRebuild3();
+
+        return new
+        {
+            component = Try(() => shelf.Name2),
+            reset = true,
+            boundingBoxM = Normalize(Try(() => shelf.GetBox(false, false))),
+        };
+    }
+
+    private static object PlaceComputeShelfComponent(
+        ModelDoc2 doc,
+        IAssemblyDoc assembly,
+        Component2 shelf,
+        Component2 layout,
+        double centerX,
+        double centerZ,
+        double shelfSeatAssemblyY)
+    {
+        if (Try(() => shelf.IsFixed()) as bool? == true)
+        {
+            shelf.Select4(false, null, false);
+            assembly.UnfixComponent();
+            doc.ClearSelection2(true);
+        }
+
+        ApplyComponentTransformMatrix(shelf, IdentityTransformMatrix());
+
+        double[]? seatOrigin = GetComponentRefPlaneOriginInAssembly(layout, "compute_shelf_seat");
+        double[]? shelfTopOrigin = GetComponentRefPlaneOriginInAssembly(shelf, "Top Plane");
+        double[]? shelfBox = Try(() => shelf.GetBox(false, false)) as double[];
+
+        double tx;
+        double ty;
+        double tz;
+
+        if (seatOrigin is { Length: >= 3 } && shelfTopOrigin is { Length: >= 3 })
+        {
+            tx = seatOrigin[0] - shelfTopOrigin[0];
+            ty = seatOrigin[1] - shelfTopOrigin[1];
+            tz = seatOrigin[2] - shelfTopOrigin[2];
+        }
+        else if (shelfBox is { Length: >= 6 })
+        {
+            tx = centerX - ((shelfBox[0] + shelfBox[3]) / 2.0);
+            ty = shelfSeatAssemblyY - shelfBox[4];
+            tz = centerZ - ((shelfBox[2] + shelfBox[5]) / 2.0);
+        }
+        else
+        {
+            throw new InvalidOperationException("Compute shelf bounding box unavailable.");
+        }
+
+        ApplyComponentTranslation(shelf, tx, ty, tz);
+        doc.EditRebuild3();
+
+        shelfBox = Try(() => shelf.GetBox(false, false)) as double[];
+        double[]? shelfTopBox = GetComponentPlaneBoxInAssembly(shelf, "Top Plane");
+        double[]? seatBox = GetComponentPlaneBoxInAssembly(layout, "compute_shelf_seat");
+        double[]? shelfTopOriginAfter = GetComponentRefPlaneOriginInAssembly(shelf, "Top Plane");
+        return new
+        {
+            component = Try(() => shelf.Name2),
+            translationM = new[] { tx, ty, tz },
+            boundingBoxM = Normalize(shelfBox),
+            shelfTopBoxM = Normalize(shelfTopBox),
+            shelfTopOriginM = Normalize(shelfTopOriginAfter),
+            seatOriginM = Normalize(seatOrigin),
+            seatBoxM = Normalize(seatBox),
+        };
+    }
+
+    private static string ResolveShelfMountReference(Component2 shelf)
+    {
+        ModelDoc2? shelfDoc = Try(() => shelf.GetModelDoc2()) as ModelDoc2;
+        if (shelfDoc is not null && FindFeatureByName(shelfDoc, "mount_face") is not null)
+        {
+            return "mount_face";
+        }
+
+        return "Top Plane";
+    }
+
+    private static object MateComputeShelfToLayout(
+        ModelDoc2 doc,
+        IAssemblyDoc assembly,
+        Component2 shelf,
+        Component2 layout)
+    {
+        string shelfMountRef = ResolveShelfMountReference(shelf);
+        int shelfFaceIndex = GetTopPlanarFaceIndex(shelf, "Boss-Extrude1");
+        var mates = new List<object>();
+        bool xzOk = true;
+
+        object frontMate = TryMateComponentReferencesWithAlign(
+            doc,
+            assembly,
+            shelf,
+            "Front Plane",
+            layout,
+            "Front Plane",
+            (int)swMateType_e.swMateCOINCIDENT,
+            (int)swMateAlign_e.swMateAlignALIGNED,
+            rebuild: false);
+        mates.Add(new { kind = "front", result = frontMate });
+        xzOk &= MateResultOk(frontMate);
+
+        object rightMate = TryMateComponentReferencesWithAlign(
+            doc,
+            assembly,
+            shelf,
+            "Right Plane",
+            layout,
+            "Right Plane",
+            (int)swMateType_e.swMateCOINCIDENT,
+            (int)swMateAlign_e.swMateAlignALIGNED,
+            rebuild: false);
+        mates.Add(new { kind = "right", result = rightMate });
+        xzOk &= MateResultOk(rightMate);
+
+        bool heightOk = false;
+        foreach (int align in new[] { (int)swMateAlign_e.swMateAlignALIGNED, (int)swMateAlign_e.swMateAlignANTI_ALIGNED })
+        {
+            object faceMate = TryMateComponentEntitiesWithAlign(
+                doc,
+                assembly,
+                shelf,
+                "Boss-Extrude1",
+                shelfFaceIndex,
+                layout,
+                "compute_shelf_seat",
+                (int)swMateType_e.swMateCOINCIDENT,
+                align,
+                rebuild: false);
+            mates.Add(new
+            {
+                kind = align == (int)swMateAlign_e.swMateAlignALIGNED ? "face_height_aligned" : "face_height_anti_aligned",
+                shelfMountRef = "Boss-Extrude1",
+                shelfFaceIndex,
+                layoutRef = "compute_shelf_seat",
+                result = faceMate,
+            });
+            if (MateResultOk(faceMate))
+            {
+                heightOk = true;
+                break;
+            }
+        }
+
+        if (!heightOk)
+        {
+            foreach (int align in new[] { (int)swMateAlign_e.swMateAlignALIGNED, (int)swMateAlign_e.swMateAlignANTI_ALIGNED })
+            {
+                object heightMate = TryMateComponentReferencesWithAlign(
+                    doc,
+                    assembly,
+                    shelf,
+                    shelfMountRef,
+                    layout,
+                    "compute_shelf_seat",
+                    (int)swMateType_e.swMateCOINCIDENT,
+                    align,
+                    rebuild: false);
+                mates.Add(new
+                {
+                    kind = align == (int)swMateAlign_e.swMateAlignALIGNED ? "height_aligned" : "height_anti_aligned",
+                    shelfMountRef,
+                    layoutRef = "compute_shelf_seat",
+                    result = heightMate,
+                });
+                if (MateResultOk(heightMate))
+                {
+                    heightOk = true;
+                    break;
+                }
+            }
+        }
+
+        if (heightOk)
+        {
+            // front/right already attempted above
+        }
+
+        doc.EditRebuild3();
+        return new { shelfMountRef, mates, heightOk, xzOk };
+    }
+
+    private static object TryMateComponentReferencesWithAlign(
+        ModelDoc2 doc,
+        IAssemblyDoc assembly,
+        Component2 first,
+        string ref1,
+        Component2 second,
+        string ref2,
+        int mateType,
+        int mateAlign,
+        bool rebuild = true)
+    {
+        try
+        {
+            doc.ClearSelection2(true);
+            if (!SelectComponentReference(doc, first, ref1, append: false, mark: 1))
+            {
+                return new { ref1, ref2, ok = false, error = $"selection_failed:{ref1}" };
+            }
+
+            if (!SelectComponentReference(doc, second, ref2, append: true, mark: 2))
+            {
+                return new { ref1, ref2, ok = false, error = $"selection_failed:{ref2}" };
+            }
+
+            return CreateMateFromSelectionWithAlign(
+                doc,
+                assembly,
+                first,
+                second,
+                ref1,
+                ref2,
+                mateType,
+                mateAlign,
+                rebuild);
+        }
+        catch (Exception ex)
+        {
+            return new { ref1, ref2, ok = false, error = ex.Message };
+        }
+    }
+
+    private static object TryMateComponentEntitiesWithAlign(
+        ModelDoc2 doc,
+        IAssemblyDoc assembly,
+        Component2 first,
+        string ref1,
+        int face1,
+        Component2 second,
+        string ref2,
+        int mateType,
+        int mateAlign,
+        bool rebuild = true)
+    {
+        try
+        {
+            doc.ClearSelection2(true);
+            if (!SelectComponentMateEntity(doc, first, ref1, face1, append: false, mark: 1))
+            {
+                return new { ref1, ref2, ok = false, error = $"selection_failed:{ref1}" };
+            }
+
+            if (!SelectComponentMateEntity(doc, second, ref2, 0, append: true, mark: 2))
+            {
+                return new { ref1, ref2, ok = false, error = $"selection_failed:{ref2}" };
+            }
+
+            return CreateMateFromSelectionWithAlign(
+                doc,
+                assembly,
+                first,
+                second,
+                ref1,
+                ref2,
+                mateType,
+                mateAlign,
+                rebuild);
+        }
+        catch (Exception ex)
+        {
+            return new { ref1, ref2, ok = false, error = ex.Message };
+        }
+    }
+
+    private static object CreateMateFromSelectionWithAlign(
+        ModelDoc2 doc,
+        IAssemblyDoc assembly,
+        Component2 first,
+        Component2 second,
+        string ref1,
+        string ref2,
+        int mateType,
+        int mateAlign,
+        bool rebuild = true)
+    {
+        SelectionMgr? selectionMgr = Try(() => doc.SelectionManager) as SelectionMgr;
+        int selectedCount = selectionMgr is null
+            ? 0
+            : Try(() => selectionMgr.GetSelectedObjectCount2(-1)) as int? ?? 0;
+
+        (bool created, string method, int mateError, bool alreadyConstrained) = TryCreateMate(
+            assembly,
+            doc,
+            mateType,
+            mateAlign);
+
+        if (rebuild)
+        {
+            doc.EditRebuild3();
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            component1 = Try(() => first.Name2),
+            component2 = Try(() => second.Name2),
+            ref1,
+            ref2,
+            selectedCount,
+            mateError,
+            mateCreated = created,
+            alreadyConstrained,
+            mateAlign,
+            mateMethod = method,
+        };
+    }
+
+    private static bool MateResultOk(object mateResult)
+    {
+        if (mateResult.GetType().GetProperty("mateCreated")?.GetValue(mateResult) as bool? == true)
+        {
+            return true;
+        }
+
+        if (mateResult.GetType().GetProperty("alreadyConstrained")?.GetValue(mateResult) as bool? == true)
+        {
+            return true;
+        }
+
+        return mateResult.GetType().GetProperty("ok")?.GetValue(mateResult) as bool? == true;
     }
 
     private static object VendorAddRs03UrdfFrame(JsonElement? args)
