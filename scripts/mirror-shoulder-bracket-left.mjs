@@ -3,12 +3,12 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 const TORSO_ASM =
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
+  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
 const RIGHT_PART =
-  "C:/code/marengo/hardware/cad/parts/marengo_shoulder_roll_mount_bracket_right_revA.SLDPRT";
+  "C:/code/marengo/hardware/cad/parts/marengo_shoulder_pitch_mount_bracket_right.SLDPRT";
 const LEFT_PART =
-  "C:/code/marengo/hardware/cad/parts/marengo_shoulder_roll_mount_bracket_left_revA.SLDPRT";
-const LEFT_COMPONENT = "marengo_shoulder_roll_mount_bracket_left_revA";
+  "C:/code/marengo/hardware/cad/parts/marengo_shoulder_pitch_mount_bracket_left.SLDPRT";
+const LEFT_COMPONENT = "marengo_shoulder_pitch_mount_bracket_left";
 
 // Mirror about assembly YZ plane (negate X) â€” same as MirrorXMatrix in worker.
 const MIRROR_X = [-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
@@ -83,7 +83,7 @@ try {
     step: "left_motor_box",
     result: runWorker("get_component_box", {
       path: TORSO_ASM,
-      component_name: "actuator_rs03_left_shoulder_roll-3",
+      component_name: "actuator_rs03_left_shoulder_pitch-3",
     }),
   });
 

@@ -8,8 +8,8 @@ import {
 import { registrySummary } from "../dist/vendor-registry.js";
 import { runWorker } from "../dist/worker.js";
 
-const ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
-const PART = "C:/code/marengo/hardware/cad/parts/marengo_torso_layout_revA.SLDPRT";
+const ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+const PART = "C:/code/marengo/hardware/cad/parts/marengo_torso_layout.SLDPRT";
 
 const results = [];
 

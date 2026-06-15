@@ -23,7 +23,7 @@ internal static partial class Program
         IAssemblyDoc assembly = (IAssemblyDoc)doc;
         var steps = new List<object>();
 
-        const string layoutPrefix = "marengo_torso_layout_revA";
+        const string layoutPrefix = "marengo_torso_layout";
         Component2? layout = FindComponent(assembly, null, layoutPrefix)
             ?? throw new InvalidOperationException($"Layout jig not found: {layoutPrefix}");
 
@@ -75,7 +75,7 @@ internal static partial class Program
             {
                 if (entry is Component2 component
                     && Try(() => component.IsFixed()) as bool? == true
-                    && (Try(() => component.Name2) as string)?.StartsWith("marengo_torso_layout_revA", StringComparison.OrdinalIgnoreCase) == false)
+                    && (Try(() => component.Name2) as string)?.StartsWith("marengo_torso_layout", StringComparison.OrdinalIgnoreCase) == false)
                 {
                     fixedComponents++;
                 }

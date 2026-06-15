@@ -1,6 +1,6 @@
 /**
  * Promote incoming 2020 corner bracket to vendor_2028_corner_bracket_vendor.SLDPRT
- * and rewire marengo_torso_asm_revA instances + naming.
+ * and rewire marengo_torso_asm instances + naming.
  *
  * Requires SolidWorks running on Windows.
  */
@@ -16,7 +16,7 @@ const marengoRoot = process.env.MARENGO_ROOT
 
 const INCOMING = path.join(marengoRoot, "hardware/cad/vendor/incoming/2020_corner_bracket.SLDPRT");
 const CANONICAL = path.join(marengoRoot, "hardware/cad/vendor/vendor_2028_corner_bracket_vendor.SLDPRT");
-const TORSO_ASM = path.join(marengoRoot, "hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM");
+const TORSO_ASM = path.join(marengoRoot, "hardware/cad/assemblies/marengo_torso_asm.SLDASM");
 
 const vendorProps = {
   process: "purchase",

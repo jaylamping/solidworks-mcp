@@ -3,12 +3,12 @@ import { mateFirstThatWorks, mateShelfHeightWithFallback, tryMateCoincident } fr
 
 const ASM =
   process.env.MARENGO_TORSO_ASM ??
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
+  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
 
-const SHELF = process.env.COMPUTE_SHELF_COMPONENT ?? "marengo_torso_compute_shelf_upper_revA";
-const LAYOUT = process.env.TORSO_LAYOUT_COMPONENT ?? "marengo_torso_layout_revA";
-const LEFT_ACTUATOR = process.env.LEFT_SHOULDER_ACTUATOR ?? "actuator_rs03_left_shoulder_roll";
-const RIGHT_ACTUATOR = process.env.RIGHT_SHOULDER_ACTUATOR ?? "actuator_rs03_right_shoulder_roll";
+const SHELF = process.env.COMPUTE_SHELF_COMPONENT ?? "marengo_torso_upper_compute_shelf";
+const LAYOUT = process.env.TORSO_LAYOUT_COMPONENT ?? "marengo_torso_layout";
+const LEFT_ACTUATOR = process.env.LEFT_SHOULDER_ACTUATOR ?? "actuator_rs03_left_shoulder_pitch";
+const RIGHT_ACTUATOR = process.env.RIGHT_SHOULDER_ACTUATOR ?? "actuator_rs03_right_shoulder_pitch";
 
 const steps = [];
 

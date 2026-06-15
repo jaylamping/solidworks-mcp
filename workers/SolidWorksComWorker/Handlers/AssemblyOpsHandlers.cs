@@ -258,11 +258,11 @@ internal static partial class Program
     {
         string assemblyPath = RequiredStringArg(args, "path");
         string bracketPartPath = StringArg(args, "bracket_part_path")
-            ?? "C:/code/marengo/hardware/cad/parts/marengo_shoulder_roll_mount_bracket_right_revA.SLDPRT";
+            ?? "C:/code/marengo/hardware/cad/parts/marengo_shoulder_pitch_mount_bracket_right.SLDPRT";
         string toolPartPath = StringArg(args, "tool_part_path")
             ?? "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT";
-        string bracketComponent = StringArg(args, "bracket_component") ?? "marengo_shoulder_roll_mount_bracket_right_revA";
-        string toolComponent = StringArg(args, "tool_component") ?? "actuator_rs03_right_shoulder_roll";
+        string bracketComponent = StringArg(args, "bracket_component") ?? "marengo_shoulder_pitch_mount_bracket_right";
+        string toolComponent = StringArg(args, "tool_component") ?? "actuator_rs03_right_shoulder_pitch";
         double clearanceM = DoubleArg(args, "clearance_mm", 0.5) / 1000.0;
         bool save = BoolArg(args, "save", defaultValue: true);
 

@@ -3,7 +3,7 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 const TORSO_ASM =
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
+  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
 
 
 const golden = JSON.parse(readFileSync(goldenPath, "utf8"));

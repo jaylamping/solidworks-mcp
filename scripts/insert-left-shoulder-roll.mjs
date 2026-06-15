@@ -3,7 +3,7 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 const TORSO_ASM =
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
+  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
 const RS03_PART =
   "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT";
 
@@ -15,7 +15,7 @@ const steps = [];
 try {
   const existing = runWorker("list_components", { path: TORSO_ASM });
   const hasLeft = existing.components?.some((c) =>
-    String(c.name).startsWith("actuator_rs03_left_shoulder_roll"),
+    String(c.name).startsWith("actuator_rs03_left_shoulder_pitch"),
   );
   const hasVendorOnly = existing.components?.some((c) =>
     String(c.name).startsWith("vendor_robstride_rs03_vendor"),
@@ -24,21 +24,21 @@ try {
   if (!hasLeft) {
     if (hasVendorOnly) {
       steps.push({
-        step: "rename_inserted_vendor_to_left_shoulder_roll",
+        step: "rename_inserted_vendor_to_left_shoulder_pitch",
         result: runWorker("rename_component", {
           path: TORSO_ASM,
           from: "vendor_robstride_rs03_vendor",
-          to: "actuator_rs03_left_shoulder_roll",
+          to: "actuator_rs03_left_shoulder_pitch",
           save: true,
         }),
       });
     } else {
       steps.push({
-        step: "insert_left_shoulder_roll",
+        step: "insert_left_shoulder_pitch",
         result: runWorker("insert_component", {
           path: TORSO_ASM,
           part_path: RS03_PART,
-          name: "actuator_rs03_left_shoulder_roll",
+          name: "actuator_rs03_left_shoulder_pitch",
           save: true,
         }),
       });
@@ -46,11 +46,11 @@ try {
   }
 
   steps.push({
-    step: "place_left_shoulder_roll",
+    step: "place_left_shoulder_pitch",
     result: runWorker("place_shoulder_roll_motors", {
       path: TORSO_ASM,
       side: "left",
-      left_component: "actuator_rs03_left_shoulder_roll",
+      left_component: "actuator_rs03_left_shoulder_pitch",
       inner_rail_mm: INNER_RAIL_MM,
       save: true,
     }),

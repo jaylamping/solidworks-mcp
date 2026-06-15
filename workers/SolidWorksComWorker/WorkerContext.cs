@@ -10,17 +10,17 @@ internal static partial class Program
 
     private static Component2? ResolveTorsoLayoutComponent(IAssemblyDoc assembly)
     {
-        Component2? frame = FindComponent(assembly, null, "marengo_torso_frame_asm_revA");
+        Component2? frame = FindComponent(assembly, null, "marengo_torso_frame_asm");
         if (frame is not null)
         {
-            Component2? nested = FindComponent(assembly, frame, "marengo_torso_layout_revA");
+            Component2? nested = FindComponent(assembly, frame, "marengo_torso_layout");
             if (nested is not null)
             {
                 return nested;
             }
         }
 
-        return FindComponent(assembly, null, "marengo_torso_layout_revA");
+        return FindComponent(assembly, null, "marengo_torso_layout");
     }
 
     private static Component2? FindComponent(IAssemblyDoc assembly, Component2? parent, string nameOrPrefix)

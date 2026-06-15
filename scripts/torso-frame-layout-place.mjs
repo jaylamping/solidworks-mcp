@@ -18,11 +18,11 @@ if (!argv.includes("--confirm")) {
 
 const root = "c:/code/solidworks-mcp";
 const workerProject = `${root}/workers/SolidWorksComWorker`;
-const FRAME = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm_revA.SLDASM";
+const FRAME = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm.SLDASM";
 const VENDOR = "C:/code/marengo/hardware/cad/vendor/vendor_2020_black_extrusion.SLDPRT";
 const BRACKET_PART =
   "C:/code/marengo/hardware/cad/vendor/vendor_2028_corner_bracket_vendor.SLDPRT";
-const LAYOUT = "marengo_torso_layout_revA";
+const LAYOUT = "marengo_torso_layout";
 
 function run(command, args) {
   const r = spawnSync("dotnet", ["run", "--project", workerProject, "--no-launch-profile"], {

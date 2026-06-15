@@ -10,7 +10,7 @@ internal static partial class Program
     private static object PlaceShoulderRollMotors(JsonElement? args)
     {
         string path = RequiredStringArg(args, "path");
-        string layoutComponent = StringArg(args, "layout_component") ?? "marengo_torso_layout_revA-1";
+        string layoutComponent = StringArg(args, "layout_component") ?? "marengo_torso_layout-1";
         string leftComponent = StringArg(args, "left_component") ?? "actuator_rs03_left_shoulder_roll";
         string rightComponent = StringArg(args, "right_component") ?? "actuator_rs03_right_shoulder_roll";
         string side = StringArg(args, "side") ?? "both";
@@ -172,7 +172,7 @@ internal static partial class Program
         string path = RequiredStringArg(args, "path");
         string side = StringArg(args, "side") ?? "left";
         bool leftSide = !side.Equals("right", StringComparison.OrdinalIgnoreCase);
-        string layoutComponent = StringArg(args, "layout_component") ?? "marengo_torso_layout_revA";
+        string layoutComponent = StringArg(args, "layout_component") ?? "marengo_torso_layout";
         string motorComponent = StringArg(args, "motor_component")
             ?? (leftSide ? "actuator_rs03_left_shoulder_roll" : "actuator_rs03_right_shoulder_roll");
         bool save = BoolArg(args, "save", defaultValue: true);

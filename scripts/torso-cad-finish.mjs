@@ -10,7 +10,7 @@ try {
     step: "unfix_layout",
     result: runWorker("set_component_fixed", {
       path: TORSO_ASM,
-      component_name: "marengo_torso_layout_revA-1",
+      component_name: "marengo_torso_layout-1",
       fixed: false,
     }),
   });
@@ -19,7 +19,7 @@ try {
     step: "unfix_frame_subasm",
     result: runWorker("set_component_fixed", {
       path: TORSO_ASM,
-      component_name: "marengo_torso_frame_asm_revA-1",
+      component_name: "marengo_torso_frame_asm-1",
       fixed: false,
     }),
   });
@@ -28,9 +28,9 @@ try {
     step: "mate_frame_to_urdf_link_frame",
     result: runWorker("mate_coord_sys", {
       path: TORSO_ASM,
-      component_1: "marengo_torso_layout_revA-1",
+      component_1: "marengo_torso_layout-1",
       ref_1: "urdf_link_frame",
-      component_2: "marengo_torso_layout_revA-2",
+      component_2: "marengo_torso_layout-2",
       ref_2: "urdf_link_frame",
     }),
   });

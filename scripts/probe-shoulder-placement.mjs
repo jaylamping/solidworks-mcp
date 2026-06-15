@@ -3,7 +3,7 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 
-const asm = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
+const asm = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
 
 const components = runWorker("list_components", { path: asm });
 const actuators = components.components.filter((c) =>
@@ -21,7 +21,7 @@ for (const a of actuators) {
 
 const layoutBox = runWorker("get_feature_box", {
   path: asm,
-  component_name: "marengo_torso_layout_revA",
+  component_name: "marengo_torso_layout",
   feature_name: "torso_inner_clear",
 }).catch?.(() => null);
 
@@ -29,14 +29,14 @@ let innerClear = null;
 try {
   innerClear = runWorker("get_feature_box", {
     path: asm,
-    component_name: "marengo_torso_frame_asm_revA/marengo_torso_layout_revA",
+    component_name: "marengo_torso_frame_asm/marengo_torso_layout",
     feature_name: "torso_inner_clear",
   });
 } catch {
   try {
     innerClear = runWorker("get_feature_box", {
       path: asm,
-      component_name: "marengo_torso_layout_revA",
+      component_name: "marengo_torso_layout",
       feature_name: "torso_inner_clear",
     });
   } catch {

@@ -3,9 +3,9 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 const LAYOUT_PART =
-  "C:/code/marengo/hardware/cad/parts/marengo_torso_layout_revA.SLDPRT";
+  "C:/code/marengo/hardware/cad/parts/marengo_torso_layout.SLDPRT";
 const TORSO_ASM =
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
+  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
 
 const INNER_RAIL_MM = 55;
 

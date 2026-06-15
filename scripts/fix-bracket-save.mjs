@@ -1,7 +1,7 @@
 /**
  * Repair bracket save state after rename / debug SaveAs drift.
  *
- * - Rewires torso asm to marengo_shoulder_roll_mount_bracket_right_revA.SLDPRT
+ * - Rewires torso asm to marengo_shoulder_pitch_mount_bracket_right.SLDPRT
  * - Copies the last known good bracket bytes if _bracket_save_test exists
  * - Saves assembly
  */
@@ -10,12 +10,12 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 const TORSO_ASM =
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
+  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
 const RIGHT_PART =
-  "C:/code/marengo/hardware/cad/parts/marengo_shoulder_roll_mount_bracket_right_revA.SLDPRT";
+  "C:/code/marengo/hardware/cad/parts/marengo_shoulder_pitch_mount_bracket_right.SLDPRT";
 const TEST_PART =
   "C:/code/marengo/hardware/cad/parts/_bracket_save_test.SLDPRT";
-const COMPONENT = "marengo_shoulder_roll_mount_bracket_right_revA";
+const COMPONENT = "marengo_shoulder_pitch_mount_bracket_right";
 
 
 const steps = [];
@@ -36,7 +36,7 @@ try {
   const bracket = components.find((c) => c.name.startsWith(COMPONENT));
   steps.push({ step: "bracket_component", result: bracket });
 
-  if (bracket && !bracket.path.endsWith("marengo_shoulder_roll_mount_bracket_right_revA.SLDPRT")) {
+  if (bracket && !bracket.path.endsWith("marengo_shoulder_pitch_mount_bracket_right.SLDPRT")) {
     steps.push({
       step: "replace_to_right_part",
       result: runWorker("replace_components_by_path", {

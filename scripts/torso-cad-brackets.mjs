@@ -2,8 +2,8 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 
-const FRAME_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm_revA.SLDASM";
-const TORSO_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
+const FRAME_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm.SLDASM";
+const TORSO_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
 const BRACKET_RENAMES = 16;
 
 
@@ -28,8 +28,8 @@ try {
 
   for (const [from, to] of [
     ["actuator_rs03_waist_layout", "actuator_rs03_waist_yaw"],
-    ["actuator_rs03_shoulder_roll_L", "actuator_rs03_left_shoulder_roll"],
-    ["actuator_rs03_shoulder_roll_R", "actuator_rs03_right_shoulder_roll"],
+    ["actuator_rs03_shoulder_roll_L", "actuator_rs03_left_shoulder_pitch"],
+    ["actuator_rs03_shoulder_roll_R", "actuator_rs03_right_shoulder_pitch"],
   ]) {
     steps.push({
       step: `rename_${from}`,

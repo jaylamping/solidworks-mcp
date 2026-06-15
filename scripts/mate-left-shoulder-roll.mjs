@@ -3,9 +3,9 @@ import { tryMateCoincident, ANTI_ALIGNED, ALIGNED } from "./lib/mate-helpers.mjs
 
 const TORSO_ASM =
   process.env.MARENGO_TORSO_ASM ??
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
-const LAYOUT = process.env.TORSO_LAYOUT_COMPONENT ?? "marengo_torso_layout_revA";
-const MOTOR = process.env.LEFT_SHOULDER_MOTOR ?? "actuator_rs03_left_shoulder_roll";
+  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+const LAYOUT = process.env.TORSO_LAYOUT_COMPONENT ?? "marengo_torso_layout";
+const LEFT_SHOULDER_MOTOR = process.env.LEFT_SHOULDER_MOTOR ?? "actuator_rs03_left_shoulder_pitch";
 const VENDOR_PART =
   process.env.RS03_VENDOR_PART ??
   "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT";

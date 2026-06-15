@@ -6,7 +6,7 @@ requireConfirm(
   "node scripts/torso-frame-layout-sync-continue.mjs --confirm",
 );
 
-const FRAME_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm_revA.SLDASM";
+const FRAME_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm.SLDASM";
 
 const steps = [];
 const depthRails = [
@@ -21,7 +21,7 @@ try {
     step: "mate_layout_to_origin",
     result: runWorker("mate_component_origin", {
       path: FRAME_ASM,
-      component_name: "marengo_torso_layout_revA",
+      component_name: "marengo_torso_layout",
       reference: "urdf_link_frame",
     }),
   });
@@ -61,7 +61,7 @@ try {
     step: "hide_layout_jig",
     result: runWorker("set_component_visible", {
       path: FRAME_ASM,
-      component_name: "marengo_torso_layout_revA",
+      component_name: "marengo_torso_layout",
       visible: false,
     }),
   });
@@ -75,9 +75,9 @@ try {
     step: "mate_torso_frame_to_layout",
     result: runWorker("mate_coord_sys", {
       path: TORSO_ASM,
-      component_1: "marengo_torso_layout_revA-1",
+      component_1: "marengo_torso_layout-1",
       ref_1: "urdf_link_frame",
-      component_2: "marengo_torso_layout_revA-2",
+      component_2: "marengo_torso_layout-2",
       ref_2: "urdf_link_frame",
     }),
   });
@@ -86,7 +86,7 @@ try {
     step: "fix_torso_layout",
     result: runWorker("set_component_fixed", {
       path: TORSO_ASM,
-      component_name: "marengo_torso_layout_revA-1",
+      component_name: "marengo_torso_layout-1",
       fixed: true,
     }),
   });

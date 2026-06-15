@@ -8,7 +8,7 @@ requireConfirm(
   "node scripts/torso-frame-autobuild.mjs --confirm",
 );
 
-const FRAME_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm_revA.SLDASM";
+const FRAME_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm.SLDASM";
 
 const data = runWorker("torso_frame_build_mates", {
   path: FRAME_ASM,

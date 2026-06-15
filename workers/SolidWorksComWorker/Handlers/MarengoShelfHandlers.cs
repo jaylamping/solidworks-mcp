@@ -15,12 +15,12 @@ internal static partial class Program
                 Path.GetDirectoryName(assemblyPath) ?? ".",
                 "..",
                 "parts",
-                "marengo_torso_compute_shelf_upper_revA.SLDPRT");
+                "marengo_torso_upper_compute_shelf.SLDPRT");
         partPath = Path.GetFullPath(partPath);
-        string shelfComponent = StringArg(args, "shelf_component") ?? "marengo_torso_compute_shelf_upper_revA";
-        string layoutComponent = StringArg(args, "layout_component") ?? "marengo_torso_layout_revA";
-        string leftActuator = StringArg(args, "left_actuator") ?? "actuator_rs03_left_shoulder_roll";
-        string rightActuator = StringArg(args, "right_actuator") ?? "actuator_rs03_right_shoulder_roll";
+        string shelfComponent = StringArg(args, "shelf_component") ?? "marengo_torso_upper_compute_shelf";
+        string layoutComponent = StringArg(args, "layout_component") ?? "marengo_torso_layout";
+        string leftActuator = StringArg(args, "left_actuator") ?? "actuator_rs03_left_shoulder_pitch";
+        string rightActuator = StringArg(args, "right_actuator") ?? "actuator_rs03_right_shoulder_pitch";
         double thicknessM = DoubleArg(args, "thickness_mm", 4.0) / 1000.0;
         double clearanceM = DoubleArg(args, "clearance_mm", 1.0) / 1000.0;
         bool mateInAssembly = BoolArg(args, "mate_in_assembly", defaultValue: true);

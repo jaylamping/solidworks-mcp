@@ -7,9 +7,9 @@ SolidWorks MCP worker commands exposed via TypeScript tools. All paths must be u
 **Tool:** `marengo_torso_frame_build`  
 **Worker:** `torso_frame_build_mates`
 
-Pipeline for `marengo_torso_frame_asm_revA`:
+Pipeline for `marengo_torso_frame_asm`:
 
-1. Show and fix layout jig (`marengo_torso_layout_revA`).
+1. Show and fix layout jig (`marengo_torso_layout`).
 2. Ensure `L100` depth-rail config on `vendor_2020_black_extrusion` (100 mm).
 3. For each of 12 extrusions: translate to layout ICE center (`bottom_rail_*`, `top_rail_*`), attempt coincident/parallel mates, **fix component** if mates fail.
 4. Place 16× `bracket_2028_corner` at **inside** joint corners (2 per corner, bottom + top bands).

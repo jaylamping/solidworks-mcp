@@ -3,7 +3,7 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 
-const asm = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm_revA.SLDASM";
+const asm = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
 const vendor = "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT";
 
 console.log(
@@ -13,7 +13,7 @@ console.log(
       vendorMeasure: runWorker("measure", { path: vendor }),
       motorBox: runWorker("get_component_box", {
         path: asm,
-        component_name: "actuator_rs03_left_shoulder_roll",
+        component_name: "actuator_rs03_left_shoulder_pitch",
       }),
     },
     null,
