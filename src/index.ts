@@ -21,6 +21,7 @@ import {
   getFeatureBox,
   listMates,
   mateCoincident,
+  mateLimitAngle,
   mateParallel,
   probeFeatureFaces,
   saveDocument,
@@ -415,6 +416,24 @@ export async function main(): Promise<void> {
     async (args: z.infer<typeof assemblyToolSchemas.mateRefsSchema>) => {
       try {
         return jsonResult(await mateParallel(args));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "solidworks_mate_limit_angle",
+    {
+      title: "Limit angle mate",
+      description:
+        "Add a limit-angle mate (two planes + axis) between components. Defaults: min -50 deg, max 180 deg.",
+      inputSchema: assemblyToolSchemas.limitAngleSchema,
+      annotations: { readOnlyHint: false },
+    },
+    async (args: z.infer<typeof assemblyToolSchemas.limitAngleSchema>) => {
+      try {
+        return jsonResult(await mateLimitAngle(args));
       } catch (error) {
         return errorResult(error);
       }

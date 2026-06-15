@@ -35,9 +35,18 @@ const torsoFrameBuildSchema = assemblyPathSchema.extend({
   rebuild_configs: z.boolean().optional(),
 });
 
+const limitAngleSchema = mateRefsSchema.extend({
+  component_axis: z.string().min(1).optional(),
+  ref_axis: z.string().min(1).optional(),
+  min_deg: z.number().optional(),
+  max_deg: z.number().optional(),
+  save: z.boolean().optional(),
+});
+
 export const assemblyToolSchemas = {
   assemblyPathSchema,
   mateRefsSchema,
+  limitAngleSchema,
   featureProbeSchema,
   alignSchema,
   torsoFrameBuildSchema,
@@ -101,6 +110,14 @@ export async function mateParallel(args: z.infer<typeof mateRefsSchema>) {
   const filePath = assertAllowedPath(args.path);
   return runWorker({
     command: "mate_parallel",
+    args: { ...args, path: filePath },
+  });
+}
+
+export async function mateLimitAngle(args: z.infer<typeof limitAngleSchema>) {
+  const filePath = assertAllowedPath(args.path);
+  return runWorker({
+    command: "mate_limit_angle",
     args: { ...args, path: filePath },
   });
 }

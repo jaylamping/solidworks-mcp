@@ -51,11 +51,26 @@ internal static partial class Program
             }
 
             string? name = Try(() => component.Name2) as string;
-            if (name is not null
-                && (name.Equals(nameOrPrefix, StringComparison.OrdinalIgnoreCase)
-                    || name.StartsWith(nameOrPrefix, StringComparison.OrdinalIgnoreCase)))
+            if (name is not null)
             {
-                return component;
+                if (name.Equals(nameOrPrefix, StringComparison.OrdinalIgnoreCase)
+                    || name.StartsWith(nameOrPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return component;
+                }
+
+                string leaf = name;
+                int slash = name.LastIndexOf('/');
+                if (slash >= 0 && slash < name.Length - 1)
+                {
+                    leaf = name[(slash + 1)..];
+                }
+
+                if (leaf.Equals(nameOrPrefix, StringComparison.OrdinalIgnoreCase)
+                    || leaf.StartsWith(nameOrPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return component;
+                }
             }
 
             Component2? nested = FindComponent(assembly, component, nameOrPrefix);

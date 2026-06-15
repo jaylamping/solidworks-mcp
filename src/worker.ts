@@ -45,6 +45,7 @@ export type WorkerCommand =
   | "mate_distance"
   | "mate_perpendicular"
   | "mate_width"
+  | "mate_limit_angle"
   | "mate_probe"
   | "align_component_to_feature"
   | "probe_feature_faces"

@@ -130,6 +130,11 @@ internal static partial class Program
             return SelectComponentPlaneFeature(assemblyDoc, component, feature, append, mark);
         }
 
+        if (refType == "RefAxis")
+        {
+            return SelectComponentAxisFeature(assemblyDoc, component, feature, append, mark);
+        }
+
         string selectionType = refType switch
         {
             "CoordSys" => "COORDSYS",
@@ -158,6 +163,221 @@ internal static partial class Program
         return false;
     }
 
+    private static bool IsValidPlaneSelection(ModelDoc2 assemblyDoc, int mark)
+    {
+        if (HasMarkedSelection(assemblyDoc, mark, (int)swSelectType_e.swSelFACES)
+            || HasMarkedSelection(assemblyDoc, mark, (int)swSelectType_e.swSelDATUMPLANES))
+        {
+            return true;
+        }
+
+        SelectionMgr? selectionMgr = Try(() => assemblyDoc.SelectionManager) as SelectionMgr;
+        object? entity = ResolveSelectedMateEntity(selectionMgr, mark);
+        return entity is Face2;
+    }
+
+    private static bool SelectComponentReferenceOrBodyPlane(
+        ModelDoc2 assemblyDoc,
+        Component2 component,
+        string referenceName,
+        string? axisReferenceName,
+        bool append,
+        int mark)
+    {
+        if (SelectComponentReference(assemblyDoc, component, referenceName, append, mark)
+            && IsValidPlaneSelection(assemblyDoc, mark))
+        {
+            return true;
+        }
+
+        DeselectMarkedObject(assemblyDoc, mark);
+        return SelectBodyPlanarFace(assemblyDoc, component, axisReferenceName, append, mark);
+    }
+
+    private static bool SelectBodyPlanarFace(
+        ModelDoc2 assemblyDoc,
+        Component2 component,
+        string? axisReferenceName,
+        bool append,
+        int mark)
+    {
+        Face2? face = FindBodyPlanarFace(component, axisReferenceName);
+        if (face is null)
+        {
+            return false;
+        }
+
+        object? asmFace = Try(() => component.GetCorrespondingEntity(face));
+        SelectData? selectData = CreateSelectData(assemblyDoc, mark);
+        if (asmFace is Entity asmEntity && selectData is not null
+            && (Try(() => asmEntity.Select4(append, selectData)) as bool? ?? false)
+            && IsValidPlaneSelection(assemblyDoc, mark))
+        {
+            return true;
+        }
+
+        DeselectMarkedObject(assemblyDoc, mark);
+
+        if (face is Entity partEntity && selectData is not null)
+        {
+            TryVoid(() => component.Select4(append, selectData, false));
+            if ((Try(() => partEntity.Select2(append, mark)) as bool? ?? false)
+                && IsValidPlaneSelection(assemblyDoc, mark))
+            {
+                return true;
+            }
+        }
+
+        DeselectMarkedObject(assemblyDoc, mark);
+        return SelectFeatureFaceByRay(assemblyDoc, component, face, append, mark)
+            && IsValidPlaneSelection(assemblyDoc, mark);
+    }
+
+    private static Face2? FindBodyPlanarFace(Component2 component, string? axisReferenceName)
+    {
+        ModelDoc2? componentDoc = Try(() => component.GetModelDoc2()) as ModelDoc2;
+        if (componentDoc is not IPartDoc partDoc)
+        {
+            return null;
+        }
+
+        double[]? axisDirection = null;
+        if (!string.IsNullOrWhiteSpace(axisReferenceName))
+        {
+            Feature? axisFeature = FindFeatureByName(componentDoc, axisReferenceName);
+            if (axisFeature is not null
+                && Try(() => axisFeature.GetSpecificFeature2()) is RefAxis refAxis)
+            {
+                double[]? axisParams = Try(() => refAxis.GetRefAxisParams()) as double[];
+                if (axisParams is { Length: >= 6 })
+                {
+                    axisDirection = NormalizeVector(axisParams[3], axisParams[4], axisParams[5]);
+                }
+            }
+        }
+
+        object? bodiesObj = Try(() => partDoc.GetBodies2((int)swBodyType_e.swSolidBody, true));
+        if (bodiesObj is not object[] bodies)
+        {
+            return null;
+        }
+
+        Face2? bestFace = null;
+        double bestArea = 0.0;
+        foreach (object bodyObj in bodies)
+        {
+            if (bodyObj is not Body2 body)
+            {
+                continue;
+            }
+
+            object? facesObj = Try(() => body.GetFaces());
+            if (facesObj is not object[] faces)
+            {
+                continue;
+            }
+
+            foreach (object faceObj in faces)
+            {
+                if (faceObj is not Face2 face)
+                {
+                    continue;
+                }
+
+                if (Try(() => face.GetSurface()) is not Surface surface
+                    || (Try(() => surface.IsPlane()) as bool? ?? false) != true)
+                {
+                    continue;
+                }
+
+                if (axisDirection is not null)
+                {
+                    double[]? planeParams = Try(() => surface.PlaneParams) as double[];
+                    if (planeParams is { Length: >= 4 })
+                    {
+                        double[] normal = NormalizeVector(planeParams[0], planeParams[1], planeParams[2]);
+                        if (Math.Abs(Dot(normal, axisDirection)) > 0.2)
+                        {
+                            continue;
+                        }
+                    }
+                }
+
+                double area = Try(() => face.GetArea()) as double? ?? 0.0;
+                if (area > bestArea)
+                {
+                    bestArea = area;
+                    bestFace = face;
+                }
+            }
+        }
+
+        return bestFace;
+    }
+
+    private static double[] NormalizeVector(double x, double y, double z)
+    {
+        double length = Math.Sqrt((x * x) + (y * y) + (z * z));
+        if (length <= 1e-9)
+        {
+            return [0, 0, 1];
+        }
+
+        return [x / length, y / length, z / length];
+    }
+
+    private static double Dot(double[] a, double[] b) =>
+        (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]);
+
+    private static double DistanceBetweenLines(
+        double[] originA,
+        double[] directionA,
+        double[] originB,
+        double[] directionB)
+    {
+        double[] w0 =
+        [
+            originA[0] - originB[0],
+            originA[1] - originB[1],
+            originA[2] - originB[2],
+        ];
+        double a = Dot(directionA, directionA);
+        double b = Dot(directionA, directionB);
+        double c = Dot(directionB, directionB);
+        double d = Dot(directionA, w0);
+        double e = Dot(directionB, w0);
+        double denominator = (a * c) - (b * b);
+        if (Math.Abs(denominator) <= 1e-9)
+        {
+            double[] cross =
+            [
+                (directionA[1] * w0[2]) - (directionA[2] * w0[1]),
+                (directionA[2] * w0[0]) - (directionA[0] * w0[2]),
+                (directionA[0] * w0[1]) - (directionA[1] * w0[0]),
+            ];
+            return Math.Sqrt(Dot(cross, cross));
+        }
+
+        double s = ((b * e) - (c * d)) / denominator;
+        double t = ((a * e) - (b * d)) / denominator;
+        double[] pointA =
+        [
+            originA[0] + (directionA[0] * s),
+            originA[1] + (directionA[1] * s),
+            originA[2] + (directionA[2] * s),
+        ];
+        double[] pointB =
+        [
+            originB[0] + (directionB[0] * t),
+            originB[1] + (directionB[1] * t),
+            originB[2] + (directionB[2] * t),
+        ];
+        double dx = pointA[0] - pointB[0];
+        double dy = pointA[1] - pointB[1];
+        double dz = pointA[2] - pointB[2];
+        return Math.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
+    }
+
     private static bool SelectComponentPlaneFeature(
         ModelDoc2 assemblyDoc,
         Component2 component,
@@ -167,36 +387,91 @@ internal static partial class Program
     {
         string? componentName = Try(() => component.Name2) as string;
         string? planeName = Try(() => planeFeature.Name) as string;
-        if (componentName is not null && planeName is not null
-            && assemblyDoc.Extension.SelectByID2(
-                $"{planeName}@{componentName}",
-                "PLANE",
-                0,
-                0,
-                0,
-                append,
-                mark,
-                null,
-                0))
+        string? assemblyTitle = Try(() => assemblyDoc.GetTitle()) as string;
+
+        if (componentName is not null && planeName is not null)
         {
-            return true;
+            List<string> selectNames = [$"{planeName}@{componentName}"];
+            if (assemblyTitle is not null)
+            {
+                selectNames.Add($"{planeName}@{componentName}@{assemblyTitle}");
+            }
+
+            if (componentName.Contains('/'))
+            {
+                string[] parts = componentName.Split('/');
+                if (parts.Length == 2)
+                {
+                    selectNames.AddRange(
+                    [
+                        $"{planeName}@{parts[1]}@{parts[0]}",
+                        $"{planeName}@{parts[0]}/{parts[1]}",
+                    ]);
+                    if (assemblyTitle is not null)
+                    {
+                        selectNames.Add($"{planeName}@{parts[1]}@{parts[0]}@{assemblyTitle}");
+                    }
+                }
+            }
+
+            foreach (string selectName in selectNames.Distinct())
+            {
+                foreach (string selectionType in new[] { "EXTREFPLANE", "PLANE", "REFPLANE" })
+                {
+                    if (TrySelectPlaneById2(assemblyDoc, selectName, selectionType, append, mark))
+                    {
+                        return true;
+                    }
+                }
+            }
         }
 
         object? facesObj = Try(() => planeFeature.GetFaces());
         if (facesObj is object[] planeFaces && planeFaces.Length > 0 && planeFaces[0] is Face2 planeFace)
         {
+            object? asmFace = Try(() => component.GetCorrespondingEntity(planeFace));
             SelectData? selectData = CreateSelectData(assemblyDoc, mark);
-            Entity? entity = planeFace as Entity;
-            if (entity is not null && selectData is not null
-                && (Try(() => entity.Select4(append, selectData)) as bool? ?? false))
+            if (asmFace is Entity asmEntity && selectData is not null
+                && (Try(() => asmEntity.Select4(append, selectData)) as bool? ?? false)
+                && IsValidPlaneSelection(assemblyDoc, mark))
             {
                 return true;
             }
 
-            if (SelectFeatureFaceByRay(assemblyDoc, component, planeFace, append, mark))
+            DeselectMarkedObject(assemblyDoc, mark);
+
+            if (planeFace is Entity partEntity && selectData is not null)
+            {
+                if ((Try(() => partEntity.Select4(append, selectData)) as bool? ?? false)
+                    && IsValidPlaneSelection(assemblyDoc, mark))
+                {
+                    return true;
+                }
+
+                DeselectMarkedObject(assemblyDoc, mark);
+
+                if (!append)
+                {
+                    assemblyDoc.ClearSelection2(true);
+                }
+
+                TryVoid(() => component.Select4(append, selectData, false));
+                if ((Try(() => partEntity.Select2(append, mark)) as bool? ?? false)
+                    && IsValidPlaneSelection(assemblyDoc, mark))
+                {
+                    return true;
+                }
+
+                DeselectMarkedObject(assemblyDoc, mark);
+            }
+
+            if (SelectFeatureFaceByRay(assemblyDoc, component, planeFace, append, mark)
+                && IsValidPlaneSelection(assemblyDoc, mark))
             {
                 return true;
             }
+
+            DeselectMarkedObject(assemblyDoc, mark);
         }
 
         if (Try(() => planeFeature.GetSpecificFeature2()) is RefPlane refPlane)
@@ -229,7 +504,100 @@ internal static partial class Program
                             mark,
                             append,
                             0,
-                            0))
+                            0)
+                        && IsValidPlaneSelection(assemblyDoc, mark))
+                    {
+                        return true;
+                    }
+
+                    DeselectMarkedObject(assemblyDoc, mark);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TrySelectPlaneById2(
+        ModelDoc2 assemblyDoc,
+        string selectName,
+        string selectionType,
+        bool append,
+        int mark)
+    {
+        if (!assemblyDoc.Extension.SelectByID2(
+                selectName,
+                selectionType,
+                0,
+                0,
+                0,
+                append,
+                mark,
+                null,
+                0))
+        {
+            return false;
+        }
+
+        if (IsValidPlaneSelection(assemblyDoc, mark))
+        {
+            return true;
+        }
+
+        DeselectMarkedObject(assemblyDoc, mark);
+        return false;
+    }
+
+    private static bool SelectComponentAxisFeature(
+        ModelDoc2 assemblyDoc,
+        Component2 component,
+        Feature axisFeature,
+        bool append,
+        int mark)
+    {
+        const int expectedAxisType = (int)swSelectType_e.swSelDATUMAXES;
+        string? componentName = Try(() => component.Name2) as string;
+        string? axisName = Try(() => axisFeature.Name) as string;
+        string? assemblyTitle = Try(() => assemblyDoc.GetTitle()) as string;
+
+        if (componentName is not null && axisName is not null)
+        {
+            List<string> selectNames = [$"{axisName}@{componentName}"];
+            if (assemblyTitle is not null)
+            {
+                selectNames.Add($"{axisName}@{componentName}@{assemblyTitle}");
+            }
+
+            if (componentName.Contains('/'))
+            {
+                string[] parts = componentName.Split('/');
+                if (parts.Length == 2)
+                {
+                    selectNames.AddRange(
+                    [
+                        $"{axisName}@{parts[1]}@{parts[0]}",
+                        $"{axisName}@{componentName}",
+                        $"{axisName}@{parts[0]}/{parts[1]}",
+                    ]);
+                    if (assemblyTitle is not null)
+                    {
+                        selectNames.Add($"{axisName}@{parts[1]}@{parts[0]}@{assemblyTitle}");
+                        selectNames.Add($"{axisName}@{parts[0]}/{parts[1]}@{assemblyTitle}");
+                    }
+                }
+            }
+
+            foreach (string selectName in selectNames.Distinct())
+            {
+                foreach (string selectionType in new[] { "EXTREFAXIS", "AXIS", "REFAXIS" })
+                {
+                    if (TrySelectAxisById2(
+                            assemblyDoc,
+                            selectName,
+                            selectionType,
+                            append,
+                            mark,
+                            expectedAxisType))
                     {
                         return true;
                     }
@@ -237,7 +605,103 @@ internal static partial class Program
             }
         }
 
+        if (Try(() => axisFeature.GetSpecificFeature2()) is RefAxis refAxis)
+        {
+            SelectData? selectData = CreateSelectData(assemblyDoc, mark);
+
+            object? asmAxis = Try(() => component.GetCorrespondingEntity(refAxis));
+            if (asmAxis is Entity asmEntity
+                && selectData is not null
+                && (Try(() => asmEntity.Select4(append, selectData)) as bool? ?? false)
+                && HasMarkedSelection(assemblyDoc, mark, expectedAxisType))
+            {
+                return true;
+            }
+
+            DeselectMarkedObject(assemblyDoc, mark);
+
+            if (refAxis is Entity partEntity && selectData is not null)
+            {
+                if ((Try(() => partEntity.Select4(append, selectData)) as bool? ?? false)
+                    && HasMarkedSelection(assemblyDoc, mark, expectedAxisType))
+                {
+                    return true;
+                }
+
+                DeselectMarkedObject(assemblyDoc, mark);
+
+                if (!append)
+                {
+                    assemblyDoc.ClearSelection2(true);
+                }
+
+                TryVoid(() => component.Select4(append, selectData, false));
+                if ((Try(() => partEntity.Select2(append, mark)) as bool? ?? false)
+                    && HasMarkedSelection(assemblyDoc, mark, expectedAxisType))
+                {
+                    return true;
+                }
+
+                DeselectMarkedObject(assemblyDoc, mark);
+            }
+
+            if (selectData is not null
+                && (Try(() => axisFeature.Select2(append, mark)) as bool? ?? false)
+                && HasMarkedSelection(assemblyDoc, mark, expectedAxisType))
+            {
+                return true;
+            }
+
+            DeselectMarkedObject(assemblyDoc, mark);
+        }
+
         return false;
+    }
+
+    private static bool TrySelectAxisById2(
+        ModelDoc2 assemblyDoc,
+        string selectName,
+        string selectionType,
+        bool append,
+        int mark,
+        int expectedAxisType)
+    {
+        if (!assemblyDoc.Extension.SelectByID2(
+                selectName,
+                selectionType,
+                0,
+                0,
+                0,
+                append,
+                mark,
+                null,
+                0))
+        {
+            return false;
+        }
+
+        if (HasMarkedSelection(assemblyDoc, mark, expectedAxisType))
+        {
+            return true;
+        }
+
+        DeselectMarkedObject(assemblyDoc, mark);
+        return false;
+    }
+
+    private static void DeselectMarkedObject(ModelDoc2 assemblyDoc, int mark)
+    {
+        SelectionMgr? selectionMgr = Try(() => assemblyDoc.SelectionManager) as SelectionMgr;
+        if (selectionMgr is null)
+        {
+            return;
+        }
+
+        int count = Try(() => selectionMgr.GetSelectedObjectCount2(mark)) as int? ?? 0;
+        for (int i = count; i >= 1; i--)
+        {
+            TryVoid(() => selectionMgr.DeSelect2(i, mark));
+        }
     }
 
     private static double[] TransformDirectionManual(MathTransform transform, double x, double y, double z)

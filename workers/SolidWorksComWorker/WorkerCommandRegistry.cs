@@ -45,6 +45,8 @@ internal static partial class Program
             ["mate_distance"] = MateDistance,
             ["mate_perpendicular"] = MatePerpendicular,
             ["mate_width"] = MateWidth,
+            ["mate_limit_angle"] = MateLimitAngle,
+            ["debug_limit_angle"] = DebugLimitAngle,
             ["mate_probe"] = MateProbe,
             ["align_component_to_feature"] = AlignComponentToFeature,
             ["probe_feature_faces"] = ProbeFeatureFaces,
@@ -78,6 +80,7 @@ internal static partial class Program
             ["insert_component"] = InsertComponent,
             ["cut_actuator_cavity"] = CutActuatorCavity,
             ["build_torso_compute_shelf"] = BuildTorsoComputeShelf,
+            ["create_mallet_mount"] = CreateMalletMount,
             ["debug_mate_entities"] = DebugMateEntities,
         };
 }
