@@ -587,6 +587,297 @@ internal static partial class Program
         return CreateMateFromSelection(doc, assembly, first, second, ref1, ref2, mateType, mateAlign);
     }
 
+    private static object ProbePitchAxis(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string componentName = RequiredStringArg(args, "component_name");
+        string refAxis = StringArg(args, "ref_axis") ?? "shaft_axis";
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        Component2? component = FindComponent((IAssemblyDoc)doc, null, componentName)
+            ?? throw new InvalidOperationException($"Component not found: {componentName}");
+        ModelDoc2? cdoc = Try(() => component.GetModelDoc2()) as ModelDoc2;
+        if (cdoc is null)
+        {
+            throw new InvalidOperationException("No part doc.");
+        }
+
+        double[]? axisDir = null;
+        double[]? axisOrigin = null;
+        Feature? axisFeature = FindFeatureByName(cdoc, refAxis);
+        if (axisFeature is not null && Try(() => axisFeature.GetSpecificFeature2()) is RefAxis ra)
+        {
+            double[]? p = Try(() => ra.GetRefAxisParams()) as double[];
+            if (p is { Length: >= 6 })
+            {
+                axisOrigin = [p[0], p[1], p[2]];
+                axisDir = NormalizeVector(p[3] - p[0], p[4] - p[1], p[5] - p[2]);
+            }
+        }
+
+        var planes = new List<object>();
+        foreach (string pn in new[] { "Front Plane", "Top Plane", "Right Plane", "output_face", "pitch_limit_ref" })
+        {
+            Feature? pf = FindFeatureByName(cdoc, pn);
+            if (pf is null || Try(() => pf.GetSpecificFeature2()) is not RefPlane rp)
+            {
+                planes.Add(new { name = pn, found = false });
+                continue;
+            }
+
+            MathTransform? t = Try(() => rp.Transform) as MathTransform;
+            double[]? m = t?.ArrayData as double[];
+            double[]? normal = m is { Length: >= 12 } ? NormalizeVector(m[6], m[7], m[8]) : null;
+            double? dotAxis = (normal is not null && axisDir is not null)
+                ? Math.Abs(Dot(normal, axisDir))
+                : (double?)null;
+            planes.Add(new { name = pn, found = true, normal, dotWithAxis = dotAxis });
+        }
+
+        // Find largest planar faces whose normal is perpendicular to the axis (good for angle-about-axis).
+        var goodFaces = new List<object>();
+        if (cdoc is IPartDoc partDoc && axisDir is not null)
+        {
+            object? bodiesObj = Try(() => partDoc.GetBodies2((int)swBodyType_e.swSolidBody, true));
+            if (bodiesObj is object[] bodies)
+            {
+                foreach (object bo in bodies)
+                {
+                    if (bo is not Body2 body)
+                    {
+                        continue;
+                    }
+
+                    if (Try(() => body.GetFaces()) is not object[] faces)
+                    {
+                        continue;
+                    }
+
+                    foreach (object fo in faces)
+                    {
+                        if (fo is not Face2 face
+                            || Try(() => face.GetSurface()) is not Surface s
+                            || (Try(() => s.IsPlane()) as bool? ?? false) != true)
+                        {
+                            continue;
+                        }
+
+                        double[]? pp = Try(() => s.PlaneParams) as double[];
+                        if (pp is not { Length: >= 4 })
+                        {
+                            continue;
+                        }
+
+                        double[] nrm = NormalizeVector(pp[0], pp[1], pp[2]);
+                        double dot = Math.Abs(Dot(nrm, axisDir));
+                        double area = Try(() => face.GetArea()) as double? ?? 0.0;
+                        if (dot < 0.2 && area > 0.0005)
+                        {
+                            goodFaces.Add(new { area, normal = nrm });
+                        }
+                    }
+                }
+            }
+        }
+
+        var topFaces = goodFaces
+            .OrderByDescending(f => (double)(f.GetType().GetProperty("area")!.GetValue(f) ?? 0.0))
+            .Take(5)
+            .ToList();
+
+        return new
+        {
+            component = Try(() => component.Name2),
+            axisDir,
+            axisOrigin,
+            planes,
+            perpFaceCount = goodFaces.Count,
+            topPerpFaces = topFaces,
+        };
+    }
+
+    private static object MatePitchLimit(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string component1 = RequiredStringArg(args, "component_1");
+        string ref1 = RequiredStringArg(args, "ref_1");
+        string component2 = RequiredStringArg(args, "component_2");
+        string ref2 = RequiredStringArg(args, "ref_2");
+        string componentAxis = StringArg(args, "component_axis") ?? component1;
+        string refAxis = StringArg(args, "ref_axis") ?? "shaft_axis";
+        double minDeg = DoubleArg(args, "min_deg", -50.0);
+        double maxDeg = DoubleArg(args, "max_deg", 180.0);
+        bool save = BoolArg(args, "save", defaultValue: true);
+        bool flip = BoolArg(args, "flip", defaultValue: false);
+        bool dryRun = BoolArg(args, "dry_run", defaultValue: false);
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("mate_pitch_limit requires an assembly document.");
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)doc;
+        Component2? first = FindComponent(assembly, null, component1)
+            ?? throw new InvalidOperationException($"Component not found: {component1}");
+        Component2? second = FindComponent(assembly, null, component2)
+            ?? throw new InvalidOperationException($"Component not found: {component2}");
+        Component2? axisComponent = FindComponent(assembly, null, componentAxis)
+            ?? throw new InvalidOperationException($"Component not found: {componentAxis}");
+
+        EnsureComponentResolved(first);
+        EnsureComponentResolved(second);
+        EnsureComponentResolved(axisComponent);
+
+        const int axisMark = 4;
+        const int expectedAxisType = (int)swSelectType_e.swSelDATUMAXES;
+
+        SelectionMgr? selectionMgr = Try(() => doc.SelectionManager) as SelectionMgr;
+
+        // Capture each entity COM object immediately after its own selection step,
+        // because selecting the axis on the motor component clobbers the motor
+        // plane's selection mark (SW reuses marks per component).
+        doc.ClearSelection2(true);
+        bool sel1 = SelectComponentReference(doc, first, ref1, append: false, mark: 1);
+        object? entity1 = ResolveSelectedMateEntity(selectionMgr, 1);
+        int? type1 = Try(() => selectionMgr?.GetSelectedObjectType3(1, 1)) as int?;
+
+        doc.ClearSelection2(true);
+        bool sel2 = SelectComponentReference(doc, second, ref2, append: false, mark: 1);
+        object? entity2 = ResolveSelectedMateEntity(selectionMgr, 1);
+        int? type2 = Try(() => selectionMgr?.GetSelectedObjectType3(1, 1)) as int?;
+
+        doc.ClearSelection2(true);
+        bool selAxis = SelectMateReferenceByName(doc, axisComponent, refAxis, append: false, mark: 1, expectedAxisType)
+            || SelectComponentReference(doc, axisComponent, refAxis, append: false, mark: 1);
+        object? axisEntity = ResolveSelectedMateEntity(selectionMgr, 1);
+        int? typeAxis = Try(() => selectionMgr?.GetSelectedObjectType3(1, 1)) as int?;
+
+        doc.ClearSelection2(true);
+
+        bool haveEntities = entity1 is not null && entity2 is not null && axisEntity is not null;
+
+        if (dryRun || !haveEntities)
+        {
+            return new
+            {
+                ok = false,
+                error = dryRun ? "dry_run" : "selection_failed",
+                sel1,
+                sel2,
+                selAxis,
+                selectionType1 = type1,
+                selectionType2 = type2,
+                selectionTypeAxis = typeAxis,
+                entity1Type = entity1?.GetType().FullName,
+                entity2Type = entity2?.GetType().FullName,
+                axisEntityType = axisEntity?.GetType().FullName,
+                haveEntities,
+            };
+        }
+
+        double minRad = minDeg * Math.PI / 180.0;
+        double maxRad = maxDeg * Math.PI / 180.0;
+
+        int mateError = -1;
+        Feature? mateFeature = null;
+        string mateMethod = "none";
+
+        var attempts = new List<object>();
+        // (useAxis, useLimit, angle0)
+        (bool useAxis, bool useLimit, double angleDeg, string label)[] variants =
+        [
+            (true, true, 0.0, "axis+limit"),
+            (false, true, 0.0, "noaxis+limit"),
+            (true, false, 0.0, "axis+fixed0"),
+            (false, false, 0.0, "noaxis+fixed0"),
+            (true, false, 90.0, "axis+fixed90"),
+        ];
+
+        foreach (var v in variants)
+        {
+            if (mateFeature is not null)
+            {
+                break;
+            }
+
+            object? mateDataObj = Try(() => assembly.CreateMateData((int)swMateType_e.swMateANGLE));
+            if (mateDataObj is not IAngleMateFeatureData angleMate)
+            {
+                continue;
+            }
+
+            angleMate.EntitiesToMate = new object[] { entity1!, entity2! };
+            if (v.useAxis)
+            {
+                TryVoid(() => angleMate.ReferenceEntity = axisEntity);
+            }
+
+            TryVoid(() => angleMate.FlipDimension = flip);
+            angleMate.Angle = v.angleDeg * Math.PI / 180.0;
+            if (v.useLimit)
+            {
+                angleMate.MinimumAngle = minRad;
+                angleMate.MaximumAngle = maxRad;
+                TryVoid(() => angleMate.IsAdvancedMate = true);
+            }
+
+            angleMate.MateAlignment = (int)swMateAlign_e.swMateAlignALIGNED;
+
+            Feature? f = Try(() => assembly.CreateMate(mateDataObj)) as Feature;
+            int err = mateDataObj is IMateFeatureData mfd
+                ? Try(() => mfd.ErrorStatus) as int? ?? -1
+                : -1;
+            attempts.Add(new { v.label, created = f is not null, err });
+
+            if (f is not null)
+            {
+                mateFeature = f;
+                mateError = err;
+                mateMethod = $"CreateMate({v.label})";
+            }
+        }
+
+        bool created = mateFeature is not null;
+
+        doc.ClearSelection2(true);
+        doc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save && created)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+        }
+
+        return new
+        {
+            ok = created,
+            mateFeature = Try(() => mateFeature?.Name),
+            mateMethod,
+            attempts,
+            mateError,
+            component1 = Try(() => first.Name2),
+            component2 = Try(() => second.Name2),
+            ref1,
+            ref2,
+            componentAxis = Try(() => axisComponent.Name2),
+            refAxis,
+            minDeg,
+            maxDeg,
+            selectionType1 = type1,
+            selectionType2 = type2,
+            selectionTypeAxis = typeAxis,
+            mateCount = CountAssemblyMates(doc),
+            saved,
+            errors,
+            warnings,
+        };
+    }
+
     private static object MateLimitAngle(JsonElement? args)
     {
         string inputPath = RequiredStringArg(args, "path");
@@ -1474,6 +1765,11 @@ internal static partial class Program
                 if (assemblyTitle is not null)
                 {
                     selectNames.Add($"{axisFeatureName}@{axisComponentName}@{assemblyTitle}");
+                    string titleNoExt = System.IO.Path.GetFileNameWithoutExtension(assemblyTitle);
+                    if (titleNoExt != assemblyTitle)
+                    {
+                        selectNames.Add($"{axisFeatureName}@{axisComponentName}@{titleNoExt}");
+                    }
                 }
 
                 if (axisComponentName.Contains('/'))
@@ -1485,6 +1781,11 @@ internal static partial class Program
                         if (assemblyTitle is not null)
                         {
                             selectNames.Add($"{axisFeatureName}@{parts[1]}@{parts[0]}@{assemblyTitle}");
+                            string titleNoExt = System.IO.Path.GetFileNameWithoutExtension(assemblyTitle);
+                            if (titleNoExt != assemblyTitle)
+                            {
+                                selectNames.Add($"{axisFeatureName}@{parts[1]}@{parts[0]}@{titleNoExt}");
+                            }
                         }
                     }
                 }

@@ -191,7 +191,7 @@ internal static partial class Program
         }
 
         DeselectMarkedObject(assemblyDoc, mark);
-        return SelectBodyPlanarFace(assemblyDoc, component, axisReferenceName, append, mark);
+        return false; // Skip SelectBodyPlanarFace which hangs on high face counts
     }
 
     private static bool SelectBodyPlanarFace(
@@ -395,6 +395,11 @@ internal static partial class Program
             if (assemblyTitle is not null)
             {
                 selectNames.Add($"{planeName}@{componentName}@{assemblyTitle}");
+                string titleNoExt = System.IO.Path.GetFileNameWithoutExtension(assemblyTitle);
+                if (titleNoExt != assemblyTitle)
+                {
+                    selectNames.Add($"{planeName}@{componentName}@{titleNoExt}");
+                }
             }
 
             if (componentName.Contains('/'))
@@ -410,6 +415,11 @@ internal static partial class Program
                     if (assemblyTitle is not null)
                     {
                         selectNames.Add($"{planeName}@{parts[1]}@{parts[0]}@{assemblyTitle}");
+                        string titleNoExt = System.IO.Path.GetFileNameWithoutExtension(assemblyTitle);
+                        if (titleNoExt != assemblyTitle)
+                        {
+                            selectNames.Add($"{planeName}@{parts[1]}@{parts[0]}@{titleNoExt}");
+                        }
                     }
                 }
             }

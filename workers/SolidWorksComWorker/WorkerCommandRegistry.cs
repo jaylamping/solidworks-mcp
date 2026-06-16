@@ -46,6 +46,8 @@ internal static partial class Program
             ["mate_perpendicular"] = MatePerpendicular,
             ["mate_width"] = MateWidth,
             ["mate_limit_angle"] = MateLimitAngle,
+            ["mate_pitch_limit"] = MatePitchLimit,
+            ["probe_pitch_axis"] = ProbePitchAxis,
             ["debug_limit_angle"] = DebugLimitAngle,
             ["mate_probe"] = MateProbe,
             ["align_component_to_feature"] = AlignComponentToFeature,
