@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://solidworks-mcp.local/tools/manifest.schema.json",
+  "title": "SolidWorks MCP tool manifest",
+  "type": "object",
+  "required": ["version", "tools"],
+  "properties": {
+    "version": { "type": "string" },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "workerCommand", "tier", "readOnly", "description"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^(solidworks|marengo)_" },
+          "workerCommand": { "type": "string" },
+          "tier": { "enum": ["core", "extended", "advanced", "debug"] },
+          "readOnly": { "type": "boolean" },
+          "destructive": { "type": "boolean" },
+          "confirmRequired": { "type": "boolean" },
+          "description": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "domains": { "type": "array", "items": { "type": "string" } },
+          "schema": {
+            "enum": [
+              "optionalPath",
+              "open",
+              "export",
+              "mateRefs",
+              "mateLimitAngle",
+              "diagnose",
+              "explainError",
+              "checkpoint",
+              "confirmPath",
+              "custom"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

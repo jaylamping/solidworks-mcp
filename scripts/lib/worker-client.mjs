@@ -10,12 +10,49 @@ const workerDll = path.join(
   "workers/SolidWorksComWorker/bin/Debug/net8.0-windows/SolidWorksComWorker.dll",
 );
 
+const DEFAULT_ALLOWED_ROOTS = ["C:/code/marengo"];
+
+function allowedRoots() {
+  const raw = process.env.SOLIDWORKS_MCP_ALLOWED_ROOTS;
+  const roots = raw
+    ? raw.split(";").map((entry) => entry.trim()).filter(Boolean)
+    : DEFAULT_ALLOWED_ROOTS;
+  return roots.map((root) => path.resolve(root));
+}
+
+export function assertAllowedPath(inputPath) {
+  const resolved = path.resolve(inputPath);
+  const normalized = resolved.toLowerCase();
+  const allowed = allowedRoots().some((root) => {
+    const normalizedRoot = path.resolve(root).toLowerCase();
+    return normalized === normalizedRoot || normalized.startsWith(`${normalizedRoot}${path.sep}`);
+  });
+  if (!allowed) {
+    throw new Error(
+      `Path is outside allowed CAD roots: ${resolved}. Set SOLIDWORKS_MCP_ALLOWED_ROOTS to allow it.`,
+    );
+  }
+  return resolved;
+}
+
+function validateArgsPaths(args) {
+  if (!args || typeof args !== "object") return args;
+  const validated = { ...args };
+  for (const key of ["path", "part_path", "output_path", "source_part_path", "assembly_path"]) {
+    if (typeof validated[key] === "string") {
+      validated[key] = assertAllowedPath(validated[key]);
+    }
+  }
+  return validated;
+}
+
 /**
  * @param {string} command
  * @param {Record<string, unknown>} [args]
  */
 export function runWorker(command, args = {}) {
-  const payload = JSON.stringify({ command, args });
+  const safeArgs = validateArgsPaths(args);
+  const payload = JSON.stringify({ command, args: safeArgs });
   const useDll = fs.existsSync(workerDll);
   const dotnetArgs = useDll
     ? ["exec", workerDll]
@@ -46,7 +83,9 @@ export function runWorker(command, args = {}) {
   }
 
   if (!parsed.ok) {
-    throw new Error(parsed.error || "Worker failed");
+    const err = parsed.error;
+    const message = typeof err === "string" ? err : err?.message ?? JSON.stringify(err);
+    throw new Error(message || "Worker failed");
   }
 
   return parsed.data;

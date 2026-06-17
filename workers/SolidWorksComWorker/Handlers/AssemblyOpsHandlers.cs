@@ -256,28 +256,70 @@ internal static partial class Program
 
     private static object CutActuatorCavity(JsonElement? args)
     {
-        string assemblyPath = RequiredStringArg(args, "path");
-        string bracketPartPath = StringArg(args, "bracket_part_path")
-            ?? "C:/code/marengo/hardware/cad/parts/marengo_shoulder_pitch_mount_bracket_right.SLDPRT";
-        string toolPartPath = StringArg(args, "tool_part_path")
-            ?? "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT";
-        string bracketComponent = StringArg(args, "bracket_component") ?? "marengo_shoulder_pitch_mount_bracket_right";
-        string toolComponent = StringArg(args, "tool_component") ?? "actuator_rs03_right_shoulder_pitch";
+        bool useSelection = BoolArg(args, "use_selection", defaultValue: false);
+        string? assemblyPath = StringArg(args, "path");
+        string? bracketPartPath = StringArg(args, "bracket_part_path");
+        string? toolPartPath = StringArg(args, "tool_part_path");
+        string? bracketComponent = StringArg(args, "bracket_component");
+        string? toolComponent = StringArg(args, "tool_component");
+        string? modelId = StringArg(args, "model");
         double clearanceM = DoubleArg(args, "clearance_mm", 0.5) / 1000.0;
         bool save = BoolArg(args, "save", defaultValue: true);
 
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 asmDoc = OpenDocument(app, assemblyPath);
+        ModelDoc2 asmDoc = !string.IsNullOrWhiteSpace(assemblyPath)
+            ? OpenDocument(app, assemblyPath)
+            : Try(() => app.ActiveDoc) as ModelDoc2
+                ?? throw WorkerException.Validation(
+                    "NO_ACTIVE_DOCUMENT",
+                    "No active assembly and no path provided.",
+                    new Dictionary<string, object?>());
         if (asmDoc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
         {
             throw new InvalidOperationException("cut_actuator_cavity requires an assembly document.");
         }
 
         IAssemblyDoc assembly = (IAssemblyDoc)asmDoc;
-        Component2? bracketInAsm = FindComponent(assembly, null, bracketComponent)
-            ?? throw new InvalidOperationException($"Bracket component not found: {bracketComponent}");
-        Component2? toolInAsm = FindComponent(assembly, null, toolComponent)
-            ?? throw new InvalidOperationException($"Tool component not found: {toolComponent}");
+        Component2 bracketInAsm;
+        Component2 toolInAsm;
+        if (useSelection)
+        {
+            (bracketInAsm, toolInAsm, bracketPartPath) = ResolveActuatorCavityFromSelection(asmDoc, assembly, modelId);
+            toolPartPath ??= Try(() => toolInAsm.GetPathName()) as string;
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(assemblyPath))
+            {
+                throw WorkerException.Validation(
+                    "PATH_REQUIRED",
+                    "path is required unless use_selection is true with an active assembly.",
+                    new Dictionary<string, object?>());
+            }
+
+            if (string.IsNullOrWhiteSpace(bracketComponent) || string.IsNullOrWhiteSpace(toolComponent))
+            {
+                throw WorkerException.Validation(
+                    "TARGETS_REQUIRED",
+                    "bracket_component and tool_component are required unless use_selection is true.",
+                    new Dictionary<string, object?>(),
+                    [
+                        "Highlight bracket and actuator in SolidWorks and pass use_selection: true.",
+                        "Or pass explicit bracket_component and tool_component names.",
+                    ]);
+            }
+
+            bracketPartPath ??= "C:/code/marengo/hardware/cad/parts/marengo_shoulder_pitch_mount_bracket_right.SLDPRT";
+            toolPartPath ??= "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT";
+
+            bracketInAsm = FindComponent(assembly, null, bracketComponent)
+                ?? throw new InvalidOperationException($"Bracket component not found: {bracketComponent}");
+            toolInAsm = FindComponent(assembly, null, toolComponent)
+                ?? throw new InvalidOperationException($"Tool component not found: {toolComponent}");
+        }
+
+        toolPartPath ??= Try(() => toolInAsm.GetPathName()) as string
+            ?? throw new InvalidOperationException("Tool component has no part path.");
 
         object? inContextResult = CutActuatorCavityInContext(app, asmDoc, assembly, bracketInAsm, toolInAsm, clearanceM);
         if (inContextResult is not null)
@@ -301,6 +343,8 @@ internal static partial class Program
             {
                 mode = "edit_part_indent",
                 document = DescribeDocument(asmDoc),
+                useSelection,
+                bracketComponent = Try(() => bracketInAsm.Name2),
                 bracketPartPath,
                 toolComponent = Try(() => toolInAsm.Name2),
                 result = inContextResult,
@@ -310,9 +354,16 @@ internal static partial class Program
             };
         }
 
+        string resolvedAssemblyPath = assemblyPath
+            ?? Try(() => asmDoc.GetPathName()) as string
+            ?? throw WorkerException.Validation(
+                "PATH_REQUIRED",
+                "Assembly has no saved path. Save the document or pass path explicitly.",
+                new Dictionary<string, object?>());
+
         return CutActuatorCavityByInsertPart(
             app,
-            assemblyPath,
+            resolvedAssemblyPath,
             bracketPartPath,
             toolPartPath,
             bracketInAsm,

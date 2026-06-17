@@ -55,3 +55,33 @@ See prior sections in git history for torso pipeline steps. Manual scripts still
 1. Tavily (`tvly crawl`)  
 2. Bright Data (`docs:scrape:brightdata`)  
 3. Local CHM under `SolidWorks\api\docs\` on Windows
+
+## Selection referent (`use_selection`)
+
+Highlight the entity you mean in SolidWorks, then pass **`use_selection: true`** instead of typing `component_name`, `plane_name`, `feature_name`, etc.
+
+| Step | Tool |
+|------|------|
+| Inspect highlight | `marengo_resolve_selection` or `solidworks_resolve_selection` |
+| Use highlight as target | Any supported worker/MCP tool + `use_selection: true` |
+
+**Multi-select:** SolidWorks order is index `1`, then `2` (mates, align, cutouts). For single-target tools, pass `selection_index` to pick which highlight you mean.
+
+**`resolve_selection` returns:** `primary`, `selections[]` (each with `label`, `kind`, `toolArgs`, `semanticTags`), plus `hints.selectionAwareCommands`.
+
+**Examples:** `get_component_box`, `create_sketch`, `mate_coincident`, `actuator_mount_hole_pattern`, `actuator_cut_cavity` — all accept `use_selection`. Worker injects `path` from the active document when omitted.
+
+## Shoulder pitch bracket iteration
+
+**Probe (read-only):** `marengo_shoulder_bracket_probe`  
+Bundles RS03 envelope, `shoulder_mount_*` layout refs, motor instance boxes/transforms, and starter block dims from `hardware/docs/torso-actuator-brackets.md`. Returns `partialErrors` when sub-probes fail (motor not placed, SW down, etc.).
+
+**Selection-aware cutout**
+
+1. In SolidWorks, highlight the **bracket body/face/component** (and optionally the **actuator** instance).
+2. `marengo_resolve_selection` — inspect `primary.toolArgs` / `semanticTags`.
+3. `marengo_actuator_cut_cavity` with `use_selection: true`, `confirm: true` — cavity cut without typing component names.
+
+`path` optional when the target assembly is the active document. Pass `model: rs03` if only the bracket is highlighted.
+
+## Next extensions

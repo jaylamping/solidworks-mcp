@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Linq;
 using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swconst;
 
 internal static partial class Program
 {
@@ -25,7 +26,7 @@ internal static partial class Program
 
     private static bool InvokeWriteEnabled() =>
         string.Equals(
-            Environment.GetEnvironmentVariable("SOLIDWORKS_MCP_INVOKE_WRITE"),
+            System.Environment.GetEnvironmentVariable("SOLIDWORKS_MCP_INVOKE_WRITE"),
             "true",
             StringComparison.OrdinalIgnoreCase);
 
@@ -239,11 +240,11 @@ internal static partial class Program
         if (result is ModelDoc2 doc)
         {
             byte[]? bytes = Try(() => doc.Extension.GetPersistReference3(doc)) as byte[];
-            return new
+            return new Dictionary<string, object?>
             {
-                $type = result.GetType().FullName,
-                $persistRef = bytes is { Length: > 0 } ? Convert.ToBase64String(bytes) : null,
-                title = Try(() => doc.GetTitle()),
+                ["$type"] = result.GetType().FullName,
+                ["$persistRef"] = bytes is { Length: > 0 } ? Convert.ToBase64String(bytes) : null,
+                ["title"] = Try(() => doc.GetTitle()),
             };
         }
 
@@ -251,14 +252,18 @@ internal static partial class Program
         {
             ModelDoc2? owner = app.ActiveDoc as ModelDoc2;
             byte[]? bytes = owner is null ? null : Try(() => owner.Extension.GetPersistReference3(entity)) as byte[];
-            return new
+            return new Dictionary<string, object?>
             {
-                $type = result.GetType().FullName,
-                $persistRef = bytes is { Length: > 0 } ? Convert.ToBase64String(bytes) : null,
+                ["$type"] = result.GetType().FullName,
+                ["$persistRef"] = bytes is { Length: > 0 } ? Convert.ToBase64String(bytes) : null,
             };
         }
 
-        return new { $type = result.GetType().FullName, value = Try(() => result.ToString()) };
+        return new Dictionary<string, object?>
+        {
+            ["$type"] = result.GetType().FullName,
+            ["value"] = Try(() => result.ToString()),
+        };
     }
 
     private static void ScanInvokeArgsForPaths(JsonElement? args)

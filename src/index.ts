@@ -1,18 +1,18 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { z } from "zod";
 
+import { registerApiCatalogResources } from "./api-catalog.js";
 import { packageRoot } from "./config.js";
+import { registerMarengoResources } from "./marengo-resources.js";
+import { registerMarengoTools } from "./marengo-tools.js";
+import { registerAllTools } from "./tool-registry.js";
 import { registerDocsTools } from "./tools/docs-search.js";
-import { registerMarengoAuditTools } from "./tools/marengo-audit.js";
 import { errorResult, jsonResult } from "./tools/common.js";
 import { registerSolidWorksInvokeTools } from "./tools/solidworks-invoke.js";
-import { registerSolidWorksReadTools } from "./tools/solidworks-read.js";
-import { registerSolidWorksWriteTools } from "./tools/solidworks-write.js";
 import { runWorker } from "./worker.js";
 
 function mcpBuildInfo(): { mcpVersion: string; buildId: string } {
@@ -25,10 +25,11 @@ function mcpBuildInfo(): { mcpVersion: string; buildId: string } {
 export async function main(): Promise<void> {
   const server = new McpServer({ name: "solidworks", version: "0.4.0" });
 
+  registerAllTools(server);
+  registerMarengoTools(server);
+  registerApiCatalogResources(server);
+  registerMarengoResources(server);
   registerDocsTools(server);
-  registerSolidWorksReadTools(server);
-  registerSolidWorksWriteTools(server);
-  registerMarengoAuditTools(server);
   registerSolidWorksInvokeTools(server);
 
   server.registerTool(

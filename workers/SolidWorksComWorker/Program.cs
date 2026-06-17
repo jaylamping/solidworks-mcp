@@ -27,8 +27,15 @@ internal static partial class Program
         using Mutex comLock = new(false, ComLockName);
         if (!comLock.WaitOne(ComLockTimeout))
         {
-            return WriteError(
-                "Timed out waiting for SolidWorks COM lock. Another worker or script is using SolidWorks.");
+            return WriteError(new WorkerError(
+                "COM_LOCK_TIMEOUT",
+                "Timed out waiting for SolidWorks COM lock. Another worker or script is using SolidWorks.",
+                "worker",
+                Remediation:
+                [
+                    "Wait for other SolidWorks scripts to finish.",
+                    "Close hung SLDWORKS.exe processes if no script is running.",
+                ]));
         }
 
         try
@@ -43,33 +50,51 @@ internal static partial class Program
 
     private static int RunWorker()
     {
+        string? command = null;
         try
         {
             string input = Console.In.ReadToEnd();
             WorkerRequest? request = JsonSerializer.Deserialize<WorkerRequest>(input, ReadJson);
             if (request is null || string.IsNullOrWhiteSpace(request.Command))
             {
-                return WriteError("Missing worker command.");
+                return WriteError(WorkerException.Validation(
+                    "MISSING_COMMAND",
+                    "Missing worker command.",
+                    new Dictionary<string, object?>()).Error);
             }
 
-            if (!CommandRegistry.TryGetValue(request.Command, out Func<JsonElement?, object>? handler))
+            command = request.Command;
+            if (!CommandRegistry.TryGetValue(command, out Func<JsonElement?, object>? handler))
             {
-                throw new InvalidOperationException($"Unknown worker command: {request.Command}");
+                throw WorkerException.Validation(
+                    "UNKNOWN_COMMAND",
+                    $"Unknown worker command: {command}",
+                    new Dictionary<string, object?> { ["command"] = command });
             }
 
-            object data = handler(request.Args);
+            CommandSafety.RequireConfirmIfDestructive(command, request.Args);
+            JsonElement? effectiveArgs = ApplyUseSelection(command, request.Args);
+            object data = handler(effectiveArgs);
             Console.WriteLine(JsonSerializer.Serialize(new { ok = true, data }, WriteJson));
             return 0;
         }
+        catch (WorkerException ex)
+        {
+            return WriteError(ex.Error);
+        }
         catch (Exception ex)
         {
-            return WriteError(ex.Message);
+            var context = new Dictionary<string, object?> { ["command"] = command };
+            return WriteError(SwErrorDecoder.FromException(ex, "Program.RunWorker", context));
         }
     }
 
-    private static int WriteError(string error)
+    private static int WriteError(WorkerError error)
     {
         Console.WriteLine(JsonSerializer.Serialize(new { ok = false, error }, WriteJson));
         return 0;
     }
+
+    private static int WriteError(string message) =>
+        WriteError(new WorkerError("WORKER_ERROR", message, "worker"));
 }

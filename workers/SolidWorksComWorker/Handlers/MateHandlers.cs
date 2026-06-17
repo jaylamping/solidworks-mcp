@@ -403,6 +403,125 @@ internal static partial class Program
     private static object MateWidth(JsonElement? args) =>
         AddMateFromComponentRefs(args, (int)swMateType_e.swMateWIDTH, ParseMateAlign(args), "mate_width");
 
+    private static object MateLimitAngle(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string component1 = RequiredStringArg(args, "component_1");
+        string ref1 = RequiredStringArg(args, "ref_1");
+        string component2 = RequiredStringArg(args, "component_2");
+        string ref2 = RequiredStringArg(args, "ref_2");
+        double minDeg = DoubleArg(args, "min_angle_deg", -90);
+        double maxDeg = DoubleArg(args, "max_angle_deg", 90);
+        int face1 = (int)DoubleArg(args, "face_index_1", 0);
+        int face2 = (int)DoubleArg(args, "face_index_2", 0);
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("mate_limit_angle requires an assembly document.");
+        }
+
+        IAssemblyDoc assembly = (IAssemblyDoc)doc;
+        Component2? first = FindComponent(assembly, null, component1)
+            ?? throw new InvalidOperationException($"Component not found: {component1}");
+        Component2? second = FindComponent(assembly, null, component2)
+            ?? throw new InvalidOperationException($"Component not found: {component2}");
+
+        doc.ClearSelection2(true);
+        if (!SelectComponentMateEntity(doc, first, ref1, face1, append: false, mark: 1))
+        {
+            throw new InvalidOperationException($"Failed to select {ref1} on {component1}");
+        }
+
+        if (!SelectComponentMateEntity(doc, second, ref2, face2, append: true, mark: 2))
+        {
+            throw new InvalidOperationException($"Failed to select {ref2} on {component2}");
+        }
+
+        int mateType = (int)swMateType_e.swMateANGLE;
+        object? mateDataObj = Try(() => assembly.CreateMateData(mateType));
+        Feature? mateFeature = null;
+        string method = "none";
+        int mateError = 0;
+
+        if (mateDataObj is IAngleMateFeatureData angleMate)
+        {
+            SelectionMgr? selectionMgr = Try(() => doc.SelectionManager) as SelectionMgr;
+            object? entity1 = Try(() => selectionMgr?.GetSelectedObject6(1, -1));
+            object? entity2 = Try(() => selectionMgr?.GetSelectedObject6(2, -1));
+            if (entity1 is not null && entity2 is not null)
+            {
+                angleMate.EntitiesToMate = new object[] { entity1, entity2 };
+                angleMate.Angle = (minDeg + maxDeg) / 2.0 * Math.PI / 180.0;
+                angleMate.MinimumAngle = minDeg * Math.PI / 180.0;
+                angleMate.MaximumAngle = maxDeg * Math.PI / 180.0;
+                mateFeature = Try(() => assembly.CreateMate(mateDataObj)) as Feature;
+                method = "CreateMate";
+            }
+        }
+
+        if (mateFeature is null)
+        {
+            Mate2? mate = assembly.AddMate5(
+                mateType,
+                (int)swMateAlign_e.swMateAlignALIGNED,
+                false,
+                minDeg * Math.PI / 180.0,
+                maxDeg * Math.PI / 180.0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                false,
+                false,
+                0,
+                out mateError) as Mate2;
+            if (mate is not null)
+            {
+                method = "AddMate5";
+            }
+        }
+
+        doc.EditRebuild3();
+        (string errorName, string[] remediation) = SwErrorDecoder.DecodeMateError(mateError);
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            component1 = Try(() => first.Name2),
+            component2 = Try(() => second.Name2),
+            ref1,
+            ref2,
+            minAngleDeg = minDeg,
+            maxAngleDeg = maxDeg,
+            mateCreated = mateFeature is not null,
+            mateError,
+            mateErrorName = errorName,
+            remediation,
+            mateMethod = method,
+        };
+    }
+
+    private static object MateRecordMacro(JsonElement? args) =>
+        new
+        {
+            stub = true,
+            path = StringArg(args, "path"),
+            message = "mate_record_macro stub — capture manual mate selections for replay.",
+        };
+
+    private static object MateReplaySequence(JsonElement? args) =>
+        new
+        {
+            stub = true,
+            path = StringArg(args, "path"),
+            sequenceId = StringArg(args, "sequence_id"),
+            message = "mate_replay_sequence stub — replay a recorded mate macro sequence.",
+        };
+
     private static object MateProbe(JsonElement? args) => DebugMateEntities(args);
 
     private static int ParseMateAlign(JsonElement? args)

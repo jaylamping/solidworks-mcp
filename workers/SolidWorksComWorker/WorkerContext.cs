@@ -226,7 +226,7 @@ internal static partial class Program
 
     private static ModelDoc2 OpenDocument(ISldWorks app, string path)
     {
-        string fullPath = Path.GetFullPath(path);
+        string fullPath = PathGuard.AssertAllowedPath(path);
         ModelDoc2? existing = FindOpenDocument(app, fullPath);
         if (existing is not null)
         {
@@ -522,7 +522,7 @@ internal static partial class Program
 
     private static string[] AllowedRoots()
     {
-        string? raw = Environment.GetEnvironmentVariable("SOLIDWORKS_MCP_ALLOWED_ROOTS");
+        string? raw = System.Environment.GetEnvironmentVariable("SOLIDWORKS_MCP_ALLOWED_ROOTS");
         if (string.IsNullOrWhiteSpace(raw))
         {
             return ["C:\\code\\marengo"];

@@ -1,0 +1,9 @@
+{
+  "allowed": [
+    "ISldWorks.ActiveDoc",
+    "ISldWorks.GetDocuments",
+    "IModelDoc2.GetTitle",
+    "IModelDoc2.GetPathName",
+    "IModelDocExtension.CreateMassProperty"
+  ]
+}

@@ -46,7 +46,8 @@ Generic COM escape hatch: `solidworks_invoke` / `solidworks_batch_invoke` — se
       "command": "node",
       "args": ["C:/code/solidworks-mcp/dist/index.js"],
       "env": {
-        "SOLIDWORKS_MCP_ALLOWED_ROOTS": "C:/code/marengo"
+        "SOLIDWORKS_MCP_ALLOWED_ROOTS": "C:/code/marengo",
+        "SOLIDWORKS_MCP_TOOL_TIER": "core"
       }
     }
   }
@@ -55,7 +56,32 @@ Generic COM escape hatch: `solidworks_invoke` / `solidworks_batch_invoke` — se
 
 Optional: `SOLIDWORKS_MCP_INVOKE_WRITE=true` to allow allowlisted invoke writes.
 
-## SolidWorks read tools
+Optional env:
+
+- `SOLIDWORKS_MCP_TOOL_TIER` — `core` (default filter), `extended`, `advanced`, `debug`, or `all`
+- `SOLIDWORKS_MCP_PERSISTENT_WORKER=1` — keep one long-lived dotnet worker (experimental; default is ephemeral spawn with queue)
+
+## Scripts
+
+| Script | Role |
+|--------|------|
+| `npm run check:registry` | CI drift gate: registry ↔ worker.ts ↔ manifest ↔ scripts |
+| `npm run docs:generate` | Regenerate manifest, API/error catalogs, tool docs |
+| `npm run validate:tools` | Smoke + structured error probes against Marengo CAD |
+
+## Tool registry
+
+MCP tools are declared in `tools/manifest.json` (generated from `WorkerCommandRegistry.cs` via `scripts/generate-manifest-from-registry.mjs`). `src/tool-registry.ts` loads the manifest, applies tier filtering, and registers thin worker wrappers. Hand-crafted tools (mates, Marengo audits, workflows) live in `src/marengo-tools.ts`.
+
+Use `solidworks_search_tools` to discover tools by name, tag, or domain.
+
+## Structured errors
+
+Worker failures return `{ ok: false, error: WorkerError }` with `code`, `category`, `remediation`, and optional `hresult` / `swErrorCode`. MCP tools surface these via `src/errors.ts`. See [docs/errors/README.md](docs/errors/README.md).
+
+Diagnostic tools: `solidworks_diagnose_com`, `solidworks_diagnose_document`, `solidworks_diagnose_selection`, `solidworks_explain_error`.
+
+## SolidWorks tools (core tier)
 
 | Tool | Role |
 |------|------|
@@ -76,6 +102,37 @@ Optional: `SOLIDWORKS_MCP_INVOKE_WRITE=true` to allow allowlisted invoke writes.
 | `solidworks_assembly_diagnostics` | Fixed/float/lightweight/suppressed counts |
 | `solidworks_component_mass_properties` | Per-component mass/COM/inertia |
 | `solidworks_search_api_docs` | Search local API markdown index |
+| `solidworks_save_document` | Save document |
+| `solidworks_checkpoint_document` | Copy document to `.checkpoints/` before destructive edits |
+| `solidworks_mate_limit_angle` | Limit-angle mate between two references |
+| `solidworks_search_tools` | Search registered tools by query |
+
+Extended/advanced tiers add ~90 more worker-backed tools (dimensions, transforms, mate try/probe, part modeling stubs, Marengo build commands). Set `SOLIDWORKS_MCP_TOOL_TIER=all` to expose everything.
+
+## Marengo humanoid audit (read-only)
+
+| Tool | Role |
+|------|------|
+| `marengo_link_mass_properties` | Per-link mass/CG from component tree |
+| `marengo_joint_axis_extract` | URDF/joint reference axes |
+| `marengo_bilateral_symmetry_check` | L/R component pairing |
+| `marengo_actuator_envelope_check` | Actuator vs interference report |
+| `marengo_config_variant_diff` | Dimensions + configurations snapshot |
+
+## Marengo workflows (write, confirm gates)
+
+| Tool | Role |
+|------|------|
+| `marengo_workflow_torso_asm_build` | Checkpoint + frame mates + shoulder mounts |
+| `marengo_workflow_shoulder_roll_setup` | Place shoulder roll motors |
+| `marengo_workflow_compute_shelf_mate` | Build + mate compute shelf |
+| `marengo_workflow_bilateral_mirror` | Bilateral mirror stub |
+
+## API catalog
+
+- `generated/api-catalog.json` — interop reflection (run `npm run docs:generate`)
+- `solidworks_search_api` — search catalog
+- `solidworks_invoke` — allowlisted COM escape hatch (`generated/invoke-allowlist.json`)
 
 ## SolidWorks write tools
 
@@ -122,9 +179,9 @@ Legacy aliases: `vendor_registry_summary`, `vendor_stage_local_asset`.
 
 ## Design policy
 
-- Real-component-first vendor CAD before guessing geometry.
-- Native SolidWorks files are source of truth.
-- URDF export remains **manual** (Brawner); MCP audits and prepares geometry.
-- Destructive actions require explicit `confirm: true` from the user request.
+- Real-component-first: vendor CAD for actuators, fasteners, boards, bearings before designing around guesses.
+- Native SolidWorks parts/assemblies are source of truth.
+- URDF export is **manual** (Brawner) → `assets/urdf/marengo.urdf`; MCP audits only.
+- MCP exposes worker commands via manifest; destructive ops require `confirm: true` on worker and Marengo workflow tools.
 
 See [docs/cad-automation.md](docs/cad-automation.md) and [docs/troubleshooting.md](docs/troubleshooting.md).
