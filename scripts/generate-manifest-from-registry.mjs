@@ -8,6 +8,8 @@ const registryPath = path.join(root, "workers/SolidWorksComWorker/WorkerCommandR
 const manifestPath = path.join(root, "tools/manifest.json");
 
 const HAND_REGISTERED = new Set([
+  "invoke",
+  "batch_invoke",
   "status",
   "set_custom_properties",
   "probe_feature_faces",

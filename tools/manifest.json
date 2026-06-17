@@ -215,22 +215,6 @@
       "schema": "optionalPath"
     },
     {
-      "name": "solidworks_batch_invoke",
-      "workerCommand": "batch_invoke",
-      "tier": "extended",
-      "readOnly": false,
-      "destructive": false,
-      "confirmRequired": false,
-      "description": "Worker command: batch_invoke",
-      "tags": [
-        "batch"
-      ],
-      "domains": [
-        "document"
-      ],
-      "schema": "optionalPath"
-    },
-    {
       "name": "solidworks_build_torso_compute_shelf",
       "workerCommand": "build_torso_compute_shelf",
       "tier": "advanced",
@@ -1046,22 +1030,6 @@
       "description": "Worker command: inspect_document",
       "tags": [
         "inspect"
-      ],
-      "domains": [
-        "document"
-      ],
-      "schema": "optionalPath"
-    },
-    {
-      "name": "solidworks_invoke",
-      "workerCommand": "invoke",
-      "tier": "extended",
-      "readOnly": false,
-      "destructive": false,
-      "confirmRequired": false,
-      "description": "Worker command: invoke",
-      "tags": [
-        "invoke"
       ],
       "domains": [
         "document"

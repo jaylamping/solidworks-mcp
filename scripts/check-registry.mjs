@@ -67,6 +67,8 @@ if (extraInWorkerTs.length) {
 
 const manifestSet = new Set(manifest);
 const missingInManifest = registry.filter((c) => !manifestSet.has(c) && ![
+  "invoke",
+  "batch_invoke",
   "status",
   "set_custom_properties",
   "probe_feature_faces",

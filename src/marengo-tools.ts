@@ -78,12 +78,6 @@ const setCustomPropertiesSchema = z.object({
   save: z.boolean().optional(),
 });
 
-function mcpBuildInfo(): { mcpVersion: string; buildId: string } {
-  const pkgPath = path.join(packageRoot(), "package.json");
-  const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { version?: string };
-  return { mcpVersion: pkg.version ?? "0.0.0", buildId: "marengo-tools" };
-}
-
 export function registerMarengoTools(server: McpServer): void {
   server.registerTool(
     "vendor_registry_summary",
@@ -144,24 +138,6 @@ export function registerMarengoTools(server: McpServer): void {
             dryRun: args.dry_run ?? true,
           }),
         );
-      } catch (error) {
-        return errorResult(error);
-      }
-    },
-  );
-
-  server.registerTool(
-    "solidworks_status",
-    {
-      title: "SolidWorks status",
-      description: "Attach to SolidWorks if running and report version/active document metadata.",
-      inputSchema: z.object({ start_if_missing: z.boolean().optional() }),
-      annotations: { readOnlyHint: true },
-    },
-    async (args) => {
-      try {
-        const data = await runWorker({ command: "status", args });
-        return jsonResult({ ...(data as Record<string, unknown>), ...mcpBuildInfo() });
       } catch (error) {
         return errorResult(error);
       }

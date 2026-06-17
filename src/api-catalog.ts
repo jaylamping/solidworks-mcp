@@ -24,10 +24,6 @@ function catalogPath(): string {
   return path.join(packageRoot(), "generated/api-catalog.json");
 }
 
-function allowlistPath(): string {
-  return path.join(packageRoot(), "generated/invoke-allowlist.json");
-}
-
 export function registerApiCatalogResources(server: McpServer): void {
   server.registerResource(
     "solidworks-api-catalog",
@@ -72,40 +68,6 @@ export function registerApiCatalogResources(server: McpServer): void {
           .filter((row) => row.interface.toLowerCase().includes(q) || row.method.toLowerCase().includes(q))
           .slice(0, limit);
         return jsonResult({ query: args.query, count: matches.length, matches });
-      } catch (error) {
-        return errorResult(error);
-      }
-    },
-  );
-
-  server.registerTool(
-    "solidworks_invoke",
-    {
-      title: "Invoke allowlisted SolidWorks COM method",
-      description: "Low-level escape hatch for advanced COM calls on the allowlist.",
-      inputSchema: z.object({
-        interface: z.string().min(1),
-        method: z.string().min(1),
-        args: z.array(z.unknown()).optional(),
-        confirm: z.literal(true),
-      }),
-      annotations: { readOnlyHint: false },
-    },
-    async (args: { interface: string; method: string; args?: unknown[]; confirm: true }) => {
-      try {
-        const allowlist = existsSync(allowlistPath())
-          ? (JSON.parse(readFileSync(allowlistPath(), "utf8")) as { allowed?: string[] }).allowed ?? []
-          : [];
-        const key = `${args.interface}.${args.method}`;
-        if (!allowlist.includes(key)) {
-          throw new Error(`COM invoke not on allowlist: ${key}`);
-        }
-        return jsonResult({
-          stub: true,
-          key,
-          message: "solidworks_invoke dispatches via worker in a future release.",
-          requestedArgs: args.args ?? [],
-        });
       } catch (error) {
         return errorResult(error);
       }
