@@ -1,6 +1,6 @@
 {
   "name": "solidworks-mcp",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "private": true,
   "description": "MCP server for SolidWorks automation with a Windows .NET COM worker.",
   "type": "module",
@@ -13,6 +13,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "worker:status": "node scripts/worker-status.mjs",
     "validate:tools": "node scripts/validate-tools.mjs",
+    "docs:scrape:tavily": "bash scripts/scrape-api-docs-tavily.sh",
+    "docs:scrape:brightdata": "node scripts/scrape-api-docs-brightdata.mjs",
+    "docs:normalize": "node scripts/normalize-api-docs.mjs",
+    "docs:signatures": "node scripts/generate-api-signatures.mjs",
     "set:vendor-props": "node scripts/set-vendor-custom-props.mjs",
     "promote:corner-bracket": "node scripts/promote-corner-bracket-vendor.mjs"
   },

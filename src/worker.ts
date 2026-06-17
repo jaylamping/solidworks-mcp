@@ -77,7 +77,12 @@ export type WorkerCommand =
   | "insert_component"
   | "cut_actuator_cavity"
   | "build_torso_compute_shelf"
-  | "debug_mate_entities";
+  | "debug_mate_entities"
+  | "assembly_diagnostics"
+  | "component_mass_properties"
+  | "resolve_lightweight"
+  | "invoke"
+  | "batch_invoke";
 
 export interface WorkerRequest {
   command: WorkerCommand;

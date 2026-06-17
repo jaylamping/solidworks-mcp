@@ -105,6 +105,32 @@ export async function mateParallel(args: z.infer<typeof mateRefsSchema>) {
   });
 }
 
+export async function mateDistance(
+  args: z.infer<typeof mateRefsSchema> & { confirm: true },
+) {
+  if (args.confirm !== true) {
+    throw new Error("Refusing mate_distance: pass confirm: true when the user explicitly requested it.");
+  }
+  const filePath = assertAllowedPath(args.path);
+  return runWorker({
+    command: "mate_distance",
+    args: { ...args, path: filePath },
+  });
+}
+
+export async function matePerpendicular(
+  args: z.infer<typeof mateRefsSchema> & { confirm: true },
+) {
+  if (args.confirm !== true) {
+    throw new Error("Refusing mate_perpendicular: pass confirm: true when the user explicitly requested it.");
+  }
+  const filePath = assertAllowedPath(args.path);
+  return runWorker({
+    command: "mate_perpendicular",
+    args: { ...args, path: filePath },
+  });
+}
+
 export async function torsoFrameBuildMates(args: z.infer<typeof torsoFrameBuildSchema>) {
   if (args.confirm !== true) {
     throw new Error(

@@ -79,5 +79,10 @@ internal static partial class Program
             ["cut_actuator_cavity"] = CutActuatorCavity,
             ["build_torso_compute_shelf"] = BuildTorsoComputeShelf,
             ["debug_mate_entities"] = DebugMateEntities,
+            ["assembly_diagnostics"] = AssemblyDiagnostics,
+            ["component_mass_properties"] = ComponentMassProperties,
+            ["resolve_lightweight"] = ResolveLightweight,
+            ["invoke"] = Invoke,
+            ["batch_invoke"] = BatchInvoke,
         };
 }

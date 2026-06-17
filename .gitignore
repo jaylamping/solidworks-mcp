@@ -11,3 +11,8 @@ workers/**/obj/
 # SolidWorks temporary/lock files should never enter tooling repo.
 ~$*
 *.tmp
+
+docs/api-reference/pages/
+docs/api-reference/crawl-state.json
+docs/api-reference/scrape-errors.json
+scripts/.gen-sigs/

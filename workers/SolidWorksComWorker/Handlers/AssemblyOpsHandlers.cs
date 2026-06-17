@@ -133,7 +133,7 @@ internal static partial class Program
         string? configuration = StringArg(args, "configuration") ?? string.Empty;
         bool save = BoolArg(args, "save", defaultValue: true);
 
-        string resolvedPartPath = Path.GetFullPath(partPath);
+        string resolvedPartPath = AssertAllowedPath(Path.GetFullPath(partPath));
         if (!File.Exists(resolvedPartPath))
         {
             throw new InvalidOperationException($"Part file not found: {resolvedPartPath}");

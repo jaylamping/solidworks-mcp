@@ -1,54 +1,57 @@
 # CAD automation capabilities
 
-SolidWorks MCP worker commands exposed via TypeScript tools. All paths must be under `SOLIDWORKS_MCP_ALLOWED_ROOTS` (default: Marengo repo).
+SolidWorks MCP worker commands exposed via TypeScript tools. Paths must be under `SOLIDWORKS_MCP_ALLOWED_ROOTS` (default: Marengo). Worker also enforces allowlist on `part_path` for `insert_component`.
+
+## API docs pipeline
+
+| Script | Purpose |
+|--------|---------|
+| `npm run docs:scrape:tavily` | Map + crawl help.solidworks.com |
+| `npm run docs:scrape:brightdata` | BFS via Bright Data Web Unlocker |
+| `npm run docs:normalize` | Build `index.json` + `interfaces/` |
+| `npm run docs:signatures` | Interop signatures (Windows + SW install) |
+
+MCP: `solidworks_search_api_docs`. Invoke policy: [com-invoke-abi.md](com-invoke-abi.md).
 
 ## Layout-driven frame build
 
 **Tool:** `marengo_torso_frame_build`  
 **Worker:** `torso_frame_build_mates`
 
-Pipeline for `marengo_torso_frame_asm`:
+See prior sections in git history for torso pipeline steps. Manual scripts still require `--confirm`.
 
-1. Show and fix layout jig (`marengo_torso_layout`).
-2. Ensure `L100` depth-rail config on `vendor_2020_black_extrusion` (100 mm).
-3. For each of 12 extrusions: translate to layout ICE center (`bottom_rail_*`, `top_rail_*`), attempt coincident/parallel mates, **fix component** if mates fail.
-4. Place 16× `bracket_2028_corner` at **inside** joint corners (2 per corner, bottom + top bands).
-5. Hide layout jig, save.
+## Worker ↔ MCP mapping (humanoid-focused)
 
-**Manual layout snap (destructive — opt-in only):**  
-`node scripts/torso-frame-layout-place.mjs --confirm`  
-Refuses to run without `--confirm`. Do **not** run from agents unless the user explicitly asked. Same for `torso-frame-autobuild.mjs --confirm` and MCP `marengo_torso_frame_build` with `confirm: true`.
+| Worker command | MCP tool | Notes |
+|----------------|----------|-------|
+| `list_configurations` | `solidworks_list_configurations` | read |
+| `list_dimensions` | `solidworks_list_dimensions` | read |
+| `set_dimension` | `solidworks_set_dimension` | confirm |
+| `insert_component` | `solidworks_insert_component` | confirm; path allowlist |
+| `list_interferences` | `solidworks_list_interferences` | read |
+| `get_component_transform` | `solidworks_get_component_transform` | read |
+| `set_component_transform` | `solidworks_set_component_transform` | confirm |
+| `mate_distance` / `mate_perpendicular` | `solidworks_mate_*` | confirm; AddMate5 quirk |
+| `rebuild_document` | `solidworks_rebuild_document` | confirm |
+| `get_persist_reference` | `solidworks_get_persist_reference` | identity for invoke |
+| `select_by_persist_reference` | `solidworks_select_by_persist_reference` | |
+| `add_configuration_copy` | `solidworks_add_configuration_copy` | confirm |
+| `vendor_add_rs03_urdf_frame` | `marengo_vendor_add_rs03_urdf_frame` | confirm |
+| `assembly_diagnostics` | `solidworks_assembly_diagnostics` | read |
+| `component_mass_properties` | `solidworks_component_mass_properties` | read |
+| `resolve_lightweight` | `solidworks_resolve_lightweight` | confirm |
+| `invoke` / `batch_invoke` | `solidworks_invoke` / `solidworks_batch_invoke` | allowlisted |
 
-**Constraint modes**
+## Marengo clearance
 
-| Mode | When | Result |
-|------|------|--------|
-| `mates` | `AddMate5` succeeds | Normal SolidWorks mate features |
-| `fixed` | Mate API returns no mate (current SW quirk) | Components fixed at layout-aligned transforms — stable for BOM/export |
-
-Script: `node scripts/torso-frame-autobuild.mjs --confirm`
-
-## Primitives (novel building blocks)
-
-| Worker command | MCP tool | Purpose |
-|----------------|----------|---------|
-| `get_feature_box` | `solidworks_get_feature_box` | Assembly-space bbox for layout ICE / extrusion ends |
-| `probe_feature_faces` | `solidworks_probe_feature_faces` | Face areas on ICE for mate targeting |
-| `align_component_to_feature` | `solidworks_align_component_to_feature` | Translate part to layout feature center |
-| `mate_coincident` / `mate_parallel` | `solidworks_mate_*` | Reference-based mates with selection marks |
-| `list_configurations` | (script only) | List part configs |
-| `add_configuration_copy` | (script only) | Copy `L085` → `L100` etc. |
-| `set_dimension` | (script only) | Drive `D1@Boss-Extrude1` per config |
-| `get_component_box` | (script only) | Component AABB in assembly |
-| `transform_component` | (script only) | Apply translation to float component |
+**Tool:** `marengo_clearance_summary` — combines `measure`, `list_interferences`, and `marengo_urdf_readiness` (static pose only).
 
 ## Known limitation
 
-`AddMate5` often returns `mateError: 0` with `mateCreated: false` even when `selectedCount: 2`. Investigate macro-recorded mate sequence vs. COM marks. Until fixed, frame build uses **fix-in-place** after ICE alignment.
+`AddMate5` often returns `mateCreated: false` with valid selections. Verify mates in the tree; frame build may fix-in-place after ICE alignment.
 
-## Next extensions
+## Doc acquisition fallback
 
-- ICE face mates via persistent face IDs / `GetSelectByIDString`
-- Width mates between rail pairs for bracket slots
-- `marengo_torso_asm_build` — frame sub-asm + RS03 to top-level layout
-- Macro capture hook: record one manual mate → replay via worker
+1. Tavily (`tvly crawl`)  
+2. Bright Data (`docs:scrape:brightdata`)  
+3. Local CHM under `SolidWorks\api\docs\` on Windows

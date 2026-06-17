@@ -519,4 +519,32 @@ internal static partial class Program
 
         return values.ToArray();
     }
+
+    private static string[] AllowedRoots()
+    {
+        string? raw = Environment.GetEnvironmentVariable("SOLIDWORKS_MCP_ALLOWED_ROOTS");
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return ["C:\\code\\marengo"];
+        }
+
+        return raw.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+
+    private static string AssertAllowedPath(string inputPath)
+    {
+        string resolved = Path.GetFullPath(inputPath);
+        string normalized = resolved.Replace('/', '\\').ToLowerInvariant();
+        foreach (string root in AllowedRoots())
+        {
+            string normalizedRoot = Path.GetFullPath(root).Replace('/', '\\').ToLowerInvariant().TrimEnd('\\');
+            if (normalized == normalizedRoot || normalized.StartsWith(normalizedRoot + "\\", StringComparison.Ordinal))
+            {
+                return resolved;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"Path is outside allowed CAD roots: {resolved}. Set SOLIDWORKS_MCP_ALLOWED_ROOTS.");
+    }
 }

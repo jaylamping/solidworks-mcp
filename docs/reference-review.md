@@ -25,3 +25,5 @@ Reviewed before scaffolding this repo:
 ## Local Decision
 
 Use a TypeScript MCP front door with a .NET COM worker. This keeps Cursor/MCP ergonomics while isolating Windows COM concerns, STA threading, and future SolidWorks interop assemblies in the worker.
+
+**Invoke policy (v0.4+):** Prefer typed MCP tools. Generic `solidworks_invoke` is an allowlisted escape hatch with persist-reference identity — not in-process handles. See `docs/com-invoke-abi.md`.

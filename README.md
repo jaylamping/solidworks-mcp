@@ -1,6 +1,6 @@
 # SolidWorks MCP
 
-Windows-only MCP server for SolidWorks automation. The MCP front door is TypeScript; SolidWorks COM calls are isolated in a .NET worker so we can own STA threading and avoid Node native COM module fragility.
+Windows-only MCP server for SolidWorks automation. TypeScript MCP front door; SolidWorks COM isolated in a .NET worker (STA threading).
 
 ## Repos
 
@@ -20,13 +20,24 @@ Smoke check:
 
 ```powershell
 npm run worker:status
+npm run validate:tools
 ```
 
-If COM is registered but not responsive, see `docs/troubleshooting.md`.
+## API documentation corpus
+
+Local SolidWorks API reference for LLM search:
+
+```powershell
+npm run docs:scrape:tavily      # primary (Python 3.10+ + tvly login)
+npm run docs:scrape:brightdata    # fallback (BRIGHTDATA_API_TOKEN + WEB_UNLOCKER zone)
+npm run docs:normalize
+```
+
+See [docs/api-reference/README.md](docs/api-reference/README.md). MCP tool: `solidworks_search_api_docs`.
+
+Generic COM escape hatch: `solidworks_invoke` / `solidworks_batch_invoke` — see [docs/com-invoke-abi.md](docs/com-invoke-abi.md).
 
 ## Cursor MCP Config
-
-Workspace config lives in marengo:
 
 ```json
 {
@@ -42,62 +53,78 @@ Workspace config lives in marengo:
 }
 ```
 
-Optional override: `MARENGO_ROOT=C:/code/marengo`.
+Optional: `SOLIDWORKS_MCP_INVOKE_WRITE=true` to allow allowlisted invoke writes.
 
-## SolidWorks tools
+## SolidWorks read tools
 
 | Tool | Role |
 |------|------|
-| `solidworks_status` | Attach and report version / active document |
-| `solidworks_open` | Open `.SLDPRT`, `.SLDASM`, `.STEP`, `.STP` from allowed roots |
-| `solidworks_export` | Export STEP, STL, PDF, PNG |
+| `solidworks_status` | Version / active document (+ doc version warning) |
 | `solidworks_measure` | Bounding box and mass properties |
-| `solidworks_list_features` | Top-level feature tree |
+| `solidworks_list_features` | Feature tree |
 | `solidworks_inspect_document` | Type, path, saved, units, custom properties |
 | `solidworks_list_components` | Assembly tree |
-| `solidworks_list_reference_geometry` | Named planes, axes, coord systems |
-| `solidworks_list_bom` | Flat assembly component list |
-| `solidworks_list_mates` | Mate feature list |
-| `solidworks_probe_feature_faces` | Face diagnostics on component features |
-| `solidworks_get_feature_box` | Feature bounding box in assembly space |
-| `solidworks_save_document` | Save document |
+| `solidworks_list_reference_geometry` | Planes, axes, coord systems |
+| `solidworks_list_bom` | Flat BOM lines |
+| `solidworks_list_mates` | Mate features |
+| `solidworks_list_configurations` | Part configurations |
+| `solidworks_list_dimensions` | Driving dimensions |
+| `solidworks_list_interferences` | Interference detection |
+| `solidworks_get_component_transform` | Component 4×4 matrix |
+| `solidworks_get_persist_reference` | Stable entity ID (base64) |
+| `solidworks_probe_feature_faces` / `solidworks_get_feature_box` | Feature diagnostics |
+| `solidworks_assembly_diagnostics` | Fixed/float/lightweight/suppressed counts |
+| `solidworks_component_mass_properties` | Per-component mass/COM/inertia |
+| `solidworks_search_api_docs` | Search local API markdown index |
 
-## Marengo assembly build (write)
+## SolidWorks write tools
 
-| Tool | Role |
-|------|------|
-| `marengo_torso_frame_build` | **Destructive (opt-in):** requires `confirm: true`; aligns frame to layout ICE |
-| `solidworks_align_component_to_feature` | Translate one component to a layout feature |
-| `solidworks_mate_coincident` | Coincident mate between two references |
-| `solidworks_mate_parallel` | Parallel mate between two references |
-
-See [docs/cad-automation.md](docs/cad-automation.md).
-
-## Marengo audit tools (read-only)
+Write tools that mutate the model require **`confirm: true`** when the user explicitly requested the action.
 
 | Tool | Role |
 |------|------|
-| `marengo_cad_conventions_check` | Filename/layout vs `cad-conventions.json` |
-| `marengo_design_package_validate` | Assembly tree vs `design-packages.json` |
-| `marengo_design_review` | Combined report + checklist |
-| `marengo_urdf_readiness` | URDF reference geometry before Brawner export; walks assembly component trees |
-| `marengo_kinematics_consistency` | `kinematics.md` vs assembly instance names |
-| `marengo_urdf_export_postcheck` | Exported URDF vs kinematics + `config/motors.yaml` |
-| `marengo_vendor_registry_summary` | Vendor registry under `hardware/manifests/` |
-| `marengo_hardware_coverage` | Assembly BOM vs registry + `master-bom.csv` |
+| `solidworks_open` / `solidworks_export` / `solidworks_save_document` | Document I/O |
+| `solidworks_set_custom_properties` | Marengo metadata |
+| `solidworks_set_dimension` | Parametric drive (**confirm**) |
+| `solidworks_insert_component` | Add part to assembly (**confirm**) |
+| `solidworks_set_component_transform` | Placement (**confirm**) |
+| `solidworks_mate_coincident` / `parallel` / `distance` / `perpendicular` | Mates |
+| `solidworks_rebuild_document` | Rebuild (**confirm**) |
+| `solidworks_add_configuration_copy` | Config copy (**confirm**) |
+| `solidworks_resolve_lightweight` | Resolve lightweight (**confirm**) |
+| `solidworks_select_by_persist_reference` | Selection via persist ref |
+| `solidworks_align_component_to_feature` | Layout alignment |
+| `marengo_torso_frame_build` | Torso frame mates (**confirm**) |
+| `marengo_vendor_add_rs03_urdf_frame` | URDF frame on part (**confirm**) |
 
-Legacy aliases: `vendor_registry_summary`, `vendor_stage_local_asset` (default registry path is Marengo).
+## Invoke (allowlisted)
 
-## Vendor CAD workflow
+| Tool | Role |
+|------|------|
+| `solidworks_invoke` | Single allowlisted API call |
+| `solidworks_batch_invoke` | Up to 50 calls in one worker process |
 
-1. Add or update `C:\code\marengo\hardware\manifests\vendor-assets.json`.
-2. Stage STEP under `hardware/cad/vendor/`.
-3. Import in SolidWorks; add named reference geometry per `hardware/docs/cad-standards.md`.
-4. Run `marengo_design_review` before saving assemblies.
+## Marengo audit tools
+
+| Tool | Role |
+|------|------|
+| `marengo_cad_conventions_check` | Paths vs `cad-conventions.json` |
+| `marengo_design_package_validate` | Tree vs `design-packages.json` |
+| `marengo_design_review` | Combined report |
+| `marengo_urdf_readiness` | URDF reference geometry |
+| `marengo_kinematics_consistency` | `kinematics.md` vs assembly |
+| `marengo_urdf_export_postcheck` | Exported URDF vs manifests |
+| `marengo_hardware_coverage` | BOM vs vendor registry |
+| `marengo_clearance_summary` | Measure + interferences + URDF gaps |
+| `marengo_vendor_registry_summary` | Vendor asset registry |
+
+Legacy aliases: `vendor_registry_summary`, `vendor_stage_local_asset`.
 
 ## Design policy
 
-- Real-component-first: vendor CAD for actuators, fasteners, boards, bearings before designing around guesses.
-- Native SolidWorks parts/assemblies are source of truth.
-- URDF export is **manual** (Brawner) → `assets/urdf/marengo.urdf`; MCP audits only.
-- MCP does not auto-mate, insert components, move features, or write URDF yet.
+- Real-component-first vendor CAD before guessing geometry.
+- Native SolidWorks files are source of truth.
+- URDF export remains **manual** (Brawner); MCP audits and prepares geometry.
+- Destructive actions require explicit `confirm: true` from the user request.
+
+See [docs/cad-automation.md](docs/cad-automation.md) and [docs/troubleshooting.md](docs/troubleshooting.md).
