@@ -7,13 +7,101 @@ import { z } from "zod";
 import { assertAllowedPath, packageRoot } from "./config.js";
 import { appendAuditEntry } from "./audit-log.js";
 import { formatErrorForMcp } from "./errors.js";
+import * as actuatorSchemas from "./schemas/actuator.js";
 import * as assemblySchemas from "./schemas/assembly.js";
 import * as documentSchemas from "./schemas/document.js";
 import * as mateSchemas from "./schemas/mate.js";
 import * as partSchemas from "./schemas/part.js";
+import * as workflowSchemas from "./schemas/workflow.js";
 import { runWorker, type WorkerCommand } from "./worker.js";
 
 export type ToolTier = "core" | "extended" | "advanced" | "debug";
+
+export const SCHEMA_MAP = {
+  optionalPath: documentSchemas.optionalPathSchema,
+  open: documentSchemas.openSchema,
+  export: documentSchemas.exportSchema,
+  diagnose: documentSchemas.diagnoseSchema,
+  explainError: documentSchemas.explainErrorSchema,
+  checkpoint: documentSchemas.checkpointSchema,
+  confirmPath: documentSchemas.confirmPathSchema,
+  closeDocument: documentSchemas.closeDocumentSchema,
+  closeAllDocuments: documentSchemas.closeAllDocumentsSchema,
+  rebuildDocument: documentSchemas.rebuildDocumentSchema,
+  importStep: documentSchemas.importStepSchema,
+  diagnosePartSave: documentSchemas.diagnosePartSaveSchema,
+  resolveLightweight: documentSchemas.resolveLightweightSchema,
+  unfixAllComponents: documentSchemas.unfixAllComponentsSchema,
+  componentName: assemblySchemas.componentNameSchema,
+  transformComponent: assemblySchemas.transformComponentSchema,
+  setComponentTransform: assemblySchemas.setComponentTransformSchema,
+  setDimension: assemblySchemas.setDimensionSchema,
+  align: assemblySchemas.alignSchema,
+  featureProbe: assemblySchemas.featureProbeSchema,
+  partFeatureProbe: assemblySchemas.partFeatureProbeSchema,
+  persistRef: assemblySchemas.persistRefSchema,
+  selectByPersistReference: assemblySchemas.selectByPersistReferenceSchema,
+  insertComponent: assemblySchemas.insertComponentSchema,
+  deleteMate: assemblySchemas.deleteMateSchema,
+  deleteMatesInRange: assemblySchemas.deleteMatesInRangeSchema,
+  deleteAllMates: assemblySchemas.deleteAllMatesSchema,
+  dissolveComponent: assemblySchemas.dissolveComponentSchema,
+  mirrorComponent: assemblySchemas.mirrorComponentSchema,
+  copyWithMates: assemblySchemas.copyWithMatesSchema,
+  explodeView: assemblySchemas.explodeViewSchema,
+  setFeatureSuppression: assemblySchemas.setFeatureSuppressionSchema,
+  setMateSuppression: assemblySchemas.setMateSuppressionSchema,
+  setComponentConfiguration: assemblySchemas.setComponentConfigurationSchema,
+  cloneSolidBodyPart: assemblySchemas.cloneSolidBodyPartSchema,
+  mirrorPartFile: assemblySchemas.mirrorPartFileSchema,
+  makeComponentIndependent: assemblySchemas.makeComponentIndependentSchema,
+  replaceComponentsByPath: assemblySchemas.replaceComponentsByPathSchema,
+  replaceComponentPath: assemblySchemas.replaceComponentPathSchema,
+  exportLinkTransforms: assemblySchemas.exportLinkTransformsSchema,
+  measureDistance: assemblySchemas.measureDistanceSchema,
+  getAssemblyDegreesOfFreedom: assemblySchemas.getAssemblyDegreesOfFreedomSchema,
+  torsoFrameBuild: assemblySchemas.torsoFrameBuildSchema,
+  mateRefs: mateSchemas.mateRefsSchema,
+  mateLimitAngle: mateSchemas.mateLimitAngleSchema,
+  mateTry: mateSchemas.mateTrySchema,
+  createSketch: partSchemas.createSketchSchema,
+  sketchLine: partSchemas.sketchLineSchema,
+  sketchCircle: partSchemas.sketchCircleSchema,
+  sketchRectangle: partSchemas.sketchRectangleSchema,
+  featureExtrudeCut: partSchemas.featureExtrudeCutSchema,
+  featureExtrudeBoss: partSchemas.featureExtrudeBossSchema,
+  deleteFeature: partSchemas.deleteFeatureSchema,
+  featureFillet: partSchemas.featureFilletSchema,
+  featureChamfer: partSchemas.featureChamferSchema,
+  featureMirror: partSchemas.featureMirrorSchema,
+  featureLinearPattern: partSchemas.featureLinearPatternSchema,
+  featureCircularPattern: partSchemas.featureCircularPatternSchema,
+  setMaterial: partSchemas.setMaterialSchema,
+  roundSideArmsFromCircle: partSchemas.roundSideArmsFromCircleSchema,
+  newDocument: partSchemas.newDocumentSchema,
+  createSubassembly: partSchemas.createSubassemblySchema,
+  createDrawingFromModel: partSchemas.createDrawingFromModelSchema,
+  addStandardViews: partSchemas.addStandardViewsSchema,
+  addConfigurationCopy: partSchemas.addConfigurationCopySchema,
+  ensureOffsetPlane: partSchemas.ensureOffsetPlaneSchema,
+  packAndGo: partSchemas.packAndGoSchema,
+  actuatorGetEnvelope: actuatorSchemas.actuatorGetEnvelopeSchema,
+  actuatorProbeMountFace: actuatorSchemas.actuatorProbeMountFaceSchema,
+  actuatorMountHolePattern: actuatorSchemas.actuatorMountHolePatternSchema,
+  actuatorCutCavity: actuatorSchemas.actuatorCutCavitySchema,
+  actuatorInsertVendor: actuatorSchemas.actuatorInsertVendorSchema,
+  actuatorAddUrdfFrame: actuatorSchemas.actuatorAddUrdfFrameSchema,
+  placeShoulderRollMotors: workflowSchemas.placeShoulderRollMotorsSchema,
+  buildTorsoComputeShelf: workflowSchemas.buildTorsoComputeShelfSchema,
+  captureShoulderRollGolden: workflowSchemas.captureShoulderRollGoldenSchema,
+  applyShoulderRollGolden: workflowSchemas.applyShoulderRollGoldenSchema,
+  cutActuatorCavity: workflowSchemas.cutActuatorCavitySchema,
+  vendorAddRs03UrdfFrame: workflowSchemas.vendorAddRs03UrdfFrameSchema,
+  createMalletMount: workflowSchemas.createMalletMountSchema,
+  layoutAddShoulderMounts: workflowSchemas.layoutAddShoulderMountsSchema,
+} as const satisfies Record<string, z.ZodTypeAny>;
+
+export type SchemaKey = keyof typeof SCHEMA_MAP;
 
 export interface ToolManifestEntry {
   name: string;
@@ -25,31 +113,13 @@ export interface ToolManifestEntry {
   description: string;
   tags?: string[];
   domains?: string[];
-  schema?: "optionalPath" | "open" | "export" | "mateRefs" | "mateLimitAngle" | "diagnose" | "explainError" | "checkpoint" | "confirmPath" | "custom";
+  schema?: SchemaKey | "custom";
 }
 
 interface ToolManifest {
   version: string;
   tools: ToolManifestEntry[];
 }
-
-const SCHEMA_MAP = {
-  optionalPath: documentSchemas.optionalPathSchema,
-  componentName: assemblySchemas.componentNameSchema,
-  featureProbe: assemblySchemas.featureProbeSchema,
-  partFeatureProbe: assemblySchemas.partFeatureProbeSchema,
-  persistRef: assemblySchemas.persistRefSchema,
-  align: assemblySchemas.alignSchema,
-  open: documentSchemas.openSchema,
-  export: documentSchemas.exportSchema,
-  mateRefs: mateSchemas.mateRefsSchema,
-  mateLimitAngle: mateSchemas.mateLimitAngleSchema,
-  mateTry: mateSchemas.mateTrySchema,
-  diagnose: documentSchemas.diagnoseSchema,
-  explainError: documentSchemas.explainErrorSchema,
-  checkpoint: documentSchemas.checkpointSchema,
-  confirmPath: documentSchemas.confirmPathSchema,
-} as const;
 
 function manifestPath(): string {
   return path.join(packageRoot(), "tools/manifest.json");

@@ -1,10 +1,10 @@
-# solidworks_copy_with_mates
+# solidworks_round_side_arms_from_circle
 
-Worker command: copy_with_mates
+Worker command: round_side_arms_from_circle
 
 | Field | Value |
 |-------|-------|
-| Worker command | `copy_with_mates` |
+| Worker command | `round_side_arms_from_circle` |
 | Tier | extended |
 | Read only | false |
 | Destructive | true |
@@ -12,10 +12,9 @@ Worker command: copy_with_mates
 
 ## Tags
 
-- copy
+- round
 
 ## Domains
 
-- assembly
-- mate
+- document
 

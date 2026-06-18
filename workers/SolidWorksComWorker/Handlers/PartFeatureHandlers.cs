@@ -150,6 +150,166 @@ internal static partial class Program
         };
     }
 
+    private static object RoundSideArmsFromCircle(JsonElement? args)
+    {
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = ResolveDocument(app, args);
+        string planeName = StringArg(args, "plane_name") ?? "Front Plane";
+        bool dryRun = BoolArg(args, "dry_run", defaultValue: false);
+        bool save = BoolArg(args, "save", defaultValue: true);
+        double samples = DoubleArg(args, "samples", 24);
+
+        (double centerX, double centerY, double radiusM) = ResolveCircleGuide(doc, args);
+        if (radiusM <= 0)
+        {
+            throw new InvalidOperationException("Circle guide radius must be greater than zero.");
+        }
+
+        double[]? box = Try(() => ((IPartDoc)doc).GetPartBox(true)) as double[];
+        double margin = radiusM * 0.1;
+        double topY = centerY + radiusM;
+        double leftOuterX = centerX - radiusM;
+        double rightOuterX = centerX + radiusM;
+
+        if (box is { Length: >= 6 })
+        {
+            double boxWidth = box[3] - box[0];
+            double boxHeight = box[4] - box[1];
+            margin = Math.Max(margin, Math.Max(boxWidth, boxHeight) * 0.05);
+            topY = Math.Max(topY, box[4]);
+            leftOuterX = box[0] - margin;
+            rightOuterX = box[3] + margin;
+        }
+
+        double cutTopY = topY + margin;
+        int segmentCount = Math.Clamp((int)Math.Round(samples), 8, 96);
+
+        if (dryRun)
+        {
+            return new
+            {
+                document = DescribeDocument(doc),
+                planeName,
+                centerM = new[] { centerX, centerY },
+                radiusM,
+                outerXM = new[] { leftOuterX, rightOuterX },
+                cutTopY,
+                segmentCount,
+                partBoxM = box,
+            };
+        }
+
+        Feature? leftCut = CutArmOutsideCircle(doc, planeName, centerX, centerY, radiusM, leftOuterX, cutTopY, segmentCount, left: true);
+        Feature? rightCut = CutArmOutsideCircle(doc, planeName, centerX, centerY, radiusM, rightOuterX, cutTopY, segmentCount, left: false);
+
+        bool rebuildOk = Try(() => doc.ForceRebuild3(false)) as bool? ?? false;
+        doc.EditRebuild3();
+
+        bool saved = false;
+        int errors = 0;
+        int warnings = 0;
+        if (save)
+        {
+            saved = doc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref errors, ref warnings);
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            planeName,
+            centerM = new[] { centerX, centerY },
+            radiusM,
+            outerXM = new[] { leftOuterX, rightOuterX },
+            cutTopY,
+            segmentCount,
+            leftFeatureName = Try(() => leftCut?.Name),
+            rightFeatureName = Try(() => rightCut?.Name),
+            rebuildOk,
+            saved,
+            saveErrors = errors,
+            saveWarnings = warnings,
+        };
+    }
+
+    private static (double CenterX, double CenterY, double RadiusM) ResolveCircleGuide(ModelDoc2 doc, JsonElement? args)
+    {
+        if (args is not null
+            && args.Value.ValueKind == JsonValueKind.Object
+            && args.Value.TryGetProperty("center_x_m", out _)
+            && args.Value.TryGetProperty("center_y_m", out _)
+            && args.Value.TryGetProperty("radius_m", out _))
+        {
+            return (
+                DoubleArg(args, "center_x_m"),
+                DoubleArg(args, "center_y_m"),
+                DoubleArg(args, "radius_m"));
+        }
+
+        SelectionMgr selection = (SelectionMgr)doc.SelectionManager;
+        object selected = selection.GetSelectedObject6(1, -1)
+            ?? throw new InvalidOperationException("Select a circular sketch entity or pass center_x_m, center_y_m, and radius_m.");
+
+        dynamic circle = selected;
+        dynamic centerPoint = circle.GetCenterPoint2();
+        return ((double)centerPoint.X, (double)centerPoint.Y, (double)circle.GetRadius());
+    }
+
+    private static Feature? CutArmOutsideCircle(
+        ModelDoc2 doc,
+        string planeName,
+        double centerX,
+        double centerY,
+        double radiusM,
+        double outerX,
+        double topY,
+        int segmentCount,
+        bool left)
+    {
+        doc.ClearSelection2(true);
+        if (!doc.Extension.SelectByID2(planeName, "PLANE", 0, 0, 0, false, 0, null, 0))
+        {
+            throw new InvalidOperationException($"Could not select sketch plane: {planeName}");
+        }
+
+        SketchManager sketchMgr = doc.SketchManager;
+        sketchMgr.InsertSketch(true);
+
+        var points = new List<(double X, double Y)>
+        {
+            (centerX + (left ? -radiusM : radiusM), centerY),
+            (outerX, centerY),
+            (outerX, topY),
+            (centerX, topY),
+        };
+
+        for (int i = 0; i <= segmentCount; i++)
+        {
+            double theta = left
+                ? (Math.PI / 2.0) + (Math.PI / 2.0) * i / segmentCount
+                : (Math.PI / 2.0) - (Math.PI / 2.0) * i / segmentCount;
+            points.Add((centerX + radiusM * Math.Cos(theta), centerY + radiusM * Math.Sin(theta)));
+        }
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            (double x1, double y1) = points[i];
+            (double x2, double y2) = points[(i + 1) % points.Count];
+            sketchMgr.CreateLine(x1, y1, 0, x2, y2, 0);
+        }
+
+        sketchMgr.InsertSketch(true);
+        Feature? sketchFeature = Try(() => doc.FeatureByPositionReverse(0)) as Feature;
+        doc.ClearSelection2(true);
+        if (sketchFeature is null || !(Try(() => sketchFeature.Select2(false, 0)) as bool? ?? false))
+        {
+            throw new InvalidOperationException("Could not select generated cut sketch.");
+        }
+
+        Feature? cut = ExtrudeCutThroughAll(doc);
+        doc.EditRebuild3();
+        return cut;
+    }
+
     private static object FeatureFillet(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);

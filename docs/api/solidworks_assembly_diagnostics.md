@@ -1,10 +1,10 @@
-# solidworks_import_step
+# solidworks_assembly_diagnostics
 
-Worker command: import_step
+Worker command: assembly_diagnostics
 
 | Field | Value |
 |-------|-------|
-| Worker command | `import_step` |
+| Worker command | `assembly_diagnostics` |
 | Tier | extended |
 | Read only | true |
 | Destructive | false |
@@ -12,7 +12,7 @@ Worker command: import_step
 
 ## Tags
 
-- import
+- assembly
 
 ## Domains
 

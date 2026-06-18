@@ -1,10 +1,10 @@
-# solidworks_import_step
+# solidworks_component_mass_properties
 
-Worker command: import_step
+Worker command: component_mass_properties
 
 | Field | Value |
 |-------|-------|
-| Worker command | `import_step` |
+| Worker command | `component_mass_properties` |
 | Tier | extended |
 | Read only | true |
 | Destructive | false |
@@ -12,7 +12,7 @@ Worker command: import_step
 
 ## Tags
 
-- import
+- component
 
 ## Domains
 

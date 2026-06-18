@@ -7,8 +7,8 @@ Worker command: feature_mirror
 | Worker command | `feature_mirror` |
 | Tier | extended |
 | Read only | false |
-| Destructive | false |
-| Confirm required | false |
+| Destructive | true |
+| Confirm required | true |
 
 ## Tags
 

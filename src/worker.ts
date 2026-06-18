@@ -121,6 +121,7 @@ export type WorkerCommand =
   | "reset_component_transform"
   | "resolve_lightweight"
   | "resolve_selection"
+  | "round_side_arms_from_circle"
   | "save_document"
   | "select_by_persist_reference"
   | "select_face_by_ray"

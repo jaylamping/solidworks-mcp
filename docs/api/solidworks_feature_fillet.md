@@ -7,8 +7,8 @@ Worker command: feature_fillet
 | Worker command | `feature_fillet` |
 | Tier | extended |
 | Read only | false |
-| Destructive | false |
-| Confirm required | false |
+| Destructive | true |
+| Confirm required | true |
 
 ## Tags
 

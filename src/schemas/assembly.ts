@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { optionalPathSchema, selectionFieldsSchema } from "./document.js";
+import { confirmPathSchema, optionalPathSchema, selectionFieldsSchema } from "./document.js";
+import { confirmField } from "./shared.js";
 
 export { mateLimitAngleSchema, mateRefsSchema, mateTrySchema } from "./mate.js";
 
@@ -8,6 +9,28 @@ export const componentNameSchema = optionalPathSchema.extend({
   component_name: z.string().min(1).optional(),
 }).refine((data) => data.use_selection || Boolean(data.component_name), {
   message: "Provide component_name or set use_selection: true.",
+});
+
+export const transformComponentSchema = z.object({
+  path: z.string().min(1),
+  component_name: z.string().min(1),
+  tx: z.number().optional(),
+  ty: z.number().optional(),
+  tz: z.number().optional(),
+}).merge(selectionFieldsSchema);
+
+export const setComponentTransformSchema = z.object({
+  path: z.string().min(1),
+  component_name: z.string().min(1),
+  matrix: z.array(z.number()).length(16),
+  fix: z.boolean().optional(),
+}).merge(selectionFieldsSchema);
+
+export const setDimensionSchema = z.object({
+  path: z.string().min(1),
+  dimension: z.string().min(1),
+  value_meters: z.number(),
+  configuration: z.string().min(1).optional(),
 });
 
 export const alignSchema = z.object({
@@ -51,6 +74,130 @@ export const persistRefSchema = z.object({
   (data) => data.use_selection || Boolean(data.component_name && data.ref),
   { message: "Provide component_name and ref, or set use_selection: true." },
 );
+
+export const selectByPersistReferenceSchema = z.object({
+  path: z.string().min(1),
+  persist_reference: z.string().min(1),
+  mark: z.number().int().optional(),
+  append: z.boolean().optional(),
+});
+
+export const insertComponentSchema = z.object({
+  path: z.string().min(1),
+  part_path: z.string().min(1),
+  name: z.string().min(1).optional(),
+  configuration: z.string().optional(),
+  save: z.boolean().optional(),
+});
+
+export const deleteMateSchema = z.object({
+  path: z.string().min(1),
+  mate_name: z.string().min(1),
+  ...confirmField,
+});
+
+export const deleteMatesInRangeSchema = z.object({
+  path: z.string().min(1).optional(),
+  min_number: z.number().int().optional(),
+  max_number: z.number().int().optional(),
+  save: z.boolean().optional(),
+  ...confirmField,
+});
+
+export const deleteAllMatesSchema = confirmPathSchema;
+
+export const dissolveComponentSchema = optionalPathSchema.extend({
+  component_name: z.string().min(1),
+  ...confirmField,
+});
+
+export const mirrorComponentSchema = z.object({
+  path: z.string().min(1),
+  component_name: z.string().min(1),
+  mirror_plane: z.string().min(1).optional(),
+  ...confirmField,
+});
+
+export const copyWithMatesSchema = optionalPathSchema.extend({
+  component_name: z.string().min(1),
+  ...confirmField,
+});
+
+export const explodeViewSchema = confirmPathSchema;
+
+export const setFeatureSuppressionSchema = z.object({
+  path: z.string().min(1),
+  feature_name: z.string().min(1),
+  suppressed: z.boolean().optional(),
+  configuration: z.string().min(1).optional(),
+});
+
+export const setMateSuppressionSchema = z.object({
+  path: z.string().min(1),
+  mate_name: z.string().min(1),
+  suppressed: z.boolean().optional(),
+});
+
+export const setComponentConfigurationSchema = z.object({
+  path: z.string().min(1),
+  component_name: z.string().min(1),
+  configuration: z.string().min(1),
+});
+
+export const cloneSolidBodyPartSchema = z.object({
+  source_part_path: z.string().min(1),
+  output_part_path: z.string().min(1),
+  assembly_path: z.string().min(1).optional(),
+  component_name: z.string().min(1).optional(),
+  save: z.boolean().optional(),
+  ...confirmField,
+});
+
+export const mirrorPartFileSchema = z.object({
+  source_part_path: z.string().min(1),
+  output_part_path: z.string().min(1),
+  mirror_plane: z.string().min(1).optional(),
+  save: z.boolean().optional(),
+  ...confirmField,
+});
+
+export const makeComponentIndependentSchema = z.object({
+  assembly_path: z.string().min(1),
+  component_name: z.string().min(1),
+  save: z.boolean().optional(),
+  ...confirmField,
+});
+
+export const replaceComponentsByPathSchema = z.object({
+  path: z.string().min(1),
+  from_part_path: z.string().min(1),
+  to_part_path: z.string().min(1),
+  configuration: z.string().min(1).optional(),
+  save: z.boolean().optional(),
+  ...confirmField,
+});
+
+export const replaceComponentPathSchema = z.object({
+  path: z.string().min(1),
+  component_name: z.string().min(1),
+  to_part_path: z.string().min(1),
+  configuration: z.string().min(1).optional(),
+  save: z.boolean().optional(),
+  ...confirmField,
+});
+
+export const exportLinkTransformsSchema = z.object({
+  path: z.string().min(1),
+  output_path: z.string().min(1).optional(),
+});
+
+export const measureDistanceSchema = z.object({
+  path: z.string().min(1).optional(),
+  entity_a: z.string().min(1).optional(),
+  entity_b: z.string().min(1).optional(),
+}).merge(selectionFieldsSchema);
+
+export const getAssemblyDegreesOfFreedomSchema = optionalPathSchema;
 
 export const torsoFrameBuildSchema = z.object({
   path: z.string().min(1),

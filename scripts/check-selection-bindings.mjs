@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { SCHEMA_BY_COMMAND } from "./schema-by-command.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const selectionContextPath = path.join(
   root,
@@ -16,7 +18,6 @@ function parseSelectionBindings(text) {
       bindings.add(match[1]);
     }
   }
-  // fallback: parse inside dictionary block
   const block = text.match(/SelectionCommandBindings\s*=\s*new[\s\S]*?};/);
   if (block) {
     for (const match of block[0].matchAll(/\["([a-z0-9_]+)"\]\s*=/g)) {
@@ -26,20 +27,8 @@ function parseSelectionBindings(text) {
   return [...bindings].sort();
 }
 
-function parseManifestSchemaMap() {
-  const manifestPath = path.join(root, "scripts/generate-manifest-from-registry.mjs");
-  const text = fs.readFileSync(manifestPath, "utf8");
-  const block = text.match(/const SCHEMA_BY_COMMAND = \{([\s\S]*?)\};/);
-  if (!block) return new Map();
-  const map = new Map();
-  for (const match of block[1].matchAll(/\n\s*([a-z0-9_]+):\s*"([^"]+)"/g)) {
-    map.set(match[1], match[2]);
-  }
-  return map;
-}
-
 const bindings = parseSelectionBindings(fs.readFileSync(selectionContextPath, "utf8"));
-const schemaMap = parseManifestSchemaMap();
+const schemaMap = new Map(Object.entries(SCHEMA_BY_COMMAND));
 
 const missingSchema = bindings.filter((command) => !schemaMap.has(command));
 if (missingSchema.length) {

@@ -1,10 +1,10 @@
-# solidworks_import_step
+# solidworks_resolve_selection
 
-Worker command: import_step
+Worker command: resolve_selection
 
 | Field | Value |
 |-------|-------|
-| Worker command | `import_step` |
+| Worker command | `resolve_selection` |
 | Tier | extended |
 | Read only | true |
 | Destructive | false |
@@ -12,7 +12,7 @@ Worker command: import_step
 
 ## Tags
 
-- import
+- resolve
 
 ## Domains
 

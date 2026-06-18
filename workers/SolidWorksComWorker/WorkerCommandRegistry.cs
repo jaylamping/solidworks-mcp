@@ -119,6 +119,7 @@ internal static partial class Program
             ["sketch_circle"] = SketchCircle,
             ["sketch_exit"] = SketchExit,
             ["feature_extrude_cut"] = FeatureExtrudeCut,
+            ["round_side_arms_from_circle"] = RoundSideArmsFromCircle,
             ["feature_fillet"] = FeatureFillet,
             ["feature_chamfer"] = FeatureChamfer,
             ["feature_mirror"] = FeatureMirror,

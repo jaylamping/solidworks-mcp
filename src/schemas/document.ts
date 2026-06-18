@@ -41,3 +41,31 @@ export const explainErrorSchema = z.object({
   sw_error_code: z.number().optional(),
   message: z.string().optional(),
 });
+
+export const closeDocumentSchema = z.object({
+  path: z.string().min(1),
+  save: z.boolean().optional(),
+});
+
+export const closeAllDocumentsSchema = z.object({
+  save_first: z.boolean().optional(),
+  confirm: z.literal(true),
+});
+
+export const rebuildDocumentSchema = z.object({
+  path: z.string().min(1),
+  force: z.boolean().optional(),
+});
+
+export const importStepSchema = z.object({
+  path: z.string().min(1),
+  start_if_missing: z.boolean().optional(),
+});
+
+export const diagnosePartSaveSchema = z.object({
+  path: z.string().min(1),
+});
+
+export const resolveLightweightSchema = confirmPathSchema;
+
+export const unfixAllComponentsSchema = confirmPathSchema;

@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { SCHEMA_BY_COMMAND } from "./schema-by-command.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const registryPath = path.join(root, "workers/SolidWorksComWorker/WorkerCommandRegistry.cs");
 const manifestPath = path.join(root, "tools/manifest.json");
@@ -53,6 +55,7 @@ const DESTRUCTIVE = new Set([
   "resolve_lightweight",
   "feature_extrude_cut",
   "feature_fillet",
+  "round_side_arms_from_circle",
   "feature_chamfer",
   "feature_mirror",
   "feature_linear_pattern",
@@ -126,50 +129,6 @@ const CORE = new Set([
   "diagnose_com",
 ]);
 
-const SCHEMA_BY_COMMAND = {
-  open: "open",
-  export: "export",
-  component_mass_properties: "componentName",
-  assembly_diagnostics: "optionalPath",
-  get_component_box: "componentName",
-  get_component_transform: "componentName",
-  transform_component: "componentName",
-  set_component_transform: "componentName",
-  reset_component_transform: "componentName",
-  set_component_visible: "componentName",
-  set_component_fixed: "componentName",
-  rename_component: "componentName",
-  get_feature_box: "featureProbe",
-  probe_feature_faces: "featureProbe",
-  get_part_feature_box: "partFeatureProbe",
-  get_planar_face_index: "featureProbe",
-  align_component_to_feature: "align",
-  create_sketch: "optionalPath",
-  actuator_mount_hole_pattern: "optionalPath",
-  actuator_probe_mount_face: "optionalPath",
-  get_persist_reference: "persistRef",
-  get_mass_properties: "componentName",
-  mate_try_coincident: "mateRefs",
-  mate_try_parallel: "mateRefs",
-  mate_try_distance: "mateTry",
-  mate_try_perpendicular: "mateRefs",
-  mate_try_width: "mateRefs",
-  mate_coincident: "mateRefs",
-  mate_parallel: "mateRefs",
-  mate_planes: "mateRefs",
-  mate_distance: "mateRefs",
-  mate_perpendicular: "mateRefs",
-  mate_width: "mateRefs",
-  mate_limit_angle: "mateLimitAngle",
-  diagnose_com: "diagnose",
-  diagnose_document: "diagnose",
-  diagnose_selection: "diagnose",
-  explain_error: "explainError",
-  checkpoint_document: "checkpoint",
-  activate_document: "open",
-  close_document: "open",
-};
-
 function parseRegistryCommands(text) {
   const matches = [...text.matchAll(/\["([a-z0-9_]+)"\]\s*=/g)];
   return [...new Set(matches.map((m) => m[1]))].sort();
@@ -193,11 +152,30 @@ function mcpName(command) {
 }
 
 function schemaFor(command) {
-  return SCHEMA_BY_COMMAND[command] ?? "optionalPath";
+  const schema = SCHEMA_BY_COMMAND[command] ?? "optionalPath";
+  if (DESTRUCTIVE.has(command) && schema === "optionalPath") {
+    throw new Error(`Destructive command '${command}' must have an explicit schema mapping in schema-by-command.mjs`);
+  }
+  return schema;
 }
 
 const registryText = fs.readFileSync(registryPath, "utf8");
 const commands = parseRegistryCommands(registryText);
+
+const schemaErrors = [];
+for (const command of commands) {
+  if (HAND_REGISTERED.has(command)) {
+    continue;
+  }
+  if (DESTRUCTIVE.has(command) && !(SCHEMA_BY_COMMAND[command] && SCHEMA_BY_COMMAND[command] !== "optionalPath")) {
+    schemaErrors.push(command);
+  }
+}
+if (schemaErrors.length) {
+  throw new Error(
+    `Destructive commands missing explicit schema mapping: ${schemaErrors.join(", ")}`,
+  );
+}
 
 const tools = commands
   .filter((command) => !HAND_REGISTERED.has(command))

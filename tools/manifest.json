@@ -34,7 +34,7 @@
         "part",
         "assembly"
       ],
-      "schema": "optionalPath"
+      "schema": "actuatorAddUrdfFrame"
     },
     {
       "name": "solidworks_actuator_cut_cavity",
@@ -53,7 +53,7 @@
         "part",
         "assembly"
       ],
-      "schema": "optionalPath"
+      "schema": "actuatorCutCavity"
     },
     {
       "name": "solidworks_actuator_get_envelope",
@@ -72,7 +72,7 @@
         "part",
         "assembly"
       ],
-      "schema": "optionalPath"
+      "schema": "actuatorGetEnvelope"
     },
     {
       "name": "solidworks_actuator_insert_vendor",
@@ -91,7 +91,7 @@
         "part",
         "assembly"
       ],
-      "schema": "optionalPath"
+      "schema": "actuatorInsertVendor"
     },
     {
       "name": "solidworks_actuator_list_models",
@@ -129,7 +129,7 @@
         "part",
         "assembly"
       ],
-      "schema": "optionalPath"
+      "schema": "actuatorMountHolePattern"
     },
     {
       "name": "solidworks_actuator_probe_mount_face",
@@ -148,7 +148,7 @@
         "part",
         "assembly"
       ],
-      "schema": "optionalPath"
+      "schema": "actuatorProbeMountFace"
     },
     {
       "name": "solidworks_add_configuration_copy",
@@ -164,7 +164,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "addConfigurationCopy"
     },
     {
       "name": "solidworks_add_standard_views",
@@ -180,7 +180,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "addStandardViews"
     },
     {
       "name": "solidworks_apply_shoulder_roll_golden",
@@ -196,7 +196,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "applyShoulderRollGolden"
     },
     {
       "name": "solidworks_assembly_diagnostics",
@@ -228,7 +228,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "buildTorsoComputeShelf"
     },
     {
       "name": "solidworks_capture_shoulder_roll_golden",
@@ -244,7 +244,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "captureShoulderRollGolden"
     },
     {
       "name": "solidworks_checkpoint_document",
@@ -276,7 +276,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "cloneSolidBodyPart"
     },
     {
       "name": "solidworks_close_all_documents",
@@ -292,7 +292,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "closeAllDocuments"
     },
     {
       "name": "solidworks_close_document",
@@ -308,7 +308,7 @@
       "domains": [
         "document"
       ],
-      "schema": "open"
+      "schema": "closeDocument"
     },
     {
       "name": "solidworks_component_mass_properties",
@@ -341,7 +341,7 @@
         "assembly",
         "mate"
       ],
-      "schema": "optionalPath"
+      "schema": "copyWithMates"
     },
     {
       "name": "solidworks_create_drawing_from_model",
@@ -357,7 +357,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "createDrawingFromModel"
     },
     {
       "name": "solidworks_create_mallet_mount",
@@ -373,7 +373,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "createMalletMount"
     },
     {
       "name": "solidworks_create_sketch",
@@ -389,7 +389,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "createSketch"
     },
     {
       "name": "solidworks_create_subassembly",
@@ -405,7 +405,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "createSubassembly"
     },
     {
       "name": "solidworks_cut_actuator_cavity",
@@ -421,7 +421,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "cutActuatorCavity"
     },
     {
       "name": "solidworks_debug_mate_entities",
@@ -455,7 +455,7 @@
         "assembly",
         "mate"
       ],
-      "schema": "optionalPath"
+      "schema": "deleteAllMates"
     },
     {
       "name": "solidworks_delete_feature",
@@ -471,7 +471,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "deleteFeature"
     },
     {
       "name": "solidworks_delete_mate",
@@ -488,7 +488,7 @@
         "assembly",
         "mate"
       ],
-      "schema": "optionalPath"
+      "schema": "deleteMate"
     },
     {
       "name": "solidworks_delete_mates_in_range",
@@ -505,7 +505,7 @@
         "assembly",
         "mate"
       ],
-      "schema": "optionalPath"
+      "schema": "deleteMatesInRange"
     },
     {
       "name": "solidworks_diagnose_com",
@@ -553,7 +553,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "diagnosePartSave"
     },
     {
       "name": "solidworks_diagnose_selection",
@@ -585,7 +585,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "dissolveComponent"
     },
     {
       "name": "solidworks_ensure_offset_plane",
@@ -601,7 +601,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "ensureOffsetPlane"
     },
     {
       "name": "solidworks_explain_error",
@@ -633,7 +633,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "explodeView"
     },
     {
       "name": "solidworks_export",
@@ -665,7 +665,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "exportLinkTransforms"
     },
     {
       "name": "solidworks_feature_chamfer",
@@ -681,7 +681,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "featureChamfer"
     },
     {
       "name": "solidworks_feature_circular_pattern",
@@ -697,7 +697,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "featureCircularPattern"
     },
     {
       "name": "solidworks_feature_extrude_boss",
@@ -713,7 +713,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "featureExtrudeBoss"
     },
     {
       "name": "solidworks_feature_extrude_cut",
@@ -729,7 +729,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "featureExtrudeCut"
     },
     {
       "name": "solidworks_feature_fillet",
@@ -745,7 +745,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "featureFillet"
     },
     {
       "name": "solidworks_feature_linear_pattern",
@@ -761,7 +761,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "featureLinearPattern"
     },
     {
       "name": "solidworks_feature_mirror",
@@ -777,7 +777,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "featureMirror"
     },
     {
       "name": "solidworks_get_assembly_degrees_of_freedom",
@@ -793,7 +793,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "getAssemblyDegreesOfFreedom"
     },
     {
       "name": "solidworks_get_component_box",
@@ -986,7 +986,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "importStep"
     },
     {
       "name": "solidworks_insert_component",
@@ -1002,7 +1002,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "insertComponent"
     },
     {
       "name": "solidworks_insert_coord_sys",
@@ -1050,7 +1050,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "layoutAddShoulderMounts"
     },
     {
       "name": "solidworks_list_bodies",
@@ -1275,7 +1275,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "makeComponentIndependent"
     },
     {
       "name": "solidworks_mate_component_origin",
@@ -1292,7 +1292,7 @@
         "assembly",
         "mate"
       ],
-      "schema": "optionalPath"
+      "schema": "mateRefs"
     },
     {
       "name": "solidworks_mate_coord_sys",
@@ -1309,7 +1309,7 @@
         "assembly",
         "mate"
       ],
-      "schema": "optionalPath"
+      "schema": "mateRefs"
     },
     {
       "name": "solidworks_mate_distance",
@@ -1562,7 +1562,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "measureDistance"
     },
     {
       "name": "solidworks_mirror_component",
@@ -1578,7 +1578,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "mirrorComponent"
     },
     {
       "name": "solidworks_mirror_part_file",
@@ -1594,7 +1594,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "mirrorPartFile"
     },
     {
       "name": "solidworks_new_document",
@@ -1610,7 +1610,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "newDocument"
     },
     {
       "name": "solidworks_open",
@@ -1642,7 +1642,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "packAndGo"
     },
     {
       "name": "solidworks_place_shoulder_roll_motors",
@@ -1658,7 +1658,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "placeShoulderRollMotors"
     },
     {
       "name": "solidworks_rebuild_document",
@@ -1674,7 +1674,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "rebuildDocument"
     },
     {
       "name": "solidworks_rename_component",
@@ -1706,7 +1706,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "replaceComponentPath"
     },
     {
       "name": "solidworks_replace_components_by_path",
@@ -1722,7 +1722,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "replaceComponentsByPath"
     },
     {
       "name": "solidworks_reset_component_transform",
@@ -1754,7 +1754,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "resolveLightweight"
     },
     {
       "name": "solidworks_resolve_selection",
@@ -1773,6 +1773,22 @@
       "schema": "optionalPath"
     },
     {
+      "name": "solidworks_round_side_arms_from_circle",
+      "workerCommand": "round_side_arms_from_circle",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Worker command: round_side_arms_from_circle",
+      "tags": [
+        "round"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "roundSideArmsFromCircle"
+    },
+    {
       "name": "solidworks_select_by_persist_reference",
       "workerCommand": "select_by_persist_reference",
       "tier": "extended",
@@ -1786,7 +1802,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "selectByPersistReference"
     },
     {
       "name": "solidworks_select_face_by_ray",
@@ -1818,7 +1834,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "setComponentConfiguration"
     },
     {
       "name": "solidworks_set_component_fixed",
@@ -1850,7 +1866,7 @@
       "domains": [
         "document"
       ],
-      "schema": "componentName"
+      "schema": "setComponentTransform"
     },
     {
       "name": "solidworks_set_component_visible",
@@ -1882,7 +1898,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "setDimension"
     },
     {
       "name": "solidworks_set_feature_suppression",
@@ -1898,7 +1914,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "setFeatureSuppression"
     },
     {
       "name": "solidworks_set_mate_suppression",
@@ -1915,7 +1931,7 @@
         "assembly",
         "mate"
       ],
-      "schema": "optionalPath"
+      "schema": "setMateSuppression"
     },
     {
       "name": "solidworks_set_material",
@@ -1932,7 +1948,7 @@
         "assembly",
         "mate"
       ],
-      "schema": "optionalPath"
+      "schema": "setMaterial"
     },
     {
       "name": "solidworks_sketch_circle",
@@ -1948,7 +1964,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "sketchCircle"
     },
     {
       "name": "solidworks_sketch_exit",
@@ -1980,7 +1996,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "sketchLine"
     },
     {
       "name": "solidworks_sketch_rectangle",
@@ -1996,7 +2012,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "sketchRectangle"
     },
     {
       "name": "solidworks_transform_component",
@@ -2012,7 +2028,7 @@
       "domains": [
         "document"
       ],
-      "schema": "componentName"
+      "schema": "transformComponent"
     },
     {
       "name": "solidworks_unfix_all_components",
@@ -2028,7 +2044,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "unfixAllComponents"
     },
     {
       "name": "solidworks_vendor_add_rs03_urdf_frame",
@@ -2044,7 +2060,7 @@
       "domains": [
         "document"
       ],
-      "schema": "optionalPath"
+      "schema": "vendorAddRs03UrdfFrame"
     }
   ]
 }

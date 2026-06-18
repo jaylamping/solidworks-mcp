@@ -7,8 +7,8 @@ Worker command: feature_extrude_cut
 | Worker command | `feature_extrude_cut` |
 | Tier | extended |
 | Read only | false |
-| Destructive | false |
-| Confirm required | false |
+| Destructive | true |
+| Confirm required | true |
 
 ## Tags
 

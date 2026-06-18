@@ -1,10 +1,10 @@
-# solidworks_copy_with_mates
+# solidworks_resolve_lightweight
 
-Worker command: copy_with_mates
+Worker command: resolve_lightweight
 
 | Field | Value |
 |-------|-------|
-| Worker command | `copy_with_mates` |
+| Worker command | `resolve_lightweight` |
 | Tier | extended |
 | Read only | false |
 | Destructive | true |
@@ -12,10 +12,9 @@ Worker command: copy_with_mates
 
 ## Tags
 
-- copy
+- resolve
 
 ## Domains
 
-- assembly
-- mate
+- document
 
