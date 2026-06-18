@@ -11,8 +11,8 @@ import { SolidWorksWorkerError } from "../dist/errors.js";
 import { registrySummary } from "../dist/vendor-registry.js";
 import { runWorker } from "../dist/worker.js";
 
-const ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
-const PART = "C:/code/marengo/hardware/cad/parts/marengo_torso_layout.SLDPRT";
+const ASM = "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
+const PART = "C:/code/marengo/cad/parts/marengo_torso_layout.SLDPRT";
 
 const results = [];
 
@@ -67,7 +67,7 @@ await run("solidworks_get_mass_properties", () =>
 );
 await run("marengo_cad_conventions_check", () => cadConventionsCheck({}));
 await run("marengo_vendor_registry_summary", () =>
-  registrySummary("C:/code/marengo/hardware/manifests/vendor-assets.json"),
+  registrySummary("C:/code/marengo/cad/manifests/vendor-assets.json"),
 );
 await run("marengo_urdf_readiness", () => urdfReadiness({ path: ASM }));
 await run("marengo_kinematics_consistency", () => kinematicsConsistency({ path: ASM }));

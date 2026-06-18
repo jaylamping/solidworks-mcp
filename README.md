@@ -5,7 +5,7 @@ Windows-only MCP server for SolidWorks automation. TypeScript MCP front door; So
 ## Repos
 
 - `C:\code\solidworks-mcp`: MCP server and COM worker.
-- `C:\code\marengo`: Mechanics + runtime; CAD under `hardware/cad/`, manifests under `hardware/manifests/`.
+- `C:\code\marengo`: Mechanics + runtime; CAD under `cad/`, manifests under `cad/manifests/`.
 
 Open **`C:\code\marengo\marengo.code-workspace`** for both repos in one Cursor session.
 
@@ -66,6 +66,7 @@ Optional env:
 | Script | Role |
 |--------|------|
 | `npm run check:registry` | CI drift gate: registry ↔ worker.ts ↔ manifest ↔ scripts |
+| `npm run docs:import:chm` | Import local SW CHM help → search corpus (Windows + 7-Zip) |
 | `npm run docs:generate` | Regenerate manifest, API/error catalogs, tool docs |
 | `npm run validate:tools` | Smoke + structured error probes against Marengo CAD |
 

@@ -47,7 +47,7 @@ export function registerMarengoAuditTools(server: McpServer): void {
     "marengo_vendor_registry_summary",
     {
       title: "Marengo vendor registry summary",
-      description: "Summarize Marengo hardware/manifests/vendor-assets.json readiness.",
+      description: "Summarize Marengo cad/manifests/vendor-assets.json readiness.",
       inputSchema: registryPathSchema,
       annotations: { readOnlyHint: true },
     },
@@ -89,7 +89,7 @@ export function registerMarengoAuditTools(server: McpServer): void {
     "marengo_cad_conventions_check",
     {
       title: "Marengo CAD conventions check",
-      description: "Validate paths and filenames under hardware/cad against cad-conventions.json.",
+      description: "Validate paths and filenames under cad against cad-conventions.json.",
       inputSchema: marengoPathSchema,
       annotations: { readOnlyHint: true },
     },
@@ -112,7 +112,7 @@ export function registerMarengoAuditTools(server: McpServer): void {
     "marengo_design_package_validate",
     {
       title: "Marengo design package validate",
-      description: "Compare open assembly tree to hardware/manifests/design-packages.json.",
+      description: "Compare open assembly tree to cad/manifests/design-packages.json.",
       inputSchema: marengoPathSchema,
       annotations: { readOnlyHint: true },
     },

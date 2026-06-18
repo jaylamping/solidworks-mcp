@@ -43,15 +43,15 @@ export interface VendorAssetsManifest {
 }
 
 export async function loadCadConventions(): Promise<CadConventions> {
-  return loadJson<CadConventions>("hardware/manifests/cad-conventions.json");
+  return loadJson<CadConventions>("cad/manifests/cad-conventions.json");
 }
 
 export async function loadDesignPackages(): Promise<DesignPackagesManifest> {
-  return loadJson<DesignPackagesManifest>("hardware/manifests/design-packages.json");
+  return loadJson<DesignPackagesManifest>("cad/manifests/design-packages.json");
 }
 
 export async function loadVendorAssets(): Promise<VendorAssetsManifest> {
-  return loadJson<VendorAssetsManifest>("hardware/manifests/vendor-assets.json");
+  return loadJson<VendorAssetsManifest>("cad/manifests/vendor-assets.json");
 }
 
 async function loadJson<T>(relativePath: string): Promise<T> {

@@ -26,15 +26,15 @@ const vendorProps = {
 
 const targets = [
   {
-    rel: "hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT",
+    rel: "cad/vendor/vendor_robstride_rs03_vendor.SLDPRT",
     properties: { ...vendorProps, material: "RS03 actuator (vendor)" },
   },
   {
-    rel: "hardware/cad/vendor/vendor_2020_black_extrusion.SLDPRT",
+    rel: "cad/vendor/vendor_2020_black_extrusion.SLDPRT",
     properties: { ...vendorProps, material: "6063-T5" },
   },
   {
-    rel: "hardware/cad/vendor/vendor_2028_corner_bracket_vendor.SLDPRT",
+    rel: "cad/vendor/vendor_2028_corner_bracket_vendor.SLDPRT",
     properties: { ...vendorProps, material: "aluminum" },
   },
 ];

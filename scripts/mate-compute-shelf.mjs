@@ -3,7 +3,7 @@ import { mateFirstThatWorks, mateShelfHeightWithFallback, tryMateCoincident } fr
 
 const ASM =
   process.env.MARENGO_TORSO_ASM ??
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+  "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
 
 const SHELF = process.env.COMPUTE_SHELF_COMPONENT ?? "marengo_torso_upper_compute_shelf";
 const LAYOUT = process.env.TORSO_LAYOUT_COMPONENT ?? "marengo_torso_layout";

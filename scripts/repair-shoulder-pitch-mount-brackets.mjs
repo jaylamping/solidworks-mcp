@@ -5,8 +5,8 @@
 import { runWorker } from "./lib/worker-client.mjs";
 
 const TORSO_ASM =
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
-const PARTS_DIR = "C:/code/marengo/hardware/cad/parts";
+  "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
+const PARTS_DIR = "C:/code/marengo/cad/parts";
 
 const BRACKETS = [
   {

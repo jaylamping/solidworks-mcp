@@ -2,11 +2,11 @@
 import { runWorker } from "./lib/worker-client.mjs";
 
 const MODELS = [
-  { id: "rs00", path: "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs00_vendor.SLDPRT" },
-  { id: "rs02", path: "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs02_vendor.SLDPRT" },
-  { id: "rs03", path: "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT" },
-  { id: "rs04", path: "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs04_vendor.SLDPRT" },
-  { id: "rs05", path: "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs05_vendor.SLDPRT" },
+  { id: "rs00", path: "C:/code/marengo/cad/vendor/vendor_robstride_rs00_vendor.SLDPRT" },
+  { id: "rs02", path: "C:/code/marengo/cad/vendor/vendor_robstride_rs02_vendor.SLDPRT" },
+  { id: "rs03", path: "C:/code/marengo/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT" },
+  { id: "rs04", path: "C:/code/marengo/cad/vendor/vendor_robstride_rs04_vendor.SLDPRT" },
+  { id: "rs05", path: "C:/code/marengo/cad/vendor/vendor_robstride_rs05_vendor.SLDPRT" },
 ];
 
 const report = [];

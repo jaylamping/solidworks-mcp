@@ -17,7 +17,7 @@ const marengoRoot = process.env.MARENGO_ROOT
   ? path.resolve(process.env.MARENGO_ROOT)
   : path.resolve(packageRoot, "..", "marengo");
 
-const vendorDir = path.join(marengoRoot, "hardware/cad/vendor");
+const vendorDir = path.join(marengoRoot, "cad/vendor");
 const incomingDir = path.join(vendorDir, "incoming");
 
 const MODELS = [

@@ -190,7 +190,7 @@ export async function designReview(args: {
   });
   const packageResult = await designPackageValidate({ path: args.path, packageId: args.packageId });
   const checklist = [
-    { item: "CAD under hardware/cad/", done: true },
+    { item: "CAD under cad/", done: true },
     { item: "Filenames match cad-conventions.json", done: (conventions as { summary: { fail: number } }).summary.fail === 0 },
     { item: "Design package tree requirements", done: (packageResult as { summary: { fail: number } }).summary.fail === 0 },
     {

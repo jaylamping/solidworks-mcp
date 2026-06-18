@@ -14,9 +14,9 @@ const marengoRoot = process.env.MARENGO_ROOT
   ? path.resolve(process.env.MARENGO_ROOT)
   : path.resolve(packageRoot, "..", "marengo");
 
-const INCOMING = path.join(marengoRoot, "hardware/cad/vendor/incoming/2020_corner_bracket.SLDPRT");
-const CANONICAL = path.join(marengoRoot, "hardware/cad/vendor/vendor_2028_corner_bracket_vendor.SLDPRT");
-const TORSO_ASM = path.join(marengoRoot, "hardware/cad/assemblies/marengo_torso_asm.SLDASM");
+const INCOMING = path.join(marengoRoot, "cad/vendor/incoming/2020_corner_bracket.SLDPRT");
+const CANONICAL = path.join(marengoRoot, "cad/vendor/vendor_2028_corner_bracket_vendor.SLDPRT");
+const TORSO_ASM = path.join(marengoRoot, "cad/assemblies/marengo_torso_asm.SLDASM");
 
 const vendorProps = {
   process: "purchase",

@@ -8,8 +8,8 @@ requireConfirm(
   "node scripts/torso-frame-layout-sync.mjs --confirm",
 );
 
-const FRAME_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm.SLDASM";
-const TORSO_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+const FRAME_ASM = "C:/code/marengo/cad/assemblies/marengo_torso_frame_asm.SLDASM";
+const TORSO_ASM = "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
 
 
 const steps = [];

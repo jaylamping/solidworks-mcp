@@ -2,8 +2,8 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 
-const FRAME_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm.SLDASM";
-const TORSO_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+const FRAME_ASM = "C:/code/marengo/cad/assemblies/marengo_torso_frame_asm.SLDASM";
+const TORSO_ASM = "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
 const BRACKET_RENAMES = 16;
 
 

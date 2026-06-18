@@ -8,9 +8,9 @@ import path from "node:path";
 import { runWorker } from "./lib/worker-client.mjs";
 
 const MARENGO = "C:/code/marengo";
-const PARTS_DIR = `${MARENGO}/hardware/cad/parts`;
-const ASM_DIR = `${MARENGO}/hardware/cad/assemblies`;
-const EXPORTS_DIR = `${MARENGO}/hardware/cad/exports`;
+const PARTS_DIR = `${MARENGO}/cad/parts`;
+const ASM_DIR = `${MARENGO}/cad/assemblies`;
+const EXPORTS_DIR = `${MARENGO}/cad/exports`;
 
 /** @type {{ oldBase: string, newBase: string, ext: ".SLDPRT" | ".SLDASM" }[]} */
 const RENAMES = [

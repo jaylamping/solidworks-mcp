@@ -3,7 +3,7 @@ import { runWorker, requireConfirm } from "./lib/worker-client.mjs";
 
 requireConfirm(process.argv.slice(2), "node scripts/torso-frame-remate.mjs --confirm");
 
-const FRAME_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm.SLDASM";
+const FRAME_ASM = "C:/code/marengo/cad/assemblies/marengo_torso_frame_asm.SLDASM";
 
 const depthRails = [
   "frame_2020_bottom_left_100",

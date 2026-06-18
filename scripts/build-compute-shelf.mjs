@@ -10,9 +10,9 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 const ASM =
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+  "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
 const PART =
-  "C:/code/marengo/hardware/cad/parts/marengo_torso_upper_compute_shelf.SLDPRT";
+  "C:/code/marengo/cad/parts/marengo_torso_upper_compute_shelf.SLDPRT";
 
 
 const result = runWorker("build_torso_compute_shelf", {

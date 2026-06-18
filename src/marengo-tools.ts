@@ -103,7 +103,7 @@ export function registerMarengoTools(server: McpServer): void {
     "marengo_vendor_registry_summary",
     {
       title: "Marengo vendor registry summary",
-      description: "Summarize Marengo hardware/manifests/vendor-assets.json readiness.",
+      description: "Summarize Marengo cad/manifests/vendor-assets.json readiness.",
       inputSchema: registryPathSchema,
       annotations: { readOnlyHint: true },
     },
@@ -313,7 +313,7 @@ export function registerMarengoTools(server: McpServer): void {
   registerMarengoAudit(
     "marengo_cad_conventions_check",
     "Marengo CAD conventions check",
-    "Validate paths and filenames under hardware/cad against cad-conventions.json.",
+    "Validate paths and filenames under cad against cad-conventions.json.",
     async (args) =>
       cadConventionsCheck({
         path: args.path,
@@ -324,7 +324,7 @@ export function registerMarengoTools(server: McpServer): void {
   registerMarengoAudit(
     "marengo_design_package_validate",
     "Marengo design package validate",
-    "Compare open assembly tree to hardware/manifests/design-packages.json.",
+    "Compare open assembly tree to cad/manifests/design-packages.json.",
     async (args) => designPackageValidate({ path: args.path, packageId: args.package_id }),
   );
 
@@ -645,7 +645,7 @@ export function registerMarengoTools(server: McpServer): void {
     "solidworks_audit_log_recent",
     {
       title: "Recent MCP audit log",
-      description: "Read recent write-tool audit entries from hardware/cad/.mcp-audit.jsonl.",
+      description: "Read recent write-tool audit entries from cad/.mcp-audit.jsonl.",
       inputSchema: z.object({ limit: z.number().int().min(1).max(100).optional() }),
       annotations: { readOnlyHint: true },
     },

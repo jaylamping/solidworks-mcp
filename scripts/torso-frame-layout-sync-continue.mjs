@@ -6,7 +6,7 @@ requireConfirm(
   "node scripts/torso-frame-layout-sync-continue.mjs --confirm",
 );
 
-const FRAME_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_frame_asm.SLDASM";
+const FRAME_ASM = "C:/code/marengo/cad/assemblies/marengo_torso_frame_asm.SLDASM";
 
 const steps = [];
 const depthRails = [

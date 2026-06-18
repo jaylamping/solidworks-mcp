@@ -101,7 +101,7 @@ internal static partial class Program
 
     private static object EnsureDepthRailConfigs(ModelDoc2 frameDoc, string framePath)
     {
-        const string vendorPath = "C:/code/marengo/hardware/cad/vendor/vendor_2020_black_extrusion.SLDPRT";
+        const string vendorPath = "C:/code/marengo/cad/vendor/vendor_2020_black_extrusion.SLDPRT";
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
         ModelDoc2 vendorDoc = OpenDocument(app, vendorPath);
 

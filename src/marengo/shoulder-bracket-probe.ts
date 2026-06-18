@@ -12,8 +12,8 @@ export interface ShoulderBracketProbeOptions {
 }
 
 const DEFAULT_MODEL = "rs03";
-const LAYOUT_REL = "hardware/cad/parts/marengo_torso_layout.SLDPRT";
-const ASM_REL = "hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+const LAYOUT_REL = "cad/parts/marengo_torso_layout.SLDPRT";
+const ASM_REL = "cad/assemblies/marengo_torso_asm.SLDASM";
 
 function motorComponentName(side: ShoulderSide, model: string): string {
   return `actuator_${model}_${side}_shoulder_pitch`;
@@ -125,7 +125,7 @@ export async function shoulderBracketProbe(options: ShoulderBracketProbeOptions 
     },
     layoutInAssembly: layoutTransformResult.ok ? layoutTransformResult.data : null,
     bracketPart: {
-      file: `hardware/cad/parts/${bracketPartName(side)}.SLDPRT`,
+      file: `cad/parts/${bracketPartName(side)}.SLDPRT`,
       componentName: bracketPartName(side),
       presentInAssembly: componentNames.some((n) => n === bracketPartName(side) || n.startsWith(`${bracketPartName(side)}-`)),
     },

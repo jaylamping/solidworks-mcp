@@ -7,9 +7,9 @@
 import fs from "node:fs";
 import { runWorker } from "./lib/worker-client.mjs";
 
-const PARTS_DIR = "C:/code/marengo/hardware/cad/parts";
-const EXPORTS_DIR = "C:/code/marengo/hardware/cad/exports";
-const TORSO_ASM = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+const PARTS_DIR = "C:/code/marengo/cad/parts";
+const EXPORTS_DIR = "C:/code/marengo/cad/exports";
+const TORSO_ASM = "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
 
 const PITCH_BRACKET_LEFT = `${PARTS_DIR}/marengo_shoulder_pitch_mount_bracket_left.SLDPRT`;
 const PITCH_BRACKET_RIGHT = `${PARTS_DIR}/marengo_shoulder_pitch_mount_bracket_right.SLDPRT`;

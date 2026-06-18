@@ -3,7 +3,7 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 
-const asm = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+const asm = "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
 
 const components = runWorker("list_components", { path: asm });
 const actuators = components.components.filter((c) =>

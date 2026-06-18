@@ -5,9 +5,9 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { marengoPath, resolveMarengoFile } from "./marengo/root.js";
 
 const MANIFEST_FILES = [
-  { uri: "marengo://manifests/cad-conventions", file: "hardware/manifests/cad-conventions.json" },
-  { uri: "marengo://manifests/vendor-assets", file: "hardware/manifests/vendor-assets.json" },
-  { uri: "marengo://manifests/design-packages", file: "hardware/manifests/design-packages.json" },
+  { uri: "marengo://manifests/cad-conventions", file: "cad/manifests/cad-conventions.json" },
+  { uri: "marengo://manifests/vendor-assets", file: "cad/manifests/vendor-assets.json" },
+  { uri: "marengo://manifests/design-packages", file: "cad/manifests/design-packages.json" },
   { uri: "marengo://docs/kinematics", file: "hardware/docs/kinematics.md" },
   { uri: "marengo://bom/master", file: "hardware/bom/master-bom.csv" },
 ] as const;

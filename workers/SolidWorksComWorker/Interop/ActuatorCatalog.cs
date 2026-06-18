@@ -18,7 +18,7 @@ internal static class ActuatorCatalog
         new(
             "rs00",
             "RS00",
-            "hardware/cad/vendor/vendor_robstride_rs00_vendor.SLDPRT",
+            "cad/vendor/vendor_robstride_rs00_vendor.SLDPRT",
             57,
             57,
             51.4,
@@ -30,7 +30,7 @@ internal static class ActuatorCatalog
         new(
             "rs02",
             "RS02",
-            "hardware/cad/vendor/vendor_robstride_rs02_vendor.SLDPRT",
+            "cad/vendor/vendor_robstride_rs02_vendor.SLDPRT",
             78.5,
             78.5,
             45.5,
@@ -42,7 +42,7 @@ internal static class ActuatorCatalog
         new(
             "rs03",
             "RS03",
-            "hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT",
+            "cad/vendor/vendor_robstride_rs03_vendor.SLDPRT",
             99.5,
             98.5,
             56.6,
@@ -54,7 +54,7 @@ internal static class ActuatorCatalog
         new(
             "rs04",
             "RS04",
-            "hardware/cad/vendor/vendor_robstride_rs04_vendor.SLDPRT",
+            "cad/vendor/vendor_robstride_rs04_vendor.SLDPRT",
             120,
             120,
             55.7,
@@ -66,7 +66,7 @@ internal static class ActuatorCatalog
         new(
             "rs05",
             "RS05",
-            "hardware/cad/vendor/vendor_robstride_rs05_vendor.SLDPRT",
+            "cad/vendor/vendor_robstride_rs05_vendor.SLDPRT",
             65,
             65,
             47,

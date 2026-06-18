@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { assertAllowedPath } from "./config.js";
 
-const DEFAULT_REGISTRY = "C:/code/marengo/hardware/manifests/vendor-assets.json";
+const DEFAULT_REGISTRY = "C:/code/marengo/cad/manifests/vendor-assets.json";
 
 interface VendorRegistry {
   assets: VendorAsset[];

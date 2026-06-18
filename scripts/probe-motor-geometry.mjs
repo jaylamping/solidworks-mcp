@@ -3,8 +3,8 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 
-const asm = "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
-const vendor = "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT";
+const asm = "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
+const vendor = "C:/code/marengo/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT";
 
 console.log(
   JSON.stringify(

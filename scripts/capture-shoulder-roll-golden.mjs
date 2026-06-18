@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { runWorker } from "./lib/worker-client.mjs";
 
 const TORSO_ASM =
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+  "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
 const goldenPath = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",

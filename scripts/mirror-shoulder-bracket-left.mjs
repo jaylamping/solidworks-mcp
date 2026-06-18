@@ -3,11 +3,11 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 const TORSO_ASM =
-  "C:/code/marengo/hardware/cad/assemblies/marengo_torso_asm.SLDASM";
+  "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
 const RIGHT_PART =
-  "C:/code/marengo/hardware/cad/parts/marengo_shoulder_pitch_mount_bracket_right.SLDPRT";
+  "C:/code/marengo/cad/parts/marengo_shoulder_pitch_mount_bracket_right.SLDPRT";
 const LEFT_PART =
-  "C:/code/marengo/hardware/cad/parts/marengo_shoulder_pitch_mount_bracket_left.SLDPRT";
+  "C:/code/marengo/cad/parts/marengo_shoulder_pitch_mount_bracket_left.SLDPRT";
 const LEFT_COMPONENT = "marengo_shoulder_pitch_mount_bracket_left";
 
 // Mirror about assembly YZ plane (negate X) â€” same as MirrorXMatrix in worker.

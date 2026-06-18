@@ -309,8 +309,8 @@ internal static partial class Program
                     ]);
             }
 
-            bracketPartPath ??= "C:/code/marengo/hardware/cad/parts/marengo_shoulder_pitch_mount_bracket_right.SLDPRT";
-            toolPartPath ??= "C:/code/marengo/hardware/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT";
+            bracketPartPath ??= "C:/code/marengo/cad/parts/marengo_shoulder_pitch_mount_bracket_right.SLDPRT";
+            toolPartPath ??= "C:/code/marengo/cad/vendor/vendor_robstride_rs03_vendor.SLDPRT";
 
             bracketInAsm = FindComponent(assembly, null, bracketComponent)
                 ?? throw new InvalidOperationException($"Bracket component not found: {bracketComponent}");

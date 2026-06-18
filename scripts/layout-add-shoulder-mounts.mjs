@@ -3,7 +3,7 @@ import { runWorker } from "./lib/worker-client.mjs";
 
 
 const LAYOUT_PART =
-  "C:/code/marengo/hardware/cad/parts/marengo_torso_layout.SLDPRT";
+  "C:/code/marengo/cad/parts/marengo_torso_layout.SLDPRT";
 
 
 try {
