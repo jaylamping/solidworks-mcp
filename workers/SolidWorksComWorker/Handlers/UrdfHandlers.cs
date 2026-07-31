@@ -161,7 +161,7 @@ internal static partial class Program
 
     private static object AddUrdfFrame(JsonElement? args)
     {
-        string path = RequiredStringArg(args, "path");
+        string path = PathGuard.AssertAllowedPath(RequiredStringArg(args, "path"));
         string name = StringArg(args, "name") ?? "urdf_link_frame";
         double originX = DoubleArg(args, "origin_x_m", 0);
         double originY = DoubleArg(args, "origin_y_m", 0);

@@ -156,7 +156,19 @@ function resolveSchema(entry: ToolManifestEntry): z.ZodTypeAny {
 
 function prepareArgs(entry: ToolManifestEntry, args: Record<string, unknown>): Record<string, unknown> {
   const prepared = { ...args };
-  for (const key of ["path", "part_path", "output_path", "source_part_path", "assembly_path"]) {
+  for (const key of [
+    "path",
+    "part_path",
+    "output_path",
+    "output_part_path",
+    "source_part_path",
+    "assembly_path",
+    "from_part_path",
+    "to_part_path",
+    "model_path",
+    "component_path",
+    "output_dir",
+  ]) {
     const value = prepared[key];
     if (typeof value === "string") {
       prepared[key] = assertAllowedPath(value);

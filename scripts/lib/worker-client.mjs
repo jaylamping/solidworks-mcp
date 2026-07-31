@@ -36,7 +36,19 @@ export function assertAllowedPath(inputPath) {
 function validateArgsPaths(args) {
   if (!args || typeof args !== "object") return args;
   const validated = { ...args };
-  for (const key of ["path", "part_path", "output_path", "source_part_path", "assembly_path"]) {
+  for (const key of [
+    "path",
+    "part_path",
+    "output_path",
+    "output_part_path",
+    "source_part_path",
+    "assembly_path",
+    "from_part_path",
+    "to_part_path",
+    "model_path",
+    "component_path",
+    "output_dir",
+  ]) {
     if (typeof validated[key] === "string") {
       validated[key] = assertAllowedPath(validated[key]);
     }

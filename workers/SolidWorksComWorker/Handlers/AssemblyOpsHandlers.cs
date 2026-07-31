@@ -9,7 +9,7 @@ internal static partial class Program
 {
     private static object InsertComponent(JsonElement? args)
     {
-        string path = RequiredStringArg(args, "path");
+        string path = PathGuard.AssertAllowedPath(RequiredStringArg(args, "path"));
         string partPath = RequiredStringArg(args, "part_path");
         string? name = StringArg(args, "name");
         string? configuration = StringArg(args, "configuration") ?? string.Empty;

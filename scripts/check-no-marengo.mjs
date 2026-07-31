@@ -27,7 +27,11 @@ const scanRoots = [
   "package.json",
   ".cursor/mcp.json",
 ];
-const ignoredFiles = new Set(["scripts/check-no-marengo.mjs"]);
+const ignoredFiles = new Set([
+  "scripts/check-no-marengo.mjs",
+  // Intentional product-name detector; scanning its denylist regex is a false positive.
+  "scripts/mcp-handshake.mjs",
+]);
 const textExtensions = new Set([".cs", ".json", ".mjs", ".ts", ".tsx", ".js", ".md", ".csproj"]);
 
 function filesUnder(relativePath) {

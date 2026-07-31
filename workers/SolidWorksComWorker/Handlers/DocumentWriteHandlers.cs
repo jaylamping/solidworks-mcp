@@ -81,7 +81,7 @@ internal static partial class Program
 
     private static object DiagnosePartSave(JsonElement? args)
     {
-        string path = RequiredStringArg(args, "path");
+        string path = PathGuard.AssertAllowedPath(RequiredStringArg(args, "path"));
 
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
         ModelDoc2 doc = OpenDocument(app, path);
@@ -169,9 +169,13 @@ internal static partial class Program
 
     private static object CloneSolidBodyPart(JsonElement? args)
     {
-        string sourcePath = RequiredStringArg(args, "source_part_path");
-        string outputPath = RequiredStringArg(args, "output_part_path");
+        string sourcePath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "source_part_path"));
+        string outputPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "output_part_path"));
         string? assemblyPath = StringArg(args, "assembly_path");
+        if (!string.IsNullOrWhiteSpace(assemblyPath))
+        {
+            assemblyPath = PathGuard.AssertAllowedPath(assemblyPath);
+        }
         string? componentName = StringArg(args, "component_name");
         bool save = BoolArg(args, "save", defaultValue: true);
 
@@ -321,8 +325,8 @@ internal static partial class Program
 
     private static object MirrorPartFile(JsonElement? args)
     {
-        string sourcePath = RequiredStringArg(args, "source_part_path");
-        string outputPath = RequiredStringArg(args, "output_part_path");
+        string sourcePath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "source_part_path"));
+        string outputPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "output_part_path"));
         string mirrorPlane = StringArg(args, "mirror_plane") ?? "Right Plane";
         bool save = BoolArg(args, "save", defaultValue: true);
 
@@ -496,7 +500,7 @@ internal static partial class Program
 
     private static object MakeComponentIndependent(JsonElement? args)
     {
-        string assemblyPath = RequiredStringArg(args, "assembly_path");
+        string assemblyPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "assembly_path"));
         string componentName = RequiredStringArg(args, "component_name");
         bool save = BoolArg(args, "save", defaultValue: true);
 
@@ -568,7 +572,7 @@ internal static partial class Program
 
     private static object SetCustomProperties(JsonElement? args)
     {
-        string path = RequiredStringArg(args, "path");
+        string path = PathGuard.AssertAllowedPath(RequiredStringArg(args, "path"));
         bool save = BoolArg(args, "save", defaultValue: true);
         IReadOnlyDictionary<string, string> properties = PropertiesArg(args);
 
@@ -631,9 +635,9 @@ internal static partial class Program
 
     private static object ReplaceComponentsByPath(JsonElement? args)
     {
-        string inputPath = RequiredStringArg(args, "path");
-        string fromPartPath = Path.GetFullPath(RequiredStringArg(args, "from_part_path"));
-        string toPartPath = Path.GetFullPath(RequiredStringArg(args, "to_part_path"));
+        string inputPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "path"));
+        string fromPartPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "from_part_path"));
+        string toPartPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "to_part_path"));
         string configName = StringArg(args, "configuration") ?? "Default";
         bool save = BoolArg(args, "save", defaultValue: true);
 
@@ -643,9 +647,9 @@ internal static partial class Program
 
     private static object ReplaceComponentPath(JsonElement? args)
     {
-        string inputPath = RequiredStringArg(args, "path");
+        string inputPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "path"));
         string componentName = RequiredStringArg(args, "component_name");
-        string toPartPath = Path.GetFullPath(RequiredStringArg(args, "to_part_path"));
+        string toPartPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "to_part_path"));
         string configName = StringArg(args, "configuration") ?? "Default";
         bool save = BoolArg(args, "save", defaultValue: true);
 

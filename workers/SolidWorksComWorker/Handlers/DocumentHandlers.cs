@@ -44,7 +44,7 @@ internal static partial class Program
 
     private static object Export(JsonElement? args)
     {
-        string outputPath = RequiredStringArg(args, "output_path");
+        string outputPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "output_path"));
         string? inputPath = StringArg(args, "path");
         bool startIfMissing = BoolArg(args, "start_if_missing", defaultValue: true);
 

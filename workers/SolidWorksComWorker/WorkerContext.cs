@@ -211,8 +211,14 @@ internal static partial class Program
 
     private static ModelDoc2 OpenDocument(ISldWorks app, string path)
     {
-        string fullPath = PathGuard.AssertAllowedPath(path);
-        ModelDoc2? existing = FindOpenDocument(app, fullPath);
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw WorkerException.Validation("PATH_REQUIRED", "A file path is required.", new Dictionary<string, object?>());
+        }
+
+        // Already-open / active documents are trusted. Path roots only gate opens from disk.
+        string lookupPath = Path.GetFullPath(path);
+        ModelDoc2? existing = FindOpenDocument(app, lookupPath);
         if (existing is not null)
         {
             int activateErrors = 0;
@@ -225,27 +231,28 @@ internal static partial class Program
             return existing;
         }
 
+        string fullPath = PathGuard.AssertAllowedPath(path);
         int errors = 0;
         int warnings = 0;
-        if (IsNeutralCad(path))
+        if (IsNeutralCad(fullPath))
         {
-            object? importData = Try(() => app.GetImportFileData(path));
-            ModelDoc2? imported = app.LoadFile4(path, "r", importData, ref errors);
+            object? importData = Try(() => app.GetImportFileData(fullPath));
+            ModelDoc2? imported = app.LoadFile4(fullPath, "r", importData, ref errors);
             if (imported is null || errors != 0)
             {
                 throw new InvalidOperationException(
-                    $"SolidWorks failed to import {path}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
+                    $"SolidWorks failed to import {fullPath}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
             }
 
             return imported;
         }
 
-        int docType = DocumentType(path);
-        ModelDoc2? doc = app.OpenDoc6(path, docType, (int)swOpenDocOptions_e.swOpenDocOptions_Silent, "", ref errors, ref warnings) as ModelDoc2;
+        int docType = DocumentType(fullPath);
+        ModelDoc2? doc = app.OpenDoc6(fullPath, docType, (int)swOpenDocOptions_e.swOpenDocOptions_Silent, "", ref errors, ref warnings) as ModelDoc2;
         if (doc is null || errors != 0)
         {
             throw new InvalidOperationException(
-                $"SolidWorks failed to open {path}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
+                $"SolidWorks failed to open {fullPath}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
         }
 
         string? openedTitle = Try(() => doc.GetTitle()) as string;
