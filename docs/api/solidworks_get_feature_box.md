@@ -1,18 +1,18 @@
-# solidworks_list_reference_geometry
+# solidworks_get_feature_box
 
-Worker command: list_reference_geometry
+Worker command: get_feature_box
 
 | Field | Value |
 |-------|-------|
-| Worker command | `list_reference_geometry` |
-| Tier | core |
+| Worker command | `get_feature_box` |
+| Tier | extended |
 | Read only | true |
 | Destructive | false |
 | Confirm required | false |
 
 ## Tags
 
-- list
+- get
 
 ## Domains
 

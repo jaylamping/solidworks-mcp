@@ -13,6 +13,7 @@ workers/**/obj/
 ~$*
 *.tmp
 
+# Scraped SolidWorks API reference corpus.
 docs/api-reference/
 docs/api-reference/crawl-state.json
 docs/api-reference/scrape-errors.json
@@ -20,3 +21,7 @@ scripts/.gen-sigs/
 scripts/.chm-import/
 scripts/.chm-*/
 scripts/.cab-test/
+
+# Local Cursor artifacts; keep shared MCP project config.
+.cursor/*
+!.cursor/mcp.json

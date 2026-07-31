@@ -1,10 +1,10 @@
-# solidworks_mate_limit_angle
+# solidworks_set_custom_properties
 
-Worker command: mate_limit_angle
+Worker command: set_custom_properties
 
 | Field | Value |
 |-------|-------|
-| Worker command | `mate_limit_angle` |
+| Worker command | `set_custom_properties` |
 | Tier | core |
 | Read only | false |
 | Destructive | false |
@@ -12,10 +12,9 @@ Worker command: mate_limit_angle
 
 ## Tags
 
-- mate
+- set
 
 ## Domains
 
-- assembly
-- mate
+- document
 

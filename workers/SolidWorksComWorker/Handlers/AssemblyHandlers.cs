@@ -167,19 +167,62 @@ internal static partial class Program
     {
         string? componentName = Try(() => component.Name2) as string;
         string? planeName = Try(() => planeFeature.Name) as string;
-        if (componentName is not null && planeName is not null
-            && assemblyDoc.Extension.SelectByID2(
-                $"{planeName}@{componentName}",
-                "PLANE",
-                0,
-                0,
-                0,
-                append,
-                mark,
-                null,
-                0))
+        string? assemblyName = Try(() =>
         {
-            return true;
+            string? pathName = assemblyDoc.GetPathName();
+            return string.IsNullOrWhiteSpace(pathName)
+                ? assemblyDoc.GetTitle()
+                : Path.GetFileNameWithoutExtension(pathName);
+        }) as string;
+
+        if (componentName is not null && planeName is not null)
+        {
+            string[] selectIds =
+            [
+                $"{planeName}@{componentName}",
+                string.IsNullOrWhiteSpace(assemblyName)
+                    ? string.Empty
+                    : $"{planeName}@{componentName}@{assemblyName}",
+            ];
+            foreach (string selectId in selectIds)
+            {
+                if (string.IsNullOrWhiteSpace(selectId))
+                {
+                    continue;
+                }
+
+                if (assemblyDoc.Extension.SelectByID2(
+                        selectId,
+                        "PLANE",
+                        0,
+                        0,
+                        0,
+                        append,
+                        mark,
+                        null,
+                        0))
+                {
+                    return true;
+                }
+            }
+        }
+
+        // Component-scoped feature select (more reliable for standard planes than SelectByID2 alone).
+        if (!string.IsNullOrWhiteSpace(planeName))
+        {
+            Feature? componentPlane = Try(() => component.FeatureByName(planeName)) as Feature;
+            SelectData? selectData = CreateSelectData(assemblyDoc, mark);
+            if (componentPlane is Entity planeEntity && selectData is not null
+                && (Try(() => planeEntity.Select4(append, selectData)) as bool? ?? false))
+            {
+                return true;
+            }
+
+            if (componentPlane is not null
+                && (Try(() => componentPlane.Select2(append, mark)) as bool? ?? false))
+            {
+                return true;
+            }
         }
 
         object? facesObj = Try(() => planeFeature.GetFaces());
@@ -264,7 +307,44 @@ internal static partial class Program
                 return feature as Feature;
             }
 
+            // Mate features live under the Mates folder as subfeatures.
+            Feature? nested = FindSubFeatureByName(current as Feature, name);
+            if (nested is not null)
+            {
+                return nested;
+            }
+
             feature = Try(() => current.GetNextFeature());
+        }
+
+        return null;
+    }
+
+    private static Feature? FindSubFeatureByName(Feature? parent, string name)
+    {
+        if (parent is null)
+        {
+            return null;
+        }
+
+        object? subFeature = Try(() => parent.GetFirstSubFeature());
+        int guard = 0;
+        while (subFeature is not null && guard++ < 500)
+        {
+            dynamic current = subFeature;
+            string? featureName = Try(() => current.Name) as string;
+            if (featureName is not null && featureName.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                return subFeature as Feature;
+            }
+
+            Feature? deeper = FindSubFeatureByName(subFeature as Feature, name);
+            if (deeper is not null)
+            {
+                return deeper;
+            }
+
+            subFeature = Try(() => current.GetNextSubFeature());
         }
 
         return null;

@@ -3,7 +3,12 @@ import { z } from "zod";
 import { confirmPathSchema, optionalPathSchema, selectionFieldsSchema } from "./document.js";
 import { confirmField } from "./shared.js";
 
-export { mateLimitAngleSchema, mateRefsSchema, mateTrySchema } from "./mate.js";
+export {
+  mateLimitAngleSchema,
+  mateRefsSchema,
+  mateTrySchema,
+  probeAngleTravelSchema,
+} from "./mate.js";
 
 export const componentNameSchema = optionalPathSchema.extend({
   component_name: z.string().min(1).optional(),

@@ -1,10 +1,10 @@
-# solidworks_mate_limit_angle
+# solidworks_mate_coincident
 
-Worker command: mate_limit_angle
+Worker command: mate_coincident
 
 | Field | Value |
 |-------|-------|
-| Worker command | `mate_limit_angle` |
+| Worker command | `mate_coincident` |
 | Tier | core |
 | Read only | false |
 | Destructive | false |

@@ -1482,6 +1482,22 @@
       "schema": "packAndGo"
     },
     {
+      "name": "solidworks_probe_angle_travel",
+      "workerCommand": "probe_angle_travel",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: probe_angle_travel",
+      "tags": [
+        "probe"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "probeAngleTravel"
+    },
+    {
       "name": "solidworks_probe_feature_faces",
       "workerCommand": "probe_feature_faces",
       "tier": "extended",

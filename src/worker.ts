@@ -100,6 +100,7 @@ export type WorkerCommand =
   | "new_document"
   | "open"
   | "pack_and_go"
+  | "probe_angle_travel"
   | "probe_feature_faces"
   | "rebuild_document"
   | "rename_component"

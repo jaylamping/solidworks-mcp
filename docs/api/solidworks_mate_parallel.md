@@ -1,10 +1,10 @@
-# solidworks_mate_limit_angle
+# solidworks_mate_parallel
 
-Worker command: mate_limit_angle
+Worker command: mate_parallel
 
 | Field | Value |
 |-------|-------|
-| Worker command | `mate_limit_angle` |
+| Worker command | `mate_parallel` |
 | Tier | core |
 | Read only | false |
 | Destructive | false |

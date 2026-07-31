@@ -91,6 +91,7 @@ const READ_ONLY = new Set([
   "mate_try_distance",
   "mate_try_perpendicular",
   "mate_try_width",
+  "probe_angle_travel",
   "list_sheet_views",
   "get_assembly_degrees_of_freedom",
   "import_step",

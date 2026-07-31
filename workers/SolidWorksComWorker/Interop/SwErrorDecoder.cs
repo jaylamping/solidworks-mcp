@@ -45,33 +45,34 @@ internal static class SwErrorDecoder
 
     public static (string Name, string[] Remediation) DecodeMateError(int mateError)
     {
+        // Matches SolidWorks.Interop.swconst.swAddMateError_e
         string name = mateError switch
         {
-            0 => "swAddMateError_NoError",
-            1 => "swAddMateError_IncorrectMateType",
-            2 => "swAddMateError_IncorrectAlignment",
-            3 => "swAddMateError_OverConstrained",
-            4 => "swAddMateError_AlreadyConstrained",
-            5 => "swAddMateError_DuplicateMateName",
-            6 => "swAddMateError_MateNotCreated",
-            7 => "swAddMateError_InvalidEntity",
+            0 => "swAddMateError_ErrorUnknown",
+            1 => "swAddMateError_NoError",
+            2 => "swAddMateError_IncorrectMateType",
+            3 => "swAddMateError_IncorrectAlignment",
+            4 => "swAddMateError_IncorrectSelections",
+            5 => "swAddMateError_OverDefinedAssembly",
+            6 => "swAddMateError_IncorrectGearRatios",
             _ => $"swAddMateError_Unknown_{mateError}",
         };
 
         string[] remediation = mateError switch
         {
-            0 =>
+            1 =>
             [
-                "mateError 0 with mateCreated false usually means selection marks are wrong — run debug_mate_entities.",
-                "Verify reference names exist on both components and faces are planar where required.",
+                "Mate API reported success. If mateCreated is false, inspect the mate tree anyway.",
             ],
             4 =>
             [
-                "Entities are already fully constrained. Check existing mates with list_mates.",
+                "Selection marks/entities are wrong for this mate type.",
+                "Angle/limit mates also need a reference axis (axis_ref) selected with the angle-mate reference mark.",
+                "Run debug_mate_entities to inspect selection marks and entity types.",
             ],
-            7 =>
+            5 =>
             [
-                "One or both selected entities are invalid. Rebuild the assembly and re-select references.",
+                "Assembly would be over-defined. Check existing mates with list_mates and unfix/float as needed.",
             ],
             _ =>
             [

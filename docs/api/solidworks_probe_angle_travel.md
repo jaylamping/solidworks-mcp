@@ -1,18 +1,18 @@
-# solidworks_list_reference_geometry
+# solidworks_probe_angle_travel
 
-Worker command: list_reference_geometry
+Worker command: probe_angle_travel
 
 | Field | Value |
 |-------|-------|
-| Worker command | `list_reference_geometry` |
-| Tier | core |
+| Worker command | `probe_angle_travel` |
+| Tier | extended |
 | Read only | true |
 | Destructive | false |
 | Confirm required | false |
 
 ## Tags
 
-- list
+- probe
 
 ## Domains
 

@@ -1,10 +1,10 @@
-# solidworks_mate_limit_angle
+# solidworks_save_document
 
-Worker command: mate_limit_angle
+Worker command: save_document
 
 | Field | Value |
 |-------|-------|
-| Worker command | `mate_limit_angle` |
+| Worker command | `save_document` |
 | Tier | core |
 | Read only | false |
 | Destructive | false |
@@ -12,10 +12,9 @@ Worker command: mate_limit_angle
 
 ## Tags
 
-- mate
+- save
 
 ## Domains
 
-- assembly
-- mate
+- document
 

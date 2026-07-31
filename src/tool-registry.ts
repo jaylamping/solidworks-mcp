@@ -62,6 +62,7 @@ export const SCHEMA_MAP = {
   getAssemblyDegreesOfFreedom: assemblySchemas.getAssemblyDegreesOfFreedomSchema,
   mateRefs: mateSchemas.mateRefsSchema,
   mateLimitAngle: mateSchemas.mateLimitAngleSchema,
+  probeAngleTravel: mateSchemas.probeAngleTravelSchema,
   mateTry: mateSchemas.mateTrySchema,
   createSketch: partSchemas.createSketchSchema,
   sketchLine: partSchemas.sketchLineSchema,
