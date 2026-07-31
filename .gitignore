@@ -13,7 +13,7 @@ workers/**/obj/
 ~$*
 *.tmp
 
-docs/api-reference/pages/
+docs/api-reference/
 docs/api-reference/crawl-state.json
 docs/api-reference/scrape-errors.json
 scripts/.gen-sigs/
