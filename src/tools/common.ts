@@ -22,15 +22,6 @@ export const confirmSchema = z.object({
   confirm: z.literal(true),
 });
 
-export const marengoPathSchema = optionalPathSchema.extend({
-  package_id: z.string().min(1).optional(),
-  inspect_custom_properties: z.boolean().optional(),
-});
-
-export const registryPathSchema = z.object({
-  registry_path: z.string().min(1).optional(),
-});
-
 export const openSchema = z.object({
   path: z.string().min(1),
   start_if_missing: z.boolean().optional(),
@@ -47,10 +38,4 @@ export const setCustomPropertiesSchema = z.object({
   path: z.string().min(1),
   properties: z.record(z.string(), z.string()),
   save: z.boolean().optional(),
-});
-
-export const stageVendorAssetSchema = registryPathSchema.extend({
-  asset_id: z.string().min(1),
-  overwrite: z.boolean().optional(),
-  dry_run: z.boolean().optional(),
 });

@@ -41,14 +41,8 @@ const HAND_REGISTERED = new Set([
   "invoke",
   "batch_invoke",
   "status",
-  "set_custom_properties",
-  "probe_feature_faces",
-  "get_feature_box",
-  "save_document",
-  "align_component_to_feature",
-  "mate_coincident",
-  "mate_parallel",
-  "torso_frame_build_mates",
+  "urdf_readiness",
+  "add_urdf_frame",
 ]);
 
 const registry = parseRegistryCommands();

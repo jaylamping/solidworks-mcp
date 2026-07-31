@@ -50,8 +50,6 @@ internal static partial class Program
             new("feature_name", SelectionFieldKind.FeatureName, 1),
         ],
         ["create_sketch"] = [new("plane_name", SelectionFieldKind.PlaneName, 1)],
-        ["actuator_mount_hole_pattern"] = [new("plane_name", SelectionFieldKind.PlaneName, 1)],
-        ["actuator_probe_mount_face"] = [new("plane_name", SelectionFieldKind.PlaneName, 1)],
         ["set_component_visible"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
         ["set_component_fixed"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
         ["rename_component"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
@@ -139,7 +137,7 @@ internal static partial class Program
 
     private static readonly string[] SelectionAwareCommands =
         SelectionCommandBindings.Keys
-            .Concat(["cut_actuator_cavity", "actuator_cut_cavity", "resolve_selection", "get_selection", "diagnose_selection"])
+            .Concat(["resolve_selection", "get_selection", "diagnose_selection"])
             .Distinct(StringComparer.Ordinal)
             .OrderBy(static name => name, StringComparer.Ordinal)
             .ToArray();
@@ -151,7 +149,7 @@ internal static partial class Program
             return args;
         }
 
-        if (command is "cut_actuator_cavity" or "actuator_cut_cavity" or "resolve_selection" or "get_selection" or "diagnose_selection")
+        if (command is "resolve_selection" or "get_selection" or "diagnose_selection")
         {
             return args;
         }
@@ -167,7 +165,7 @@ internal static partial class Program
                 new Dictionary<string, object?> { ["command"] = command },
                 [
                     "Highlight a component, face, body, plane, or edge in the graphics area.",
-                    "Call marengo_resolve_selection (or solidworks_resolve_selection) to inspect the current referent.",
+                    "Call solidworks_resolve_selection to inspect the current referent.",
                 ]);
         }
 
@@ -178,7 +176,7 @@ internal static partial class Program
                 $"Command '{command}' does not support use_selection.",
                 new Dictionary<string, object?> { ["command"] = command },
                 [
-                    "Call marengo_resolve_selection to inspect highlights, then use a selection-aware command.",
+                    "Call solidworks_resolve_selection to inspect highlights, then use a selection-aware command.",
                     "See hints.selectionAwareCommands on resolve_selection output.",
                 ]);
         }
@@ -203,7 +201,7 @@ internal static partial class Program
             string? docPath = Try(() => doc.GetPathName()) as string;
             if (!string.IsNullOrWhiteSpace(docPath))
             {
-                overrides["path"] = PathGuard.AssertAllowedPath(docPath);
+                overrides["path"] = docPath;
             }
         }
 
@@ -228,12 +226,6 @@ internal static partial class Program
                 "NO_ACTIVE_DOCUMENT",
                 "use_selection requires an open SolidWorks document.",
                 new Dictionary<string, object?>());
-
-        string? activePath = Try(() => activeDoc.GetPathName()) as string;
-        if (!string.IsNullOrWhiteSpace(activePath))
-        {
-            PathGuard.AssertAllowedPath(activePath);
-        }
 
         return activeDoc;
     }
@@ -378,27 +370,9 @@ internal static partial class Program
     private static string[] InferSemanticTags(ResolvedSelectionItem item)
     {
         var tags = new List<string> { item.Kind };
-        string haystack = string.Join(
-            " ",
-            new[] { item.ComponentName, item.FeatureName, item.BodyName, item.PlaneName }
-                .Where(static s => !string.IsNullOrWhiteSpace(s))
-                .Select(static s => s!.ToLowerInvariant()));
-
-        if (haystack.Contains("actuator")
-            || haystack.Contains("robstride")
-            || System.Text.RegularExpressions.Regex.IsMatch(haystack, @"\brs0\d\b"))
+        if (item.Kind == "plane")
         {
-            tags.Add("domain:actuator");
-        }
-
-        if (haystack.Contains("bracket") || haystack.Contains("adapter") || haystack.Contains("petg"))
-        {
-            tags.Add("domain:bracket");
-        }
-
-        if (haystack.Contains("mount") || haystack.Contains("shoulder") || item.Kind == "plane")
-        {
-            tags.Add("domain:mount");
+            tags.Add("domain:reference-geometry");
         }
 
         return tags.Distinct(StringComparer.Ordinal).ToArray();

@@ -6,13 +6,13 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
 import { registerApiCatalogResources } from "./api-catalog.js";
+import { readRecentAuditEntries } from "./audit-log.js";
 import { packageRoot } from "./config.js";
-import { registerMarengoResources } from "./marengo-resources.js";
-import { registerMarengoTools } from "./marengo-tools.js";
 import { registerAllTools } from "./tool-registry.js";
 import { registerDocsTools } from "./tools/docs-search.js";
 import { errorResult, jsonResult } from "./tools/common.js";
 import { registerSolidWorksInvokeTools } from "./tools/solidworks-invoke.js";
+import { registerUrdfTools } from "./tools/urdf.js";
 import { runWorker } from "./worker.js";
 
 function mcpBuildInfo(): { mcpVersion: string; buildId: string } {
@@ -26,11 +26,27 @@ export async function main(): Promise<void> {
   const server = new McpServer({ name: "solidworks", version: "0.4.0" });
 
   registerAllTools(server);
-  registerMarengoTools(server);
+  registerUrdfTools(server);
   registerApiCatalogResources(server);
-  registerMarengoResources(server);
   registerDocsTools(server);
   registerSolidWorksInvokeTools(server);
+
+  server.registerTool(
+    "solidworks_audit_log_recent",
+    {
+      title: "Recent MCP audit log",
+      description: "Read recent SolidWorks write-tool audit entries.",
+      inputSchema: z.object({ limit: z.number().int().min(1).max(100).optional() }),
+      annotations: { readOnlyHint: true },
+    },
+    async (args: { limit?: number }) => {
+      try {
+        return jsonResult({ entries: readRecentAuditEntries(args.limit ?? 20) });
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
 
   server.registerTool(
     "solidworks_status",

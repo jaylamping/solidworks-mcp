@@ -8,21 +8,6 @@ using SolidWorks.Interop.swconst;
 internal static partial class Program
 {
 
-    private static Component2? ResolveTorsoLayoutComponent(IAssemblyDoc assembly)
-    {
-        Component2? frame = FindComponent(assembly, null, "marengo_torso_frame_asm");
-        if (frame is not null)
-        {
-            Component2? nested = FindComponent(assembly, frame, "marengo_torso_layout");
-            if (nested is not null)
-            {
-                return nested;
-            }
-        }
-
-        return FindComponent(assembly, null, "marengo_torso_layout");
-    }
-
     private static Component2? FindComponent(IAssemblyDoc assembly, Component2? parent, string nameOrPrefix)
     {
         if (parent is null)
@@ -520,31 +505,4 @@ internal static partial class Program
         return values.ToArray();
     }
 
-    private static string[] AllowedRoots()
-    {
-        string? raw = System.Environment.GetEnvironmentVariable("SOLIDWORKS_MCP_ALLOWED_ROOTS");
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            return ["C:\\code\\marengo"];
-        }
-
-        return raw.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    }
-
-    private static string AssertAllowedPath(string inputPath)
-    {
-        string resolved = Path.GetFullPath(inputPath);
-        string normalized = resolved.Replace('/', '\\').ToLowerInvariant();
-        foreach (string root in AllowedRoots())
-        {
-            string normalizedRoot = Path.GetFullPath(root).Replace('/', '\\').ToLowerInvariant().TrimEnd('\\');
-            if (normalized == normalizedRoot || normalized.StartsWith(normalizedRoot + "\\", StringComparison.Ordinal))
-            {
-                return resolved;
-            }
-        }
-
-        throw new InvalidOperationException(
-            $"Path is outside allowed CAD roots: {resolved}. Set SOLIDWORKS_MCP_ALLOWED_ROOTS.");
-    }
 }

@@ -10,13 +10,11 @@ const workerDll = path.join(
   "workers/SolidWorksComWorker/bin/Debug/net8.0-windows/SolidWorksComWorker.dll",
 );
 
-const DEFAULT_ALLOWED_ROOTS = ["C:/code/marengo"];
-
 function allowedRoots() {
   const raw = process.env.SOLIDWORKS_MCP_ALLOWED_ROOTS;
   const roots = raw
     ? raw.split(";").map((entry) => entry.trim()).filter(Boolean)
-    : DEFAULT_ALLOWED_ROOTS;
+    : [];
   return roots.map((root) => path.resolve(root));
 }
 

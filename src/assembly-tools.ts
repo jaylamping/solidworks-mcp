@@ -4,7 +4,6 @@ import { assertAllowedPath } from "./config.js";
 import {
   alignSchema,
   featureProbeSchema,
-  torsoFrameBuildSchema,
 } from "./schemas/assembly.js";
 import { mateRefsSchema } from "./schemas/mate.js";
 import { runWorker } from "./worker.js";
@@ -18,7 +17,6 @@ export const assemblyToolSchemas = {
   mateRefsSchema,
   featureProbeSchema,
   alignSchema,
-  torsoFrameBuildSchema,
 };
 
 function resolveOptionalPath(path?: string) {
@@ -100,22 +98,5 @@ export async function matePerpendicular(
   return runWorker({
     command: "mate_perpendicular",
     args: { ...args, path: filePath },
-  });
-}
-
-export async function torsoFrameBuildMates(args: z.infer<typeof torsoFrameBuildSchema>) {
-  if (args.confirm !== true) {
-    throw new Error(
-      "Refusing torso frame build: pass confirm: true only when the user explicitly requested layout placement.",
-    );
-  }
-  const filePath = assertAllowedPath(args.path);
-  return runWorker({
-    command: "torso_frame_build_mates",
-    args: {
-      path: filePath,
-      include_brackets: args.include_brackets ?? true,
-      rebuild_configs: args.rebuild_configs ?? true,
-    },
   });
 }

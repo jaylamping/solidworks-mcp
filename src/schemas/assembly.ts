@@ -198,10 +198,3 @@ export const measureDistanceSchema = z.object({
 }).merge(selectionFieldsSchema);
 
 export const getAssemblyDegreesOfFreedomSchema = optionalPathSchema;
-
-export const torsoFrameBuildSchema = z.object({
-  path: z.string().min(1),
-  confirm: z.literal(true),
-  include_brackets: z.boolean().optional(),
-  rebuild_configs: z.boolean().optional(),
-});

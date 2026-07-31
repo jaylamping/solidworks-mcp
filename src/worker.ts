@@ -7,21 +7,12 @@ import { parseWorkerError, SolidWorksWorkerError, type WorkerError } from "./err
 /** All worker commands — kept in sync via `npm run check:registry`. */
 export type WorkerCommand =
   | "activate_document"
-  | "actuator_add_urdf_frame"
-  | "actuator_cut_cavity"
-  | "actuator_get_envelope"
-  | "actuator_insert_vendor"
-  | "actuator_list_models"
-  | "actuator_mount_hole_pattern"
-  | "actuator_probe_mount_face"
   | "add_configuration_copy"
   | "add_standard_views"
+  | "add_urdf_frame"
   | "align_component_to_feature"
-  | "apply_shoulder_roll_golden"
   | "assembly_diagnostics"
   | "batch_invoke"
-  | "build_torso_compute_shelf"
-  | "capture_shoulder_roll_golden"
   | "checkpoint_document"
   | "clone_solid_body_part"
   | "close_all_documents"
@@ -29,10 +20,8 @@ export type WorkerCommand =
   | "component_mass_properties"
   | "copy_with_mates"
   | "create_drawing_from_model"
-  | "create_mallet_mount"
   | "create_sketch"
   | "create_subassembly"
-  | "cut_actuator_cavity"
   | "debug_mate_entities"
   | "delete_all_mates"
   | "delete_feature"
@@ -73,7 +62,6 @@ export type WorkerCommand =
   | "insert_coord_sys"
   | "inspect_document"
   | "invoke"
-  | "layout_add_shoulder_mounts"
   | "list_bodies"
   | "list_bom"
   | "list_broken_references"
@@ -112,7 +100,6 @@ export type WorkerCommand =
   | "new_document"
   | "open"
   | "pack_and_go"
-  | "place_shoulder_roll_motors"
   | "probe_feature_faces"
   | "rebuild_document"
   | "rename_component"
@@ -139,10 +126,9 @@ export type WorkerCommand =
   | "sketch_line"
   | "sketch_rectangle"
   | "status"
-  | "torso_frame_build_mates"
   | "transform_component"
   | "unfix_all_components"
-  | "vendor_add_rs03_urdf_frame";
+  | "urdf_readiness";
 
 export interface WorkerRequest {
   command: WorkerCommand;
