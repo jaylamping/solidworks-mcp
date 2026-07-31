@@ -5,7 +5,6 @@ internal sealed record WorkerRequest(string Command, JsonElement? Args);
 
 internal static partial class Program
 {
-    private const string ComLockName = @"Global\MarengoSolidWorksComWorker";
     private static readonly TimeSpan ComLockTimeout = TimeSpan.FromMinutes(5);
 
     private static readonly JsonSerializerOptions ReadJson = new()
@@ -24,7 +23,7 @@ internal static partial class Program
     [STAThread]
     private static int Main()
     {
-        using Mutex comLock = new(false, ComLockName);
+        using Mutex comLock = new(false, WorkerConstants.ComMutexName);
         if (!comLock.WaitOne(ComLockTimeout))
         {
             return WriteError(new WorkerError(

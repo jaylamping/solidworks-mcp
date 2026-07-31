@@ -7,12 +7,10 @@ import { z } from "zod";
 import { assertAllowedPath, packageRoot } from "./config.js";
 import { appendAuditEntry } from "./audit-log.js";
 import { formatErrorForMcp } from "./errors.js";
-import * as actuatorSchemas from "./schemas/actuator.js";
 import * as assemblySchemas from "./schemas/assembly.js";
 import * as documentSchemas from "./schemas/document.js";
 import * as mateSchemas from "./schemas/mate.js";
 import * as partSchemas from "./schemas/part.js";
-import * as workflowSchemas from "./schemas/workflow.js";
 import { runWorker, type WorkerCommand } from "./worker.js";
 
 export type ToolTier = "core" | "extended" | "advanced" | "debug";
@@ -32,6 +30,8 @@ export const SCHEMA_MAP = {
   diagnosePartSave: documentSchemas.diagnosePartSaveSchema,
   resolveLightweight: documentSchemas.resolveLightweightSchema,
   unfixAllComponents: documentSchemas.unfixAllComponentsSchema,
+  setCustomProperties: documentSchemas.setCustomPropertiesSchema,
+  saveDocument: documentSchemas.saveDocumentSchema,
   componentName: assemblySchemas.componentNameSchema,
   transformComponent: assemblySchemas.transformComponentSchema,
   setComponentTransform: assemblySchemas.setComponentTransformSchema,
@@ -60,7 +60,6 @@ export const SCHEMA_MAP = {
   exportLinkTransforms: assemblySchemas.exportLinkTransformsSchema,
   measureDistance: assemblySchemas.measureDistanceSchema,
   getAssemblyDegreesOfFreedom: assemblySchemas.getAssemblyDegreesOfFreedomSchema,
-  torsoFrameBuild: assemblySchemas.torsoFrameBuildSchema,
   mateRefs: mateSchemas.mateRefsSchema,
   mateLimitAngle: mateSchemas.mateLimitAngleSchema,
   mateTry: mateSchemas.mateTrySchema,
@@ -85,20 +84,6 @@ export const SCHEMA_MAP = {
   addConfigurationCopy: partSchemas.addConfigurationCopySchema,
   ensureOffsetPlane: partSchemas.ensureOffsetPlaneSchema,
   packAndGo: partSchemas.packAndGoSchema,
-  actuatorGetEnvelope: actuatorSchemas.actuatorGetEnvelopeSchema,
-  actuatorProbeMountFace: actuatorSchemas.actuatorProbeMountFaceSchema,
-  actuatorMountHolePattern: actuatorSchemas.actuatorMountHolePatternSchema,
-  actuatorCutCavity: actuatorSchemas.actuatorCutCavitySchema,
-  actuatorInsertVendor: actuatorSchemas.actuatorInsertVendorSchema,
-  actuatorAddUrdfFrame: actuatorSchemas.actuatorAddUrdfFrameSchema,
-  placeShoulderRollMotors: workflowSchemas.placeShoulderRollMotorsSchema,
-  buildTorsoComputeShelf: workflowSchemas.buildTorsoComputeShelfSchema,
-  captureShoulderRollGolden: workflowSchemas.captureShoulderRollGoldenSchema,
-  applyShoulderRollGolden: workflowSchemas.applyShoulderRollGoldenSchema,
-  cutActuatorCavity: workflowSchemas.cutActuatorCavitySchema,
-  vendorAddRs03UrdfFrame: workflowSchemas.vendorAddRs03UrdfFrameSchema,
-  createMalletMount: workflowSchemas.createMalletMountSchema,
-  layoutAddShoulderMounts: workflowSchemas.layoutAddShoulderMountsSchema,
 } as const satisfies Record<string, z.ZodTypeAny>;
 
 export type SchemaKey = keyof typeof SCHEMA_MAP;
@@ -171,7 +156,19 @@ function resolveSchema(entry: ToolManifestEntry): z.ZodTypeAny {
 
 function prepareArgs(entry: ToolManifestEntry, args: Record<string, unknown>): Record<string, unknown> {
   const prepared = { ...args };
-  for (const key of ["path", "part_path", "output_path", "source_part_path", "assembly_path"]) {
+  for (const key of [
+    "path",
+    "part_path",
+    "output_path",
+    "output_part_path",
+    "source_part_path",
+    "assembly_path",
+    "from_part_path",
+    "to_part_path",
+    "model_path",
+    "component_path",
+    "output_dir",
+  ]) {
     const value = prepared[key];
     if (typeof value === "string") {
       prepared[key] = assertAllowedPath(value);

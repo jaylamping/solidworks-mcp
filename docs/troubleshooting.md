@@ -2,7 +2,7 @@
 
 ## SolidWorks crashes during MCP audits
 
-Observed when multiple MCP tools or scripts hit SolidWorks at once (for example parallel `marengo_design_review`, `list_components`, and `solidworks_open`).
+Observed when multiple MCP tools or scripts hit SolidWorks at once (for example parallel `list_components` and `solidworks_open`).
 
 Symptoms:
 
@@ -66,11 +66,11 @@ Manual repair path:
 3. Retry `npm run worker:status` or the `solidworks_status` MCP tool.
 4. If still broken, repair/re-register SolidWorks COM from the installed SolidWorks tools or installer.
 
-Do not design from guessed actuator dimensions while this is broken. Use staged STEP files and mark native import as pending.
+Do not design from guessed dimensions while this is broken. Use staged STEP files and mark native import as pending.
 
 ## Stale MCP server after `npm run build`
 
-Symptom: tools respond but omit new fields (e.g. `marengo_urdf_readiness` missing `scopesScanned` / `referenceLocations`), or `solidworks_status` has no `mcpVersion`.
+Symptom: tools respond but omit new fields, or `solidworks_status` has no `mcpVersion`.
 
 Cursor keeps the MCP Node process alive across builds. Fix:
 

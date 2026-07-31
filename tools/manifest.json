@@ -18,139 +18,6 @@
       "schema": "open"
     },
     {
-      "name": "solidworks_actuator_add_urdf_frame",
-      "workerCommand": "actuator_add_urdf_frame",
-      "tier": "advanced",
-      "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Robstride actuator workflow: actuator_add_urdf_frame",
-      "tags": [
-        "actuator",
-        "robstride"
-      ],
-      "domains": [
-        "actuator",
-        "part",
-        "assembly"
-      ],
-      "schema": "actuatorAddUrdfFrame"
-    },
-    {
-      "name": "solidworks_actuator_cut_cavity",
-      "workerCommand": "actuator_cut_cavity",
-      "tier": "advanced",
-      "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Robstride actuator workflow: actuator_cut_cavity",
-      "tags": [
-        "actuator",
-        "robstride"
-      ],
-      "domains": [
-        "actuator",
-        "part",
-        "assembly"
-      ],
-      "schema": "actuatorCutCavity"
-    },
-    {
-      "name": "solidworks_actuator_get_envelope",
-      "workerCommand": "actuator_get_envelope",
-      "tier": "advanced",
-      "readOnly": true,
-      "destructive": false,
-      "confirmRequired": false,
-      "description": "Robstride actuator workflow: actuator_get_envelope",
-      "tags": [
-        "actuator",
-        "robstride"
-      ],
-      "domains": [
-        "actuator",
-        "part",
-        "assembly"
-      ],
-      "schema": "actuatorGetEnvelope"
-    },
-    {
-      "name": "solidworks_actuator_insert_vendor",
-      "workerCommand": "actuator_insert_vendor",
-      "tier": "advanced",
-      "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Robstride actuator workflow: actuator_insert_vendor",
-      "tags": [
-        "actuator",
-        "robstride"
-      ],
-      "domains": [
-        "actuator",
-        "part",
-        "assembly"
-      ],
-      "schema": "actuatorInsertVendor"
-    },
-    {
-      "name": "solidworks_actuator_list_models",
-      "workerCommand": "actuator_list_models",
-      "tier": "advanced",
-      "readOnly": true,
-      "destructive": false,
-      "confirmRequired": false,
-      "description": "Robstride actuator workflow: actuator_list_models",
-      "tags": [
-        "actuator",
-        "robstride"
-      ],
-      "domains": [
-        "actuator",
-        "part",
-        "assembly"
-      ],
-      "schema": "optionalPath"
-    },
-    {
-      "name": "solidworks_actuator_mount_hole_pattern",
-      "workerCommand": "actuator_mount_hole_pattern",
-      "tier": "advanced",
-      "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Robstride actuator workflow: actuator_mount_hole_pattern",
-      "tags": [
-        "actuator",
-        "robstride"
-      ],
-      "domains": [
-        "actuator",
-        "part",
-        "assembly"
-      ],
-      "schema": "actuatorMountHolePattern"
-    },
-    {
-      "name": "solidworks_actuator_probe_mount_face",
-      "workerCommand": "actuator_probe_mount_face",
-      "tier": "advanced",
-      "readOnly": true,
-      "destructive": false,
-      "confirmRequired": false,
-      "description": "Robstride actuator workflow: actuator_probe_mount_face",
-      "tags": [
-        "actuator",
-        "robstride"
-      ],
-      "domains": [
-        "actuator",
-        "part",
-        "assembly"
-      ],
-      "schema": "actuatorProbeMountFace"
-    },
-    {
       "name": "solidworks_add_configuration_copy",
       "workerCommand": "add_configuration_copy",
       "tier": "extended",
@@ -183,20 +50,20 @@
       "schema": "addStandardViews"
     },
     {
-      "name": "solidworks_apply_shoulder_roll_golden",
-      "workerCommand": "apply_shoulder_roll_golden",
-      "tier": "advanced",
+      "name": "solidworks_align_component_to_feature",
+      "workerCommand": "align_component_to_feature",
+      "tier": "extended",
       "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Worker command: apply_shoulder_roll_golden",
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: align_component_to_feature",
       "tags": [
-        "apply"
+        "align"
       ],
       "domains": [
         "document"
       ],
-      "schema": "applyShoulderRollGolden"
+      "schema": "align"
     },
     {
       "name": "solidworks_assembly_diagnostics",
@@ -213,38 +80,6 @@
         "document"
       ],
       "schema": "optionalPath"
-    },
-    {
-      "name": "solidworks_build_torso_compute_shelf",
-      "workerCommand": "build_torso_compute_shelf",
-      "tier": "advanced",
-      "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Worker command: build_torso_compute_shelf",
-      "tags": [
-        "build"
-      ],
-      "domains": [
-        "document"
-      ],
-      "schema": "buildTorsoComputeShelf"
-    },
-    {
-      "name": "solidworks_capture_shoulder_roll_golden",
-      "workerCommand": "capture_shoulder_roll_golden",
-      "tier": "advanced",
-      "readOnly": false,
-      "destructive": false,
-      "confirmRequired": false,
-      "description": "Worker command: capture_shoulder_roll_golden",
-      "tags": [
-        "capture"
-      ],
-      "domains": [
-        "document"
-      ],
-      "schema": "captureShoulderRollGolden"
     },
     {
       "name": "solidworks_checkpoint_document",
@@ -360,22 +195,6 @@
       "schema": "createDrawingFromModel"
     },
     {
-      "name": "solidworks_create_mallet_mount",
-      "workerCommand": "create_mallet_mount",
-      "tier": "extended",
-      "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Worker command: create_mallet_mount",
-      "tags": [
-        "create"
-      ],
-      "domains": [
-        "document"
-      ],
-      "schema": "createMalletMount"
-    },
-    {
       "name": "solidworks_create_sketch",
       "workerCommand": "create_sketch",
       "tier": "extended",
@@ -406,22 +225,6 @@
         "document"
       ],
       "schema": "createSubassembly"
-    },
-    {
-      "name": "solidworks_cut_actuator_cavity",
-      "workerCommand": "cut_actuator_cavity",
-      "tier": "extended",
-      "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Worker command: cut_actuator_cavity",
-      "tags": [
-        "cut"
-      ],
-      "domains": [
-        "document"
-      ],
-      "schema": "cutActuatorCavity"
     },
     {
       "name": "solidworks_debug_mate_entities",
@@ -860,6 +663,22 @@
       "schema": "optionalPath"
     },
     {
+      "name": "solidworks_get_feature_box",
+      "workerCommand": "get_feature_box",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: get_feature_box",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureProbe"
+    },
+    {
       "name": "solidworks_get_mass_properties",
       "workerCommand": "get_mass_properties",
       "tier": "extended",
@@ -1037,22 +856,6 @@
       "schema": "optionalPath"
     },
     {
-      "name": "solidworks_layout_add_shoulder_mounts",
-      "workerCommand": "layout_add_shoulder_mounts",
-      "tier": "advanced",
-      "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Worker command: layout_add_shoulder_mounts",
-      "tags": [
-        "layout"
-      ],
-      "domains": [
-        "document"
-      ],
-      "schema": "layoutAddShoulderMounts"
-    },
-    {
       "name": "solidworks_list_bodies",
       "workerCommand": "list_bodies",
       "tier": "extended",
@@ -1216,7 +1019,7 @@
     {
       "name": "solidworks_list_reference_geometry",
       "workerCommand": "list_reference_geometry",
-      "tier": "extended",
+      "tier": "core",
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
@@ -1278,6 +1081,23 @@
       "schema": "makeComponentIndependent"
     },
     {
+      "name": "solidworks_mate_coincident",
+      "workerCommand": "mate_coincident",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: mate_coincident",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
       "name": "solidworks_mate_component_origin",
       "workerCommand": "mate_component_origin",
       "tier": "extended",
@@ -1331,7 +1151,7 @@
     {
       "name": "solidworks_mate_limit_angle",
       "workerCommand": "mate_limit_angle",
-      "tier": "extended",
+      "tier": "core",
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
@@ -1344,6 +1164,23 @@
         "mate"
       ],
       "schema": "mateLimitAngle"
+    },
+    {
+      "name": "solidworks_mate_parallel",
+      "workerCommand": "mate_parallel",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: mate_parallel",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
     },
     {
       "name": "solidworks_mate_perpendicular",
@@ -1645,20 +1482,20 @@
       "schema": "packAndGo"
     },
     {
-      "name": "solidworks_place_shoulder_roll_motors",
-      "workerCommand": "place_shoulder_roll_motors",
-      "tier": "advanced",
+      "name": "solidworks_probe_feature_faces",
+      "workerCommand": "probe_feature_faces",
+      "tier": "extended",
       "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Worker command: place_shoulder_roll_motors",
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: probe_feature_faces",
       "tags": [
-        "place"
+        "probe"
       ],
       "domains": [
         "document"
       ],
-      "schema": "placeShoulderRollMotors"
+      "schema": "featureProbe"
     },
     {
       "name": "solidworks_rebuild_document",
@@ -1789,6 +1626,22 @@
       "schema": "roundSideArmsFromCircle"
     },
     {
+      "name": "solidworks_save_document",
+      "workerCommand": "save_document",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: save_document",
+      "tags": [
+        "save"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "saveDocument"
+    },
+    {
       "name": "solidworks_select_by_persist_reference",
       "workerCommand": "select_by_persist_reference",
       "tier": "extended",
@@ -1883,6 +1736,22 @@
         "document"
       ],
       "schema": "componentName"
+    },
+    {
+      "name": "solidworks_set_custom_properties",
+      "workerCommand": "set_custom_properties",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: set_custom_properties",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "setCustomProperties"
     },
     {
       "name": "solidworks_set_dimension",
@@ -2045,22 +1914,6 @@
         "document"
       ],
       "schema": "unfixAllComponents"
-    },
-    {
-      "name": "solidworks_vendor_add_rs03_urdf_frame",
-      "workerCommand": "vendor_add_rs03_urdf_frame",
-      "tier": "extended",
-      "readOnly": false,
-      "destructive": true,
-      "confirmRequired": true,
-      "description": "Worker command: vendor_add_rs03_urdf_frame",
-      "tags": [
-        "vendor"
-      ],
-      "domains": [
-        "document"
-      ],
-      "schema": "vendorAddRs03UrdfFrame"
     }
   ]
 }

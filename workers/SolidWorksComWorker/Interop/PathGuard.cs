@@ -1,7 +1,5 @@
 internal static class PathGuard
 {
-    private static readonly string DefaultRoot = "C:/code/marengo";
-
     private static string[]? _allowedRoots;
 
     public static IReadOnlyList<string> AllowedRoots()
@@ -13,7 +11,7 @@ internal static class PathGuard
 
         string? raw = Environment.GetEnvironmentVariable("SOLIDWORKS_MCP_ALLOWED_ROOTS");
         string[] roots = string.IsNullOrWhiteSpace(raw)
-            ? [DefaultRoot]
+            ? []
             : raw.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         _allowedRoots = roots

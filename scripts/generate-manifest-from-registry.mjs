@@ -13,14 +13,8 @@ const HAND_REGISTERED = new Set([
   "invoke",
   "batch_invoke",
   "status",
-  "set_custom_properties",
-  "probe_feature_faces",
-  "get_feature_box",
-  "save_document",
-  "align_component_to_feature",
-  "mate_coincident",
-  "mate_parallel",
-  "torso_frame_build_mates",
+  "urdf_readiness",
+  "add_urdf_frame",
 ]);
 
 const DESTRUCTIVE = new Set([
@@ -28,19 +22,12 @@ const DESTRUCTIVE = new Set([
   "delete_mates_in_range",
   "delete_mate",
   "close_all_documents",
-  "torso_frame_build_mates",
-  "layout_add_shoulder_mounts",
-  "place_shoulder_roll_motors",
-  "build_torso_compute_shelf",
-  "cut_actuator_cavity",
-  "apply_shoulder_roll_golden",
-  "vendor_add_rs03_urdf_frame",
+  "add_urdf_frame",
   "clone_solid_body_part",
   "mirror_part_file",
   "make_component_independent",
   "replace_components_by_path",
   "replace_component_path",
-  "create_mallet_mount",
   "delete_feature",
   "dissolve_component",
   "mirror_component",
@@ -48,10 +35,6 @@ const DESTRUCTIVE = new Set([
   "sketch_rectangle",
   "create_sketch",
   "new_document",
-  "actuator_mount_hole_pattern",
-  "actuator_cut_cavity",
-  "actuator_add_urdf_frame",
-  "actuator_insert_vendor",
   "resolve_lightweight",
   "feature_extrude_cut",
   "feature_fillet",
@@ -108,9 +91,6 @@ const READ_ONLY = new Set([
   "mate_try_distance",
   "mate_try_perpendicular",
   "mate_try_width",
-  "actuator_list_models",
-  "actuator_get_envelope",
-  "actuator_probe_mount_face",
   "list_sheet_views",
   "get_assembly_degrees_of_freedom",
   "import_step",
@@ -123,7 +103,12 @@ const CORE = new Set([
   "inspect_document",
   "list_components",
   "list_mates",
+  "list_reference_geometry",
+  "mate_limit_angle",
   "save_document",
+  "set_custom_properties",
+  "mate_coincident",
+  "mate_parallel",
   "rebuild_document",
   "checkpoint_document",
   "diagnose_com",
@@ -139,15 +124,10 @@ function tierFor(command) {
   if (command.startsWith("diagnose_") || command.startsWith("debug_") || command.startsWith("mate_try_")) {
     return "debug";
   }
-  if (command.startsWith("actuator_")) return "advanced";
-  if (command.startsWith("marengo") || command.includes("torso") || command.includes("shoulder")) {
-    return "advanced";
-  }
   return "extended";
 }
 
 function mcpName(command) {
-  if (command.startsWith("marengo_")) return command;
   return `solidworks_${command}`;
 }
 
@@ -189,15 +169,9 @@ const tools = commands
       readOnly,
       destructive,
       confirmRequired: destructive,
-      description: command.startsWith("actuator_")
-        ? `Robstride actuator workflow: ${command}`
-        : `Worker command: ${command}`,
-      tags: command.startsWith("actuator_") ? ["actuator", "robstride"] : [command.split("_")[0]],
-      domains: command.startsWith("actuator_")
-        ? ["actuator", "part", "assembly"]
-        : command.includes("mate")
-          ? ["assembly", "mate"]
-          : ["document"],
+      description: `Worker command: ${command}`,
+      tags: [command.split("_")[0]],
+      domains: command.includes("mate") ? ["assembly", "mate"] : ["document"],
       schema: schemaFor(command),
     };
   });

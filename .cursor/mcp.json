@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "solidworks": {
+      "command": "node",
+      "args": [
+        "C:/code/solidworks-mcp/node_modules/tsx/dist/cli.mjs",
+        "C:/code/solidworks-mcp/src/index.ts"
+      ],
+      "env": {
+        "SOLIDWORKS_MCP_TOOL_TIER": "extended"
+      }
+    }
+  }
+}

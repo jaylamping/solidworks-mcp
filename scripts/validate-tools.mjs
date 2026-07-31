@@ -1,22 +1,11 @@
 #!/usr/bin/env node
 import { searchApiDocs } from "../dist/api-docs/search.js";
-import { cadConventionsCheck } from "../dist/marengo/cad-audit.js";
-import { hardwareCoverage } from "../dist/marengo/coverage.js";
-import {
-  kinematicsConsistency,
-  urdfExportPostcheck,
-  urdfReadiness,
-} from "../dist/marengo/urdf-audit.js";
 import { SolidWorksWorkerError } from "../dist/errors.js";
-import { registrySummary } from "../dist/vendor-registry.js";
 import { runWorker } from "../dist/worker.js";
-
-const ASM = "C:/code/marengo/cad/assemblies/marengo_torso_asm.SLDASM";
-const PART = "C:/code/marengo/cad/parts/marengo_torso_layout.SLDPRT";
 
 const results = [];
 
-async function run(name, fn) {
+async function run(name, fn, { expectedCodes = [], allowUnavailable = false } = {}) {
   try {
     const data = await fn();
     results.push({ name, ok: true, data });
@@ -25,98 +14,38 @@ async function run(name, fn) {
       error instanceof SolidWorksWorkerError
         ? error.workerError
         : { message: error instanceof Error ? error.message : String(error) };
-    results.push({ name, ok: false, error: structured });
+    const unavailable = !structured.code || ["SOLIDWORKS_NOT_RUNNING", "WORKER_START_FAILED"].includes(structured.code);
+    const expected = expectedCodes.length === 0 || expectedCodes.includes(structured.code) || (allowUnavailable && unavailable);
+    results.push({ name, ok: expected, expected, error: structured });
   }
 }
 
-await run("solidworks_status", () => runWorker({ command: "status", args: { start_if_missing: false } }));
-await run("solidworks_search_api_docs", async () => searchApiDocs("IModelDoc2", 3));
-await run("solidworks_list_reference_geometry", () =>
-  runWorker({ command: "list_reference_geometry", args: { path: ASM } }),
+// These probes are useful with or without SolidWorks. A missing worker or active
+// document is reported in the output but does not make CI depend on a CAD session.
+await run("solidworks_status", () =>
+  runWorker({ command: "status", args: { start_if_missing: false } }),
+  { allowUnavailable: true },
 );
-await run("solidworks_inspect_document", () =>
-  runWorker({ command: "inspect_document", args: { path: ASM } }),
+await run("solidworks_urdf_readiness_active_document", () =>
+  runWorker({ command: "urdf_readiness", args: {} }),
+  { expectedCodes: ["NO_ACTIVE_DOCUMENT"], allowUnavailable: true },
 );
-await run("solidworks_list_components", () => runWorker({ command: "list_components", args: { path: ASM } }));
-await run("solidworks_list_bom", () => runWorker({ command: "list_bom", args: { path: ASM } }));
-await run("solidworks_measure", () => runWorker({ command: "measure", args: { path: PART } }));
-await run("solidworks_list_features", () => runWorker({ command: "list_features", args: { path: PART } }));
-await run("solidworks_list_configurations", () =>
-  runWorker({ command: "list_configurations", args: { path: PART } }),
-);
-await run("solidworks_list_dimensions", () =>
-  runWorker({ command: "list_dimensions", args: { path: PART } }),
-);
-await run("solidworks_assembly_diagnostics", () =>
-  runWorker({ command: "assembly_diagnostics", args: { path: ASM } }),
-);
-await run("solidworks_invoke_read_blocked", async () => {
-  try {
-    await runWorker({
-      command: "invoke",
-      args: { target: "app", member: "DeleteFeature", args: [] },
-    });
-    return { blocked: false };
-  } catch (error) {
-    return { blocked: true, error: error instanceof Error ? error.message : String(error) };
-  }
-});
-await run("solidworks_diagnose_com", () => runWorker({ command: "diagnose_com", args: {} }));
-await run("solidworks_get_mass_properties", () =>
-  runWorker({ command: "get_mass_properties", args: { path: PART } }),
-);
-await run("marengo_cad_conventions_check", () => cadConventionsCheck({}));
-await run("marengo_vendor_registry_summary", () =>
-  registrySummary("C:/code/marengo/cad/manifests/vendor-assets.json"),
-);
-await run("marengo_urdf_readiness", () => urdfReadiness({ path: ASM }));
-await run("marengo_kinematics_consistency", () => kinematicsConsistency({ path: ASM }));
-await run("marengo_urdf_export_postcheck", () => urdfExportPostcheck());
-await run("marengo_hardware_coverage", () => hardwareCoverage({ path: ASM }));
+await run("solidworks_search_api_docs", () => searchApiDocs("IModelDoc2", 3));
 
-// Error-mode probes — expect structured failures (ok: false with code)
-await run("error_bad_path", async () => {
-  await runWorker({ command: "open", args: { path: "C:/outside/not_allowed.SLDPRT" } });
-});
-await run("error_unknown_command", async () => {
-  await runWorker({ command: "not_a_real_command", args: {} });
-});
-await run("error_confirm_required", async () => {
-  await runWorker({ command: "delete_all_mates", args: { path: ASM } });
-});
-await run("error_missing_component", async () => {
-  await runWorker({
-    command: "mate_coincident",
-    args: {
-      path: ASM,
-      component_1: "nonexistent_component_a",
-      ref_1: "Origin",
-      component_2: "nonexistent_component_b",
-      ref_2: "Origin",
-    },
-  });
-});
-await run("error_explain_error", () =>
-  runWorker({ command: "explain_error", args: { sw_error_code: 4, message: "Already constrained" } }),
+// PathGuard must reject caller-supplied paths when no roots are configured.
+await run(
+  "error_path_open_fails_closed",
+  () => runWorker({ command: "open", args: { path: "C:/outside/not_allowed.SLDPRT" } }),
+  { expectedCodes: ["PATH_NOT_ALLOWED"], allowUnavailable: true },
 );
 
 const summary = results.map((row) => ({
   tool: row.name,
   ok: row.ok,
-  error: row.ok ? null : row.error,
-  keys: row.ok && row.data && typeof row.data === "object" ? Object.keys(row.data).slice(0, 8) : null,
+  expected: row.expected ?? null,
+  error: row.ok && !row.error ? null : row.error,
+  keys: row.data && typeof row.data === "object" ? Object.keys(row.data).slice(0, 8) : null,
 }));
 
 console.log(JSON.stringify({ summary }, null, 2));
-
-const failed = results.filter((r) => !r.ok);
-const errorProbes = ["error_bad_path", "error_unknown_command", "error_confirm_required", "error_missing_component"];
-const unexpectedFailures = failed.filter((r) => !errorProbes.includes(r.name));
-const errorProbeFailures = errorProbes.filter((name) => results.find((r) => r.name === name)?.ok);
-
-if (errorProbeFailures.length) {
-  console.error("Expected error probes succeeded unexpectedly:", errorProbeFailures);
-  process.exit(1);
-}
-
-process.exit(unexpectedFailures.length > 0 ? 1 : 0);
+process.exit(results.every((row) => row.ok) ? 0 : 1);

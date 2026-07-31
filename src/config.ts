@@ -1,8 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_ALLOWED_ROOTS = ["C:/code/marengo"];
-
 /** solidworks-mcp package root (works regardless of MCP process cwd). */
 export function packageRoot(): string {
   return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -24,7 +22,7 @@ export function allowedRoots(): string[] {
   const raw = process.env.SOLIDWORKS_MCP_ALLOWED_ROOTS;
   const roots = raw
     ? raw.split(";").map((entry) => entry.trim()).filter(Boolean)
-    : DEFAULT_ALLOWED_ROOTS;
+    : [];
 
   return roots.map((root) => path.resolve(root));
 }

@@ -12,7 +12,7 @@
         "type": "object",
         "required": ["name", "workerCommand", "tier", "readOnly", "description"],
         "properties": {
-          "name": { "type": "string", "pattern": "^(solidworks|marengo)_" },
+          "name": { "type": "string", "pattern": "^solidworks_" },
           "workerCommand": { "type": "string" },
           "tier": { "enum": ["core", "extended", "advanced", "debug"] },
           "readOnly": { "type": "boolean" },

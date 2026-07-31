@@ -80,7 +80,7 @@ internal static partial class Program
                     "get_component_box + use_selection → bbox of highlighted component",
                     "create_sketch + use_selection → sketch on highlighted plane/face",
                     "mate_coincident + use_selection → mate two highlighted refs (indices 1 and 2)",
-                    "actuator_cut_cavity + use_selection → cut into highlighted bracket",
+                    "feature_extrude_cut + use_selection → cut into the highlighted face",
                 },
         };
 
@@ -221,107 +221,4 @@ internal static partial class Program
         return FindComponent((IAssemblyDoc)doc, null, componentName);
     }
 
-    private static (Component2 Bracket, Component2 Tool, string BracketPartPath) ResolveActuatorCavityFromSelection(
-        ModelDoc2 asmDoc,
-        IAssemblyDoc assembly,
-        string? modelId)
-    {
-        List<ResolvedSelectionItem> items = CollectResolvedSelection(asmDoc);
-        if (items.Count == 0)
-        {
-            throw new InvalidOperationException(
-                "use_selection requires a highlighted bracket body/face/component (and optionally an actuator) in the active assembly.");
-        }
-
-        Component2? bracket = null;
-        Component2? tool = null;
-
-        foreach (ResolvedSelectionItem item in items)
-        {
-            Component2? component = FindComponentByName(asmDoc, item.ComponentName);
-            if (component is null)
-            {
-                continue;
-            }
-
-            string[] tags = InferSemanticTags(item);
-            if (tags.Contains("domain:actuator", StringComparer.Ordinal))
-            {
-                tool ??= component;
-            }
-            else
-            {
-                bracket ??= component;
-            }
-        }
-
-        List<ResolvedSelectionItem> withComponents = items.Where(i => i.ComponentName is not null).ToList();
-        if (withComponents.Count == 1 && bracket is null && tool is null)
-        {
-            Component2? only = FindComponentByName(asmDoc, withComponents[0].ComponentName);
-            if (only is not null)
-            {
-                if (InferSemanticTags(withComponents[0]).Contains("domain:actuator", StringComparer.Ordinal))
-                {
-                    tool = only;
-                }
-                else
-                {
-                    bracket = only;
-                }
-            }
-        }
-        else if (withComponents.Count >= 2)
-        {
-            foreach (ResolvedSelectionItem item in withComponents)
-            {
-                Component2? component = FindComponentByName(asmDoc, item.ComponentName);
-                if (component is null)
-                {
-                    continue;
-                }
-
-                if (InferSemanticTags(item).Contains("domain:actuator", StringComparer.Ordinal))
-                {
-                    tool ??= component;
-                }
-                else
-                {
-                    bracket ??= component;
-                }
-            }
-        }
-
-        if (tool is null && !string.IsNullOrWhiteSpace(modelId))
-        {
-            tool = FindComponent(assembly, null, $"actuator_{modelId}")
-                ?? FindComponent(assembly, null, "actuator");
-        }
-
-        if (bracket is null)
-        {
-            throw new InvalidOperationException(
-                "Could not resolve target from selection. Highlight the part, body, or face you mean.");
-        }
-
-        if (tool is null)
-        {
-            throw new InvalidOperationException(
-                "Could not resolve actuator tool from selection. Highlight the actuator component or pass model.");
-        }
-
-        if (ReferenceEquals(bracket, tool))
-        {
-            throw new InvalidOperationException(
-                "Selection resolved the same component for bracket and tool. Highlight distinct targets.");
-        }
-
-        string? bracketPartPath = Try(() => bracket.GetPathName()) as string;
-        if (string.IsNullOrWhiteSpace(bracketPartPath))
-        {
-            throw new InvalidOperationException("Resolved target component has no part path.");
-        }
-
-        return (bracket, tool, bracketPartPath);
-    }
 }

@@ -10,7 +10,6 @@ import {
   mateParallel,
   matePerpendicular,
   saveDocument,
-  torsoFrameBuildMates,
 } from "../assembly-tools.js";
 import { runWorker } from "../worker.js";
 import {
@@ -89,7 +88,7 @@ export function registerSolidWorksWriteTools(server: McpServer): void {
     {
       title: "Set custom properties",
       description:
-        "Set Marengo custom properties (process, material, revision, owner) on a part or assembly and optionally save.",
+        "Set custom properties (process, material, revision, owner) on a part or assembly and optionally save.",
       inputSchema: setCustomPropertiesSchema,
       annotations: { readOnlyHint: false },
     },
@@ -426,55 +425,4 @@ export function registerSolidWorksWriteTools(server: McpServer): void {
     },
   );
 
-  const vendorUrdfSchema = optionalPathSchema.extend({
-    save: z.boolean().optional(),
-    replace_existing: z.boolean().optional(),
-    confirm: z.literal(true),
-  });
-
-  server.registerTool(
-    "marengo_vendor_add_rs03_urdf_frame",
-    {
-      title: "Add RS03 URDF frame",
-      description: "Add vendor RS03 URDF reference frame to a part. Requires confirm: true.",
-      inputSchema: vendorUrdfSchema,
-      annotations: { readOnlyHint: false },
-    },
-    async (args: z.infer<typeof vendorUrdfSchema>) => {
-      try {
-        const filePath = args.path ? assertAllowedPath(args.path) : undefined;
-        if (!filePath) throw new Error("path is required");
-        return jsonResult(
-          await runWorker({
-            command: "vendor_add_rs03_urdf_frame",
-            args: {
-              path: filePath,
-              save: args.save ?? true,
-              replace_existing: args.replace_existing ?? true,
-            },
-          }),
-        );
-      } catch (error) {
-        return errorResult(error);
-      }
-    },
-  );
-
-  server.registerTool(
-    "marengo_torso_frame_build",
-    {
-      title: "Build Marengo torso frame mates",
-      description:
-        "DESTRUCTIVE — only when the user explicitly asked. Requires confirm: true. Aligns 12×2020 + 16× brackets to layout ICE and saves the frame assembly.",
-      inputSchema: assemblyToolSchemas.torsoFrameBuildSchema,
-      annotations: { readOnlyHint: false },
-    },
-    async (args: z.infer<typeof assemblyToolSchemas.torsoFrameBuildSchema>) => {
-      try {
-        return jsonResult(await torsoFrameBuildMates(args));
-      } catch (error) {
-        return errorResult(error);
-      }
-    },
-  );
 }

@@ -8,21 +8,6 @@ using SolidWorks.Interop.swconst;
 internal static partial class Program
 {
 
-    private static Component2? ResolveTorsoLayoutComponent(IAssemblyDoc assembly)
-    {
-        Component2? frame = FindComponent(assembly, null, "marengo_torso_frame_asm");
-        if (frame is not null)
-        {
-            Component2? nested = FindComponent(assembly, frame, "marengo_torso_layout");
-            if (nested is not null)
-            {
-                return nested;
-            }
-        }
-
-        return FindComponent(assembly, null, "marengo_torso_layout");
-    }
-
     private static Component2? FindComponent(IAssemblyDoc assembly, Component2? parent, string nameOrPrefix)
     {
         if (parent is null)
@@ -226,8 +211,14 @@ internal static partial class Program
 
     private static ModelDoc2 OpenDocument(ISldWorks app, string path)
     {
-        string fullPath = PathGuard.AssertAllowedPath(path);
-        ModelDoc2? existing = FindOpenDocument(app, fullPath);
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw WorkerException.Validation("PATH_REQUIRED", "A file path is required.", new Dictionary<string, object?>());
+        }
+
+        // Already-open / active documents are trusted. Path roots only gate opens from disk.
+        string lookupPath = Path.GetFullPath(path);
+        ModelDoc2? existing = FindOpenDocument(app, lookupPath);
         if (existing is not null)
         {
             int activateErrors = 0;
@@ -240,27 +231,28 @@ internal static partial class Program
             return existing;
         }
 
+        string fullPath = PathGuard.AssertAllowedPath(path);
         int errors = 0;
         int warnings = 0;
-        if (IsNeutralCad(path))
+        if (IsNeutralCad(fullPath))
         {
-            object? importData = Try(() => app.GetImportFileData(path));
-            ModelDoc2? imported = app.LoadFile4(path, "r", importData, ref errors);
+            object? importData = Try(() => app.GetImportFileData(fullPath));
+            ModelDoc2? imported = app.LoadFile4(fullPath, "r", importData, ref errors);
             if (imported is null || errors != 0)
             {
                 throw new InvalidOperationException(
-                    $"SolidWorks failed to import {path}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
+                    $"SolidWorks failed to import {fullPath}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
             }
 
             return imported;
         }
 
-        int docType = DocumentType(path);
-        ModelDoc2? doc = app.OpenDoc6(path, docType, (int)swOpenDocOptions_e.swOpenDocOptions_Silent, "", ref errors, ref warnings) as ModelDoc2;
+        int docType = DocumentType(fullPath);
+        ModelDoc2? doc = app.OpenDoc6(fullPath, docType, (int)swOpenDocOptions_e.swOpenDocOptions_Silent, "", ref errors, ref warnings) as ModelDoc2;
         if (doc is null || errors != 0)
         {
             throw new InvalidOperationException(
-                $"SolidWorks failed to open {path}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
+                $"SolidWorks failed to open {fullPath}. errors={errors} ({DecodeFileLoadErrors(errors)}), warnings={warnings}");
         }
 
         string? openedTitle = Try(() => doc.GetTitle()) as string;
@@ -520,31 +512,4 @@ internal static partial class Program
         return values.ToArray();
     }
 
-    private static string[] AllowedRoots()
-    {
-        string? raw = System.Environment.GetEnvironmentVariable("SOLIDWORKS_MCP_ALLOWED_ROOTS");
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            return ["C:\\code\\marengo"];
-        }
-
-        return raw.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    }
-
-    private static string AssertAllowedPath(string inputPath)
-    {
-        string resolved = Path.GetFullPath(inputPath);
-        string normalized = resolved.Replace('/', '\\').ToLowerInvariant();
-        foreach (string root in AllowedRoots())
-        {
-            string normalizedRoot = Path.GetFullPath(root).Replace('/', '\\').ToLowerInvariant().TrimEnd('\\');
-            if (normalized == normalizedRoot || normalized.StartsWith(normalizedRoot + "\\", StringComparison.Ordinal))
-            {
-                return resolved;
-            }
-        }
-
-        throw new InvalidOperationException(
-            $"Path is outside allowed CAD roots: {resolved}. Set SOLIDWORKS_MCP_ALLOWED_ROOTS.");
-    }
 }

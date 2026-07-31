@@ -1,11 +1,10 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { allowedRoots } from "./config.js";
+import { packageRoot } from "./config.js";
 
 function auditLogPath(): string {
-  const root = allowedRoots()[0] ?? process.cwd();
-  const dir = path.join(root, "hardware", "cad");
+  const dir = path.join(packageRoot(), ".mcp-audit");
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }

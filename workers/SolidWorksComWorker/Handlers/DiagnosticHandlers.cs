@@ -91,7 +91,7 @@ internal static partial class Program
             hiddenCount,
             brokenReferenceComponents = brokenRefs,
             mateCount = CountAssemblyMates(doc),
-            note = "Compare with marengo_design_review for manifest-level checks.",
+            note = "Review the document's component and mate state before making changes.",
         };
     }
 
@@ -188,7 +188,7 @@ internal static partial class Program
         bool mutexHeld = false;
         try
         {
-            using Mutex probe = new(false, @"Global\MarengoSolidWorksComWorker");
+            using Mutex probe = new(false, WorkerConstants.ComMutexName);
             mutexHeld = !probe.WaitOne(0);
         }
         catch

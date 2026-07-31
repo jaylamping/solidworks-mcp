@@ -274,7 +274,7 @@ internal static partial class Program
             if (entry.ValueKind == JsonValueKind.String)
             {
                 string? s = entry.GetString();
-                if (LooksLikePath(s)) AssertAllowedPath(s!);
+                if (LooksLikePath(s)) PathGuard.AssertAllowedPath(s!);
             }
         }
     }

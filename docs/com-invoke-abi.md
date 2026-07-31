@@ -9,7 +9,7 @@ Session model for generic API access:
 
 ```json
 {
-  "path": "C:/code/marengo/.../assembly.SLDASM",
+  "path": "C:/allowed-root/.../assembly.SLDASM",
   "target": "app | active_doc | component | persist_ref",
   "component_name": "optional for component target",
   "persist_reference": "base64 for persist_ref target",

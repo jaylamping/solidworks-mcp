@@ -69,3 +69,11 @@ export const diagnosePartSaveSchema = z.object({
 export const resolveLightweightSchema = confirmPathSchema;
 
 export const unfixAllComponentsSchema = confirmPathSchema;
+
+export const setCustomPropertiesSchema = z.object({
+  path: z.string().min(1),
+  properties: z.record(z.string(), z.string()),
+  save: z.boolean().optional(),
+});
+
+export const saveDocumentSchema = optionalPathSchema;
