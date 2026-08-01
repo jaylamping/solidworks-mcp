@@ -47,6 +47,7 @@ internal static partial class Program
         string outputPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "output_path"));
         string? inputPath = StringArg(args, "path");
         bool startIfMissing = BoolArg(args, "start_if_missing", defaultValue: true);
+        bool keepView = BoolArg(args, "keep_view", defaultValue: false);
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? ".");
 
@@ -61,7 +62,7 @@ internal static partial class Program
         int warnings = 0;
         if (IsPreviewExport(outputPath))
         {
-            PreparePreview(app, doc);
+            PreparePreview(app, doc, keepView);
         }
 
         ModelDocExtension extension = doc.Extension;
@@ -74,6 +75,7 @@ internal static partial class Program
             errors,
             warnings,
             exists = File.Exists(outputPath),
+            keepView,
         };
     }
 
@@ -83,7 +85,7 @@ internal static partial class Program
         return ext is ".png" or ".jpg" or ".jpeg";
     }
 
-    private static void PreparePreview(ISldWorks app, ModelDoc2 doc)
+    private static void PreparePreview(ISldWorks app, ModelDoc2 doc, bool keepView)
     {
         HideReferenceGeometryForPreview(app);
         TryVoid(() => doc.ClearSelection2(true));
@@ -91,8 +93,11 @@ internal static partial class Program
         TryVoid(() => doc.BlankRefGeom());
         TryVoid(() => doc.ClearSelection2(true));
         TryVoid(() => doc.BlankSketch());
-        TryVoid(() => doc.ShowNamedView2("*Isometric", (int)swStandardViews_e.swIsometricView));
-        TryVoid(() => doc.ViewZoomtofit2());
+        if (!keepView)
+        {
+            TryVoid(() => doc.ShowNamedView2("*Isometric", (int)swStandardViews_e.swIsometricView));
+            TryVoid(() => doc.ViewZoomtofit2());
+        }
 
         ModelView? view = Try(() => doc.ActiveView) as ModelView;
         if (view is not null)

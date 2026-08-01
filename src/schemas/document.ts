@@ -19,6 +19,9 @@ export const exportSchema = z.object({
   output_path: z.string().min(1).describe("Destination file path under an allowed CAD root."),
   format: z.enum(["sldprt", "sldasm", "step", "stp", "stl", "pdf", "png"]).describe("Output format."),
   start_if_missing: z.boolean().optional().describe("Start SolidWorks if no instance is running."),
+  keep_view: z.boolean().optional().describe(
+    "For png/jpg previews: keep the current camera/view instead of forcing isometric + zoom-to-fit. Use this for before/after reasoning screenshots.",
+  ),
 });
 
 export const confirmPathSchema = selectionFieldsSchema.extend({

@@ -472,7 +472,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Export a CAD document to STEP, STL, PDF, or PNG under an allowed CAD root.",
+      "description": "Export a CAD document to STEP, STL, PDF, or PNG under an allowed CAD root. PNG supports keep_view for stable before/after screenshots.",
       "descriptionSource": "authored",
       "tags": [
         "export"

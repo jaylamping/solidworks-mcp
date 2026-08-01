@@ -1357,18 +1357,24 @@ internal static partial class Program
 
             recreateResult = MateLimitAngle(JsonSerializer.SerializeToElement(recreateArgs));
             method = "delete_and_recreate";
-            updated = true;
-            if (recreateResult is not null)
+            // Extract mate name via JSON round-trip for stable typing.
+            string json = JsonSerializer.Serialize(recreateResult);
+            using JsonDocument parsed = JsonDocument.Parse(json);
+            bool recreateOk = parsed.RootElement.TryGetProperty("mateCreated", out JsonElement createdEl)
+                && createdEl.ValueKind == JsonValueKind.True;
+            if (parsed.RootElement.TryGetProperty("mateName", out JsonElement nameEl)
+                && nameEl.ValueKind == JsonValueKind.String)
             {
-                // Extract mate name via JSON round-trip for stable typing.
-                string json = JsonSerializer.Serialize(recreateResult);
-                using JsonDocument parsed = JsonDocument.Parse(json);
-                if (parsed.RootElement.TryGetProperty("mateName", out JsonElement nameEl)
-                    && nameEl.ValueKind == JsonValueKind.String)
-                {
-                    recreatedName = nameEl.GetString();
-                }
+                recreatedName = nameEl.GetString();
             }
+
+            if (!recreateOk || string.IsNullOrWhiteSpace(recreatedName))
+            {
+                throw new InvalidOperationException(
+                    $"Deleted mate '{mateName}' but recreate failed. Reopen a checkpoint and retry with an explicit seed_angle_deg/flip.");
+            }
+
+            updated = true;
         }
 
         Feature? resultFeature = !string.IsNullOrWhiteSpace(recreatedName)

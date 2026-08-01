@@ -32,6 +32,7 @@ export const exportSchema = z.object({
   output_path: z.string().min(1),
   format: z.enum(["sldprt", "sldasm", "step", "stp", "stl", "pdf", "png"]),
   start_if_missing: z.boolean().optional(),
+  keep_view: z.boolean().optional(),
 });
 
 export const setCustomPropertiesSchema = z.object({
