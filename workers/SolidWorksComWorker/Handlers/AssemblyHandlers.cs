@@ -976,7 +976,7 @@ internal static partial class Program
         string inputPath = RequiredStringArg(args, "path");
         string componentName = RequiredStringArg(args, "component_name");
         double[] matrix = DoubleArrayArg(args, "matrix");
-        bool fix = BoolArg(args, "fix", defaultValue: true);
+        bool fix = BoolArg(args, "fix", defaultValue: false);
 
         if (matrix.Length != 16)
         {

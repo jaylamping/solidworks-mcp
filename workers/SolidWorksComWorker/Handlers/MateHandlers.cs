@@ -413,17 +413,41 @@ internal static partial class Program
         string ref1 = RequiredStringArg(args, "ref_1");
         string component2 = RequiredStringArg(args, "component_2");
         string ref2 = RequiredStringArg(args, "ref_2");
-        string axisRef = StringArg(args, "axis_ref") ?? "shoulder_roll_axis";
+        string? axisRef = StringArg(args, "axis_ref");
         string? axisComponentName = StringArg(args, "axis_component");
         double minDeg = DoubleArg(args, "min_angle_deg", -90);
         double maxDeg = DoubleArg(args, "max_angle_deg", 90);
         int face1 = (int)DoubleArg(args, "face_index_1", 0);
         int face2 = (int)DoubleArg(args, "face_index_2", 0);
+        bool flipSpecified = args is not null
+            && args.Value.TryGetProperty("flip", out JsonElement flipEl)
+            && (flipEl.ValueKind is JsonValueKind.True or JsonValueKind.False);
+        bool flipValue = BoolArg(args, "flip", defaultValue: false);
+        bool checkBranchStability = BoolArg(args, "check_branch_stability", defaultValue: true);
+        bool autoStablePlanes = BoolArg(args, "auto_stable_planes", defaultValue: true);
+        bool stablePlaneRetry = BoolArg(args, "_stable_plane_retry", defaultValue: false);
+        var warnings = new List<string>();
 
         if (minDeg > maxDeg)
         {
             (minDeg, maxDeg) = (maxDeg, minDeg);
         }
+
+        if (IsAmbiguousPlanarAnglePair(ref1, ref2))
+        {
+            warnings.Add(
+                "ambiguous_plane_pair_top_top: Prefer Front/Front or Right/Right for revolute limit-angle mates; Top/Top often shares two opposite poses and can jump sides on save/rebuild.");
+            if (autoStablePlanes && !stablePlaneRetry)
+            {
+                warnings.Add(
+                    "auto_stable_planes: Rewriting Top/Top selections to Front/Front before create to avoid opposite-branch flips.");
+                ref1 = "Front Plane";
+                ref2 = "Front Plane";
+            }
+        }
+
+        string effectiveRef1 = ref1;
+        string effectiveRef2 = ref2;
 
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
         ModelDoc2 doc = OpenDocument(app, inputPath);
@@ -467,36 +491,39 @@ internal static partial class Program
 
         string? selectedAxisOwner = null;
         bool axisSelected = false;
-        foreach ((Component2? owner, string ownerName) in new (Component2?, string)[]
-                 {
-                     (axisComponent, axisComponentName ?? string.Empty),
-                     (first, component1),
-                     (second, component2),
-                     (null, "__assembly__"),
-                 })
+        if (!string.IsNullOrWhiteSpace(axisRef))
         {
-            if (owner is not null)
+            foreach ((Component2? owner, string ownerName) in new (Component2?, string)[]
+                     {
+                         (axisComponent, axisComponentName ?? string.Empty),
+                         (first, component1),
+                         (second, component2),
+                         (null, "__assembly__"),
+                     })
             {
-                if (SelectComponentPlaneOrAxisStrict(doc, owner, axisRef, append: true, mark: AngleMateReferenceMark)
-                    || SelectComponentAxisFeature(doc, owner, axisRef, append: true, mark: AngleMateReferenceMark))
+                if (owner is not null)
+                {
+                    if (SelectComponentPlaneOrAxisStrict(doc, owner, axisRef, append: true, mark: AngleMateReferenceMark)
+                        || SelectComponentAxisFeature(doc, owner, axisRef, append: true, mark: AngleMateReferenceMark))
+                    {
+                        axisSelected = true;
+                        selectedAxisOwner = ownerName;
+                        break;
+                    }
+                }
+                else if (SelectAssemblyReference(doc, axisRef, append: true, mark: AngleMateReferenceMark))
                 {
                     axisSelected = true;
-                    selectedAxisOwner = ownerName;
+                    selectedAxisOwner = "__assembly__";
                     break;
                 }
             }
-            else if (SelectAssemblyReference(doc, axisRef, append: true, mark: AngleMateReferenceMark))
-            {
-                axisSelected = true;
-                selectedAxisOwner = "__assembly__";
-                break;
-            }
-        }
 
-        if (!axisSelected)
-        {
-            throw new InvalidOperationException(
-                $"Failed to select angle reference axis '{axisRef}'. Pass axis_component/axis_ref explicitly.");
+            if (!axisSelected)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to select angle reference axis '{axisRef}'. Pass axis_component/axis_ref explicitly.");
+            }
         }
 
         SelectionMgr? selectionMgr = Try(() => doc.SelectionManager) as SelectionMgr;
@@ -540,6 +567,32 @@ internal static partial class Program
         // Capture COM entities, then clear selection so CreateMate uses only EntitiesToMate/ReferenceEntity.
         doc.ClearSelection2(true);
 
+        // Prefer seeding Angle from the live pose. Midpoint seeds can yank the joint and leave MateIlldefined.
+        double seedAngleDeg = DoubleArg(args, "seed_angle_deg", double.NaN);
+        string? seedSource = args is not null && args.Value.TryGetProperty("seed_angle_deg", out _)
+            ? "arg"
+            : null;
+        if (double.IsNaN(seedAngleDeg))
+        {
+            double? measured = TryMeasurePlaneAngleDeg(doc, first, ref1, second, ref2);
+            if (measured is double m && IsPlausiblePlaneAngleDeg(m))
+            {
+                seedAngleDeg = m;
+                seedSource = "transform_or_measure";
+            }
+            else if (measured is double bogus)
+            {
+                warnings.Add(
+                    $"measure_seed_rejected: Rejected implausible plane angle seed {bogus:F3}° (common Measure failure sentinel). Pass seed_angle_deg explicitly.");
+            }
+        }
+        else if (!IsPlausiblePlaneAngleDeg(seedAngleDeg))
+        {
+            warnings.Add($"seed_angle_rejected: seed_angle_deg={seedAngleDeg:F3}° is implausible; falling back to range midpoint.");
+            seedAngleDeg = double.NaN;
+            seedSource = null;
+        }
+
         int mateType = (int)swMateType_e.swMateANGLE;
         Feature? mateFeature = null;
         string method = "none";
@@ -573,7 +626,15 @@ internal static partial class Program
                 angleMate.ReferenceEntity = axisEntity;
             }
 
-            angleMate.Angle = (minDeg + maxDeg) / 2.0 * Math.PI / 180.0;
+            // Prefer the live geometric angle when it already lies in-range so CreateMate
+            // does not yank the joint to the range midpoint (which can leave the mate ill-defined).
+            double nominalDeg = (minDeg + maxDeg) / 2.0;
+            if (!double.IsNaN(seedAngleDeg) && seedAngleDeg >= minDeg - 1e-6 && seedAngleDeg <= maxDeg + 1e-6)
+            {
+                nominalDeg = seedAngleDeg;
+            }
+
+            angleMate.Angle = nominalDeg * Math.PI / 180.0;
             if (advanced)
             {
                 angleMate.MinimumAngle = minDeg * Math.PI / 180.0;
@@ -610,27 +671,57 @@ internal static partial class Program
         }
 
         // Prefer limit mate with axis; fall back through common angle-mate variants.
-        AttemptCreate("CreateMateLimitAxisAligned", advanced: true, includeAxis: true, flip: false, align: (int)swMateAlign_e.swMateAlignALIGNED);
-        AttemptCreate("CreateMateLimitAxisAnti", advanced: true, includeAxis: true, flip: false, align: (int)swMateAlign_e.swMateAlignANTI_ALIGNED);
-        AttemptCreate("CreateMateLimitNoAxisAligned", advanced: true, includeAxis: false, flip: false, align: (int)swMateAlign_e.swMateAlignALIGNED);
-        AttemptCreate("CreateMateLimitNoAxisAnti", advanced: true, includeAxis: false, flip: false, align: (int)swMateAlign_e.swMateAlignANTI_ALIGNED);
-        AttemptCreate("CreateMateLimitFlip", advanced: true, includeAxis: true, flip: true, align: (int)swMateAlign_e.swMateAlignALIGNED);
-        AttemptCreate("CreateMateStandardAngle", advanced: false, includeAxis: false, flip: false, align: (int)swMateAlign_e.swMateAlignALIGNED);
+        // When flip is specified, lock FlipDimension to that sense first.
+        bool[] flipOrder = flipSpecified
+            ? new[] { flipValue }
+            : new[] { false, true };
+        foreach (bool flipTry in flipOrder)
+        {
+            AttemptCreate(
+                flipTry ? "CreateMateLimitAxisAlignedFlip" : "CreateMateLimitAxisAligned",
+                advanced: true,
+                includeAxis: true,
+                flip: flipTry,
+                align: (int)swMateAlign_e.swMateAlignALIGNED);
+            AttemptCreate(
+                flipTry ? "CreateMateLimitAxisAntiFlip" : "CreateMateLimitAxisAnti",
+                advanced: true,
+                includeAxis: true,
+                flip: flipTry,
+                align: (int)swMateAlign_e.swMateAlignANTI_ALIGNED);
+            AttemptCreate(
+                flipTry ? "CreateMateLimitNoAxisAlignedFlip" : "CreateMateLimitNoAxisAligned",
+                advanced: true,
+                includeAxis: false,
+                flip: flipTry,
+                align: (int)swMateAlign_e.swMateAlignALIGNED);
+            AttemptCreate(
+                flipTry ? "CreateMateLimitNoAxisAntiFlip" : "CreateMateLimitNoAxisAnti",
+                advanced: true,
+                includeAxis: false,
+                flip: flipTry,
+                align: (int)swMateAlign_e.swMateAlignANTI_ALIGNED);
+        }
+
+        AttemptCreate(
+            "CreateMateStandardAngle",
+            advanced: false,
+            includeAxis: false,
+            flip: flipSpecified && flipValue,
+            align: (int)swMateAlign_e.swMateAlignALIGNED);
+
+        double nominalDeg = (minDeg + maxDeg) / 2.0;
+        if (!double.IsNaN(seedAngleDeg) && seedAngleDeg >= minDeg - 1e-6 && seedAngleDeg <= maxDeg + 1e-6)
+        {
+            nominalDeg = seedAngleDeg;
+        }
 
         bool mateCreated = mateFeature is not null;
         if (!mateCreated)
         {
-            // Restore selections for AddMate3/AddMate5 fallbacks.
+            // Planes-only selection — including the axis with AddMate3/5 has produced MateIlldefined.
             SelectComponentPlaneOrAxisStrict(doc, first, ref1, append: false, mark: 1);
             SelectComponentPlaneOrAxisStrict(doc, second, ref2, append: true, mark: 1);
-            if (axisComponent is not null)
-            {
-                SelectComponentPlaneOrAxisStrict(doc, axisComponent, axisRef, append: true, mark: AngleMateReferenceMark);
-            }
-            else
-            {
-                SelectAssemblyReference(doc, axisRef, append: true, mark: AngleMateReferenceMark);
-            }
 
             // Older AddMate3 path used by many macros for angle mates.
             try
@@ -644,17 +735,18 @@ internal static partial class Program
                     0,
                     0,
                     0,
-                    (minDeg + maxDeg) / 2.0 * Math.PI / 180.0,
+                    nominalDeg * Math.PI / 180.0,
                     maxDeg * Math.PI / 180.0,
                     minDeg * Math.PI / 180.0,
                     false,
                     out int mate3Error) as Mate2;
-                attempts.Add(new { attempt = "AddMate3", ok = mate3 is not null, status = mate3Error });
+                attempts.Add(new { attempt = "AddMate3NoAxis", ok = mate3 is not null, status = mate3Error });
                 if (mate3 is not null)
                 {
-                    method = "AddMate3";
+                    method = "AddMate3NoAxis";
                     mateCreated = true;
                     mateError = mate3Error;
+                    mateFeature = Try(() => FindNewestLimitAngleMate(doc)) as Feature;
                 }
                 else
                 {
@@ -663,7 +755,7 @@ internal static partial class Program
             }
             catch (Exception ex)
             {
-                attempts.Add(new { attempt = "AddMate3", ok = false, error = ex.Message });
+                attempts.Add(new { attempt = "AddMate3NoAxis", ok = false, error = ex.Message });
             }
         }
 
@@ -671,15 +763,6 @@ internal static partial class Program
         {
             SelectComponentPlaneOrAxisStrict(doc, first, ref1, append: false, mark: 1);
             SelectComponentPlaneOrAxisStrict(doc, second, ref2, append: true, mark: 1);
-            if (axisComponent is not null)
-            {
-                SelectComponentPlaneOrAxisStrict(doc, axisComponent, axisRef, append: true, mark: AngleMateReferenceMark);
-            }
-            else
-            {
-                SelectAssemblyReference(doc, axisRef, append: true, mark: AngleMateReferenceMark);
-            }
-
             Mate2? mate = assembly.AddMate5(
                 mateType,
                 (int)swMateAlign_e.swMateAlignALIGNED,
@@ -689,7 +772,7 @@ internal static partial class Program
                 0,
                 0,
                 0,
-                (minDeg + maxDeg) / 2.0 * Math.PI / 180.0,
+                nominalDeg * Math.PI / 180.0,
                 maxDeg * Math.PI / 180.0,
                 minDeg * Math.PI / 180.0,
                 false,
@@ -698,23 +781,179 @@ internal static partial class Program
                 out mateError) as Mate2;
             if (mate is not null)
             {
-                method = "AddMate5";
+                method = "AddMate5NoAxis";
                 mateCreated = true;
+                mateFeature = Try(() => FindNewestLimitAngleMate(doc)) as Feature;
             }
 
-            attempts.Add(new { attempt = "AddMate5", ok = mateCreated, status = mateError });
+            attempts.Add(new { attempt = "AddMate5NoAxis", ok = mateCreated, status = mateError });
         }
 
         doc.EditRebuild3();
+
+        int? featureErrorCode = null;
+        bool featureErrorIsWarning = false;
+        bool? branchStable = null;
+        double? branchRotationDelta = null;
+        string? branchDetail = null;
+        bool? flipDimension = null;
+
+        if (mateFeature is not null)
+        {
+            if (flipSpecified)
+            {
+                TryUpdateLimitAngleMate(mateFeature, doc, minDeg, maxDeg, nominalDeg, flip: flipValue);
+                doc.EditRebuild3();
+            }
+
+            featureErrorCode = Try(() => mateFeature.GetErrorCode2(out featureErrorIsWarning)) as int?;
+            // Heal ill-defined / errored limit mates by rewriting Angle to the in-range seed.
+            if (featureErrorCode is int code && code != 0)
+            {
+                if (code == 47)
+                {
+                    warnings.Add(
+                        "mate_illdefined: Feature error 47 — planar angle may be ambiguous or seed yanked the joint. Prefer Front/Front planes, pass seed_angle_deg from the live pose, and avoid mating the axis with AddMate5.");
+                }
+
+                if (TryUpdateLimitAngleMate(mateFeature, doc, minDeg, maxDeg, nominalDeg, flip: flipSpecified ? flipValue : null))
+                {
+                    doc.EditRebuild3();
+                    featureErrorCode = Try(() => mateFeature.GetErrorCode2(out featureErrorIsWarning)) as int?;
+                    method += "+heal";
+                }
+            }
+
+            if (Try(() => mateFeature.GetDefinition()) is IAngleMateFeatureData afterDef)
+            {
+                flipDimension = afterDef.FlipDimension;
+            }
+
+            if (checkBranchStability)
+            {
+                Component2 moving = ResolveLikelyMovingComponent(first, second);
+                (branchStable, branchRotationDelta, branchDetail) =
+                    CheckLimitMateBranchStability(doc, mateFeature, moving);
+
+                if (branchStable == false)
+                {
+                    warnings.Add(
+                        $"branch_unstable: Suppress/unsuppress changed the moving component pose (rotDelta={branchRotationDelta:F3}, detail={branchDetail}). Opposite-branch planar angles are unsafe across save/rebuild.");
+
+                    if (autoStablePlanes
+                        && !stablePlaneRetry
+                        && IsAmbiguousPlanarAnglePair(ref1, ref2))
+                    {
+                        string? failedName = Try(() => mateFeature.Name) as string;
+                        doc.ClearSelection2(true);
+                        bool selected = Try(() => mateFeature.Select2(false, 0)) as bool? ?? false;
+                        bool deleted = false;
+                        if (selected)
+                        {
+                            deleted = Try(() => doc.Extension.DeleteSelection2(
+                                (int)swDeleteSelectionOptions_e.swDelete_Absorbed)) as bool? ?? false;
+                            doc.EditRebuild3();
+                        }
+
+                        if (deleted)
+                        {
+                            warnings.Add(
+                                "auto_stable_planes: Deleted unstable Top/Top limit mate and recreating with Front/Front.");
+                            var retryArgs = new Dictionary<string, object?>
+                            {
+                                ["path"] = inputPath,
+                                ["component_1"] = component1,
+                                ["ref_1"] = "Front Plane",
+                                ["component_2"] = component2,
+                                ["ref_2"] = "Front Plane",
+                                ["min_angle_deg"] = minDeg,
+                                ["max_angle_deg"] = maxDeg,
+                                ["check_branch_stability"] = checkBranchStability,
+                                ["auto_stable_planes"] = false,
+                                ["_stable_plane_retry"] = true,
+                            };
+                            if (!double.IsNaN(seedAngleDeg))
+                            {
+                                retryArgs["seed_angle_deg"] = seedAngleDeg;
+                            }
+
+                            if (flipSpecified)
+                            {
+                                retryArgs["flip"] = flipValue;
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(axisRef))
+                            {
+                                retryArgs["axis_ref"] = axisRef;
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(axisComponentName))
+                            {
+                                retryArgs["axis_component"] = axisComponentName;
+                            }
+
+                            object retryResult = MateLimitAngle(JsonSerializer.SerializeToElement(retryArgs));
+                            // Merge prior warnings into the retry payload via JSON round-trip.
+                            string retryJson = JsonSerializer.Serialize(retryResult);
+                            using JsonDocument parsed = JsonDocument.Parse(retryJson);
+                            var merged = new Dictionary<string, object?>();
+                            foreach (JsonProperty prop in parsed.RootElement.EnumerateObject())
+                            {
+                                merged[prop.Name] = JsonSerializer.Deserialize<object>(prop.Value.GetRawText());
+                            }
+
+                            var mergedWarnings = new List<string>(warnings);
+                            if (parsed.RootElement.TryGetProperty("warnings", out JsonElement wEl)
+                                && wEl.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (JsonElement item in wEl.EnumerateArray())
+                                {
+                                    if (item.ValueKind == JsonValueKind.String
+                                        && item.GetString() is string s
+                                        && !mergedWarnings.Contains(s))
+                                    {
+                                        mergedWarnings.Add(s);
+                                    }
+                                }
+                            }
+
+                            merged["warnings"] = mergedWarnings;
+                            merged["autoStablePlanesFrom"] = failedName;
+                            merged["autoStablePlanesTo"] = new[] { "Front Plane", "Front Plane" };
+                            return merged;
+                        }
+
+                        warnings.Add("auto_stable_planes_failed: Could not delete unstable Top/Top mate for Front/Front retry.");
+                    }
+                }
+            }
+        }
+
+        if (mateError == 5 || createMateErrorStatus == 5)
+        {
+            warnings.Add(
+                "overdefined_assembly: AddMate reported over-defined (status 5). Float conflicting fixed components and remove duplicate angle/limit mates before retrying.");
+        }
+
         (string errorName, string[] remediation) = SwErrorDecoder.DecodeMateError(mateError);
+        if (IsAmbiguousPlanarAnglePair(effectiveRef1, effectiveRef2)
+            && remediation.All(r => !r.Contains("Front/Front", StringComparison.Ordinal)))
+        {
+            remediation = remediation
+                .Concat(new[]
+                {
+                    "Prefer Front Plane ↔ Front Plane (or Right ↔ Right) over Top ↔ Top for revolute limit mates.",
+                })
+                .ToArray();
+        }
 
         return new
         {
             document = DescribeDocument(doc),
             component1 = Try(() => first.Name2),
             component2 = Try(() => second.Name2),
-            ref1,
-            ref2,
+            ref1 = effectiveRef1,
+            ref2 = effectiveRef2,
             axisRef,
             axisOwner = selectedAxisOwner,
             selectedCount,
@@ -722,18 +961,545 @@ internal static partial class Program
             hasEntity1 = entity1 is not null,
             hasEntity2 = entity2 is not null,
             hasAxisEntity = axisEntity is not null,
+            seedAngleDeg = double.IsNaN(seedAngleDeg) ? (double?)null : seedAngleDeg,
+            seedSource,
+            nominalAngleDeg = nominalDeg,
             minAngleDeg = minDeg,
             maxAngleDeg = maxDeg,
+            flipDimension,
             isAdvancedMate = true,
             mateCreated,
             mateName = Try(() => mateFeature?.Name),
             mateError,
+            featureErrorCode,
+            featureErrorIsWarning,
             createMateErrorStatus,
             mateErrorName = errorName,
             remediation,
             mateMethod = method,
             attempts,
             mateCount = CountAssemblyMates(doc),
+            branchStable,
+            branchRotationDelta,
+            branchDetail,
+            warnings,
+        };
+    }
+
+    private static bool IsAmbiguousPlanarAnglePair(string ref1, string ref2)
+    {
+        static string NormalizePlaneName(string value) =>
+            value.Trim().Replace(" ", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+
+        string a = NormalizePlaneName(ref1);
+        string b = NormalizePlaneName(ref2);
+        return (a is "topplane" or "top") && (b is "topplane" or "top");
+    }
+
+    private static bool IsPlausiblePlaneAngleDeg(double deg)
+    {
+        if (double.IsNaN(deg) || double.IsInfinity(deg))
+        {
+            return false;
+        }
+
+        if (Math.Abs(deg) > 360.0)
+        {
+            return false;
+        }
+
+        // Measure API commonly returns ±1.0 rad when angle is unavailable.
+        double oneRadDeg = 180.0 / Math.PI;
+        if (Math.Abs(Math.Abs(deg) - oneRadDeg) < 0.08)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static Component2 ResolveLikelyMovingComponent(Component2 first, Component2 second)
+    {
+        bool firstFixed = Try(() => first.IsFixed()) as bool? ?? false;
+        bool secondFixed = Try(() => second.IsFixed()) as bool? ?? false;
+        if (firstFixed && !secondFixed)
+        {
+            return second;
+        }
+
+        if (secondFixed && !firstFixed)
+        {
+            return first;
+        }
+
+        return second;
+    }
+
+    private static (bool Stable, double RotationDelta, string? Detail) CheckLimitMateBranchStability(
+        ModelDoc2 doc,
+        Feature mateFeature,
+        Component2 moving)
+    {
+        double[] before;
+        try
+        {
+            before = ReadComponentTransformMatrix(moving);
+        }
+        catch
+        {
+            return (true, 0, "no_transform");
+        }
+
+        bool suppressed = Try(() => mateFeature.SetSuppression2(
+            (int)swFeatureSuppressionAction_e.swSuppressFeature,
+            0,
+            null)) as bool? ?? false;
+        if (!suppressed)
+        {
+            return (true, 0, "suppress_failed");
+        }
+
+        doc.EditRebuild3();
+
+        bool unsuppressed = Try(() => mateFeature.SetSuppression2(
+            (int)swFeatureSuppressionAction_e.swUnSuppressFeature,
+            0,
+            null)) as bool? ?? false;
+        doc.EditRebuild3();
+        if (!unsuppressed)
+        {
+            return (false, 0, "unsuppress_failed");
+        }
+
+        double[] after;
+        try
+        {
+            after = ReadComponentTransformMatrix(moving);
+        }
+        catch
+        {
+            return (false, 0, "no_transform_after");
+        }
+
+        double rotDelta = 0;
+        for (int i = 0; i < 9 && i < before.Length && i < after.Length; i++)
+        {
+            rotDelta += Math.Abs(before[i] - after[i]);
+        }
+
+        bool axisSignFlip = false;
+        for (int col = 0; col < 3; col++)
+        {
+            int i = col * 3;
+            if (i + 2 >= before.Length || i + 2 >= after.Length)
+            {
+                break;
+            }
+
+            double dot = (before[i] * after[i]) + (before[i + 1] * after[i + 1]) + (before[i + 2] * after[i + 2]);
+            if (dot < -0.5)
+            {
+                axisSignFlip = true;
+                break;
+            }
+        }
+
+        bool unstable = axisSignFlip || rotDelta > 0.8;
+        string? detail = axisSignFlip
+            ? "axis_sign_flip"
+            : (unstable ? "large_rotation_delta" : "stable");
+        return (!unstable, rotDelta, detail);
+    }
+
+    private static Feature? FindNewestLimitAngleMate(ModelDoc2 doc)
+    {
+        Feature? mateGroup = FindFeatureByName(doc, "Mates");
+        if (mateGroup is null)
+        {
+            return null;
+        }
+
+        Feature? newest = null;
+        object? subFeature = Try(() => mateGroup.GetFirstSubFeature());
+        int guard = 0;
+        while (subFeature is Feature current && guard++ < 500)
+        {
+            string? name = Try(() => current.Name) as string;
+            string? type = Try(() => current.GetTypeName2()) as string;
+            if (name is not null
+                && name.StartsWith("LimitAngle", StringComparison.OrdinalIgnoreCase)
+                && type is not null
+                && type.Contains("Limit", StringComparison.OrdinalIgnoreCase))
+            {
+                newest = current;
+            }
+
+            subFeature = Try(() => current.GetNextSubFeature());
+        }
+
+        return newest;
+    }
+
+    private static double? TryMeasurePlaneAngleDeg(
+        ModelDoc2 doc,
+        Component2 first,
+        string ref1,
+        Component2 second,
+        string ref2)
+    {
+        double? fromTransforms = TryPlaneAngleFromTransforms(first, ref1, second, ref2);
+        if (fromTransforms is double transformDeg && IsPlausiblePlaneAngleDeg(transformDeg))
+        {
+            return transformDeg;
+        }
+
+        try
+        {
+            doc.ClearSelection2(true);
+            if (!SelectComponentPlaneOrAxisStrict(doc, first, ref1, append: false, mark: 0)
+                || !SelectComponentPlaneOrAxisStrict(doc, second, ref2, append: true, mark: 0))
+            {
+                return fromTransforms;
+            }
+
+            Measure? measure = Try(() => doc.Extension.CreateMeasure()) as Measure;
+            if (measure is null)
+            {
+                return fromTransforms;
+            }
+
+            Try(() => measure.Calculate(null));
+            double? angleRad = Try(() => measure.Angle) as double?;
+            doc.ClearSelection2(true);
+            if (angleRad is null || double.IsNaN(angleRad.Value))
+            {
+                return fromTransforms;
+            }
+
+            double measuredDeg = angleRad.Value * 180.0 / Math.PI;
+            return IsPlausiblePlaneAngleDeg(measuredDeg) ? measuredDeg : fromTransforms;
+        }
+        catch
+        {
+            return fromTransforms;
+        }
+    }
+
+    private static double? TryPlaneAngleFromTransforms(
+        Component2 first,
+        string ref1,
+        Component2 second,
+        string ref2)
+    {
+        try
+        {
+            double[] ma = ReadComponentTransformMatrix(first);
+            double[] mb = ReadComponentTransformMatrix(second);
+            double[]? na = PlaneNormalFromComponentMatrix(ma, ref1);
+            double[]? nb = PlaneNormalFromComponentMatrix(mb, ref2);
+            if (na is null || nb is null)
+            {
+                return null;
+            }
+
+            double dot = (na[0] * nb[0]) + (na[1] * nb[1]) + (na[2] * nb[2]);
+            dot = Math.Clamp(dot, -1.0, 1.0);
+            return Math.Acos(dot) * 180.0 / Math.PI;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static double[]? PlaneNormalFromComponentMatrix(double[] matrix, string planeName)
+    {
+        if (matrix.Length < 9)
+        {
+            return null;
+        }
+
+        string normalized = planeName.Trim().Replace(" ", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+        // SolidWorks standard planes: Right=X, Top=Y, Front=Z in part space.
+        return normalized switch
+        {
+            "rightplane" or "right" or "yzplane" => new[] { matrix[0], matrix[1], matrix[2] },
+            "topplane" or "top" or "xzplane" => new[] { matrix[3], matrix[4], matrix[5] },
+            "frontplane" or "front" or "xyplane" => new[] { matrix[6], matrix[7], matrix[8] },
+            _ => null,
+        };
+    }
+
+    private static bool TryUpdateLimitAngleMate(
+        Feature mateFeature,
+        ModelDoc2? assemblyDoc,
+        double minDeg,
+        double maxDeg,
+        double nominalDeg,
+        bool? flip)
+    {
+        bool accessed = false;
+        try
+        {
+            // Some SolidWorks builds expose AccessSelections only on the COM object, not the interop Feature type.
+            accessed = Try(() =>
+            {
+                dynamic feature = mateFeature;
+                return (bool)feature.AccessSelections(assemblyDoc, null);
+            }) as bool? ?? false;
+
+            if (Try(() => mateFeature.GetDefinition()) is not IAngleMateFeatureData editable)
+            {
+                return false;
+            }
+
+            editable.IsAdvancedMate = true;
+            editable.MinimumAngle = minDeg * Math.PI / 180.0;
+            editable.MaximumAngle = maxDeg * Math.PI / 180.0;
+            editable.Angle = nominalDeg * Math.PI / 180.0;
+            if (flip is bool flipValue)
+            {
+                editable.FlipDimension = flipValue;
+            }
+
+            bool ok = Try(() => mateFeature.ModifyDefinition(editable, assemblyDoc, null)) as bool? ?? false;
+            if (!ok)
+            {
+                ok = Try(() => mateFeature.IModifyDefinition2(editable, assemblyDoc, null)) as bool? ?? false;
+            }
+
+            return ok;
+        }
+        catch
+        {
+            return false;
+        }
+        finally
+        {
+            if (accessed)
+            {
+                TryVoid(() =>
+                {
+                    dynamic feature = mateFeature;
+                    feature.ReleaseSelectionAccess();
+                });
+            }
+        }
+    }
+
+    private static object SetMateLimitAngle(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string mateName = RequiredStringArg(args, "mate_name");
+        double? minOverride = args is not null && args.Value.TryGetProperty("min_angle_deg", out _)
+            ? DoubleArg(args, "min_angle_deg", double.NaN)
+            : null;
+        double? maxOverride = args is not null && args.Value.TryGetProperty("max_angle_deg", out _)
+            ? DoubleArg(args, "max_angle_deg", double.NaN)
+            : null;
+        double? angleOverride = args is not null && args.Value.TryGetProperty("angle_deg", out _)
+            ? DoubleArg(args, "angle_deg", double.NaN)
+            : null;
+        bool? flip = args is not null && args.Value.TryGetProperty("flip", out JsonElement flipEl)
+            && (flipEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            ? flipEl.GetBoolean()
+            : null;
+
+        if (minOverride is null && maxOverride is null && angleOverride is null && flip is null)
+        {
+            throw WorkerException.Validation(
+                "ARGS_REQUIRED",
+                "Provide at least one of min_angle_deg, max_angle_deg, angle_deg, or flip.",
+                new Dictionary<string, object?> { ["mate_name"] = mateName });
+        }
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("set_mate_limit_angle requires an assembly document.");
+        }
+
+        Feature? mateFeature = FindFeatureByName(doc, mateName)
+            ?? throw new InvalidOperationException($"Mate feature not found: {mateName}");
+
+        string? mateType = Try(() => mateFeature.GetTypeName2()) as string;
+        if (mateType is null || !mateType.Contains("Limit", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"Mate '{mateName}' type '{mateType}' is not a limit-angle mate.");
+        }
+
+        if (Try(() => mateFeature.GetDefinition()) is not IAngleMateFeatureData current)
+        {
+            throw new InvalidOperationException($"Failed to read angle-mate definition for '{mateName}'.");
+        }
+
+        double minDeg = minOverride is double min && !double.IsNaN(min)
+            ? min
+            : current.MinimumAngle * 180.0 / Math.PI;
+        double maxDeg = maxOverride is double max && !double.IsNaN(max)
+            ? max
+            : current.MaximumAngle * 180.0 / Math.PI;
+        double angleDeg = angleOverride is double ang && !double.IsNaN(ang)
+            ? ang
+            : current.Angle * 180.0 / Math.PI;
+
+        if (minDeg > maxDeg)
+        {
+            (minDeg, maxDeg) = (maxDeg, minDeg);
+        }
+
+        if (angleDeg < minDeg)
+        {
+            angleDeg = minDeg;
+        }
+        else if (angleDeg > maxDeg)
+        {
+            angleDeg = maxDeg;
+        }
+
+        bool errorIsWarningBefore = false;
+        int? errorBefore = Try(() => mateFeature.GetErrorCode2(out errorIsWarningBefore)) as int?;
+
+        bool updated = TryUpdateLimitAngleMate(mateFeature, doc, minDeg, maxDeg, angleDeg, flip);
+        doc.EditRebuild3();
+
+        string method = updated ? "modify_definition" : "modify_definition_failed";
+        string? recreatedName = null;
+        object? recreateResult = null;
+
+        string? component1 = StringArg(args, "component_1");
+        string? ref1 = StringArg(args, "ref_1");
+        string? component2 = StringArg(args, "component_2");
+        string? ref2 = StringArg(args, "ref_2");
+        bool canRecreate = !string.IsNullOrWhiteSpace(component1)
+            && !string.IsNullOrWhiteSpace(ref1)
+            && !string.IsNullOrWhiteSpace(component2)
+            && !string.IsNullOrWhiteSpace(ref2);
+
+        if (!updated && canRecreate)
+        {
+            doc.ClearSelection2(true);
+            bool selected = Try(() => mateFeature.Select2(false, 0)) as bool? ?? false;
+            if (!selected)
+            {
+                throw new InvalidOperationException($"Failed to select mate for recreate: {mateName}");
+            }
+
+            bool deleted = Try(() => doc.Extension.DeleteSelection2((int)swDeleteSelectionOptions_e.swDelete_Absorbed)) as bool? ?? false;
+            doc.EditRebuild3();
+            if (!deleted)
+            {
+                throw new InvalidOperationException($"Failed to delete mate '{mateName}' before recreate.");
+            }
+
+            var recreateArgs = new Dictionary<string, object?>
+            {
+                ["path"] = inputPath,
+                ["component_1"] = component1,
+                ["ref_1"] = ref1,
+                ["component_2"] = component2,
+                ["ref_2"] = ref2,
+                ["min_angle_deg"] = minDeg,
+                ["max_angle_deg"] = maxDeg,
+                ["seed_angle_deg"] = DoubleArg(args, "seed_angle_deg", angleDeg),
+            };
+            if (flip is bool flipValue)
+            {
+                recreateArgs["flip"] = flipValue;
+            }
+
+            string? axisRef = StringArg(args, "axis_ref");
+            string? axisComponent = StringArg(args, "axis_component");
+            if (!string.IsNullOrWhiteSpace(axisRef))
+            {
+                recreateArgs["axis_ref"] = axisRef;
+            }
+
+            if (!string.IsNullOrWhiteSpace(axisComponent))
+            {
+                recreateArgs["axis_component"] = axisComponent;
+            }
+
+            recreateResult = MateLimitAngle(JsonSerializer.SerializeToElement(recreateArgs));
+            method = "delete_and_recreate";
+            updated = true;
+            if (recreateResult is not null)
+            {
+                // Extract mate name via JSON round-trip for stable typing.
+                string json = JsonSerializer.Serialize(recreateResult);
+                using JsonDocument parsed = JsonDocument.Parse(json);
+                if (parsed.RootElement.TryGetProperty("mateName", out JsonElement nameEl)
+                    && nameEl.ValueKind == JsonValueKind.String)
+                {
+                    recreatedName = nameEl.GetString();
+                }
+            }
+        }
+
+        Feature? resultFeature = !string.IsNullOrWhiteSpace(recreatedName)
+            ? FindFeatureByName(doc, recreatedName!)
+            : FindFeatureByName(doc, mateName);
+        bool errorIsWarningAfter = false;
+        int? errorAfter = resultFeature is null
+            ? null
+            : Try(() => resultFeature.GetErrorCode2(out errorIsWarningAfter)) as int?;
+        IAngleMateFeatureData? after = resultFeature is null
+            ? null
+            : Try(() => resultFeature.GetDefinition()) as IAngleMateFeatureData;
+
+        var warnings = new List<string>();
+        bool? branchStable = null;
+        double? branchRotationDelta = null;
+        string? branchDetail = null;
+        if (resultFeature is not null
+            && BoolArg(args, "check_branch_stability", defaultValue: true)
+            && !string.IsNullOrWhiteSpace(component1)
+            && !string.IsNullOrWhiteSpace(component2))
+        {
+            Component2? c1 = FindComponent((IAssemblyDoc)doc, null, component1!);
+            Component2? c2 = FindComponent((IAssemblyDoc)doc, null, component2!);
+            if (c1 is not null && c2 is not null)
+            {
+                Component2 moving = ResolveLikelyMovingComponent(c1, c2);
+                (branchStable, branchRotationDelta, branchDetail) =
+                    CheckLimitMateBranchStability(doc, resultFeature, moving);
+                if (branchStable == false)
+                {
+                    warnings.Add(
+                        $"branch_unstable: Suppress/unsuppress changed pose (rotDelta={branchRotationDelta:F3}, detail={branchDetail}). Prefer Front/Front planes if this is a Top/Top limit mate.");
+                }
+            }
+        }
+
+        if (errorAfter is int err && err != 0)
+        {
+            warnings.Add($"feature_error_{err}: Mate still reports GetErrorCode2={err} after update.");
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            mateName = recreatedName ?? mateName,
+            previousMateName = mateName,
+            mateType = resultFeature is null ? mateType : Try(() => resultFeature.GetTypeName2()),
+            updated,
+            method,
+            minAngleDeg = after is null ? minDeg : after.MinimumAngle * 180.0 / Math.PI,
+            maxAngleDeg = after is null ? maxDeg : after.MaximumAngle * 180.0 / Math.PI,
+            angleDeg = after is null ? angleDeg : after.Angle * 180.0 / Math.PI,
+            flipDimension = after?.FlipDimension ?? flip,
+            isAdvancedMate = after?.IsAdvancedMate,
+            errorCodeBefore = errorBefore,
+            errorIsWarningBefore,
+            errorCode = errorAfter,
+            errorIsWarning = errorIsWarningAfter,
+            branchStable,
+            branchRotationDelta,
+            branchDetail,
+            warnings,
+            recreate = recreateResult,
         };
     }
 

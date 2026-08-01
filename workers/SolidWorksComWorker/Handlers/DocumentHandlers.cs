@@ -358,11 +358,57 @@ internal static partial class Program
             int guard = 0;
             while (subFeature is not null && guard++ < 200)
             {
-                dynamic current = subFeature;
+                if (subFeature is not Feature current)
+                {
+                    break;
+                }
+
+                string? mateName = Try(() => current.Name) as string;
+                string? mateType = Try(() => current.GetTypeName2()) as string;
+                bool errorIsWarning = false;
+                int? errorCode = Try(() => current.GetErrorCode2(out errorIsWarning)) as int?;
+                bool? suppressed = null;
+                try
+                {
+                    bool[]? flags = current.IsSuppressed2((int)swInConfigurationOpts_e.swThisConfiguration, null) as bool[];
+                    if (flags is { Length: > 0 })
+                    {
+                        suppressed = flags[0];
+                    }
+                }
+                catch
+                {
+                    // ignore suppression probe failures
+                }
+
+                double? angleDeg = null;
+                double? minAngleDeg = null;
+                double? maxAngleDeg = null;
+                bool? isAdvancedMate = null;
+                bool? flipDimension = null;
+                if (mateName is not null
+                    && mateName.StartsWith("LimitAngle", StringComparison.OrdinalIgnoreCase)
+                    && Try(() => current.GetDefinition()) is IAngleMateFeatureData angleMate)
+                {
+                    angleDeg = angleMate.Angle * 180.0 / Math.PI;
+                    minAngleDeg = angleMate.MinimumAngle * 180.0 / Math.PI;
+                    maxAngleDeg = angleMate.MaximumAngle * 180.0 / Math.PI;
+                    isAdvancedMate = angleMate.IsAdvancedMate;
+                    flipDimension = angleMate.FlipDimension;
+                }
+
                 mates.Add(new
                 {
-                    name = Try(() => current.Name),
-                    type = Try(() => current.GetTypeName2()),
+                    name = mateName,
+                    type = mateType,
+                    suppressed,
+                    errorCode,
+                    errorIsWarning,
+                    angleDeg,
+                    minAngleDeg,
+                    maxAngleDeg,
+                    isAdvancedMate,
+                    flipDimension,
                 });
                 subFeature = Try(() => current.GetNextSubFeature());
             }

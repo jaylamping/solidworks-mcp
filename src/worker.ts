@@ -120,6 +120,7 @@ export type WorkerCommand =
   | "set_custom_properties"
   | "set_dimension"
   | "set_feature_suppression"
+  | "set_mate_limit_angle"
   | "set_mate_suppression"
   | "set_material"
   | "sketch_circle"

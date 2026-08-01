@@ -74,6 +74,7 @@ export const SCHEMA_BY_COMMAND = {
   mate_coord_sys: "mateRefs",
   mate_distance: "mateRefs",
   mate_limit_angle: "mateLimitAngle",
+  set_mate_limit_angle: "setMateLimitAngle",
   probe_angle_travel: "probeAngleTravel",
   mate_parallel: "mateRefs",
   mate_perpendicular: "mateRefs",

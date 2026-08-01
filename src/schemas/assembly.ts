@@ -8,6 +8,7 @@ export {
   mateRefsSchema,
   mateTrySchema,
   probeAngleTravelSchema,
+  setMateLimitAngleSchema,
 } from "./mate.js";
 
 export const componentNameSchema = optionalPathSchema.extend({
@@ -28,7 +29,9 @@ export const setComponentTransformSchema = z.object({
   path: z.string().min(1),
   component_name: z.string().min(1),
   matrix: z.array(z.number()).length(16),
-  fix: z.boolean().optional(),
+  fix: z.boolean().optional().describe(
+    "If true, fix the component after applying the transform. Defaults to false so the component stays floatable for mates/dragging.",
+  ),
 }).merge(selectionFieldsSchema);
 
 export const setDimensionSchema = z.object({

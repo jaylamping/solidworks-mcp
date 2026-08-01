@@ -1,6 +1,6 @@
 # solidworks_list_mates
 
-Return mate feature names and types for an assembly.
+Return assembly mates with types, suppression, feature errors, and limit-angle values when present.
 
 | Field | Value |
 |-------|-------|

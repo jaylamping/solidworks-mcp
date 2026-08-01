@@ -1068,7 +1068,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Return mate feature names and types for an assembly.",
+      "description": "Return assembly mates with types, suppression, feature errors, and limit-angle values when present.",
       "descriptionSource": "authored",
       "tags": [
         "list"
@@ -1226,7 +1226,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Add a limit-angle mate with min/max rotation about an axis.",
+      "description": "Add a limit-angle mate with min/max rotation. Prefers stable Front/Front planes over ambiguous Top/Top; supports flip and branch-stability checks.",
       "descriptionSource": "authored",
       "tags": [
         "mate"
@@ -1834,7 +1834,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Apply a 4x4 transform matrix to an assembly component.",
+      "description": "Apply a 4x4 transform matrix to an assembly component. Does not fix the component unless fix:true is passed.",
       "descriptionSource": "authored",
       "tags": [
         "set"
@@ -1911,6 +1911,24 @@
         "document"
       ],
       "schema": "setFeatureSuppression"
+    },
+    {
+      "name": "solidworks_set_mate_limit_angle",
+      "workerCommand": "set_mate_limit_angle",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Update min/max/current angle on an existing limit-angle mate; recreates when in-place edit fails and component refs are provided.",
+      "descriptionSource": "authored",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "setMateLimitAngle"
     },
     {
       "name": "solidworks_set_mate_suppression",

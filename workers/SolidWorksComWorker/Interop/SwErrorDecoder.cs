@@ -67,17 +67,26 @@ internal static class SwErrorDecoder
             4 =>
             [
                 "Selection marks/entities are wrong for this mate type.",
-                "Angle/limit mates also need a reference axis (axis_ref) selected with the angle-mate reference mark.",
+                "Limit-angle mates usually work with two planes only; axis_ref is optional and including it can leave the mate ill-defined.",
+                "Prefer Front/Front or Right/Right plane pairs over Top/Top for revolute joints.",
                 "Run debug_mate_entities to inspect selection marks and entity types.",
             ],
             5 =>
             [
                 "Assembly would be over-defined. Check existing mates with list_mates and unfix/float as needed.",
+                "set_component_transform defaults to leaving components floatable; avoid fix:true unless you intentionally want a grounded part.",
+                "Remove duplicate angle/limit mates before retrying.",
+            ],
+            0 =>
+            [
+                "AddMate error 0 can mean success on some paths — trust mateCreated and featureErrorCode.",
+                "If mateCreated is false, inspect selection marks with debug_mate_entities.",
             ],
             _ =>
             [
                 "Run debug_mate_entities to inspect selection marks and entity types.",
                 "Confirm components are not fixed unless the mate requires it.",
+                "For revolute limit-angle mates prefer Front/Front (or Right/Right); Top/Top is often ambiguous across rebuild.",
             ],
         };
 

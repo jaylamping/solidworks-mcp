@@ -32,10 +32,48 @@ export const mateLimitAngleSchema = mateRefsWithSelection
     max_angle_deg: z.number().optional().describe("Maximum allowed rotation in degrees."),
     axis_ref: z.string().min(1).optional().describe("Optional rotation axis reference."),
     axis_component: z.string().min(1).optional().describe("Component containing the rotation axis."),
+    seed_angle_deg: z.number().optional().describe(
+      "Current/nominal angle in degrees. Prefer the live pose angle so creation does not yank the joint to the range midpoint.",
+    ),
+    flip: z.boolean().optional().describe("FlipDimension sense for the limit-angle mate."),
+    check_branch_stability: z.boolean().optional().describe(
+      "If true (default), suppress/unsuppress the new mate and detect opposite-branch pose flips common with Top/Top planar angles.",
+    ),
+    auto_stable_planes: z.boolean().optional().describe(
+      "If true (default), rewrite Top/Top to Front/Front before create, and recreate if a branch flip is still detected.",
+    ),
   })
   .refine(mateRefsRefine, {
     message: "Provide component/ref names or set use_selection: true with two highlights.",
-  }).describe("Create a limit-angle mate between two references.");
+  }).describe(
+    "Create a limit-angle mate between two references. Prefer Front/Front (or Right/Right) over Top/Top for revolute joints — Top/Top is often ambiguous and can jump sides on save/rebuild.",
+  );
+
+export const setMateLimitAngleSchema = z.object({
+  path: z.string().min(1).describe("Assembly path under an allowed CAD root."),
+  mate_name: z.string().min(1).describe("Existing LimitAngle mate feature name, e.g. LimitAngle9."),
+  min_angle_deg: z.number().optional().describe("New minimum allowed rotation in degrees."),
+  max_angle_deg: z.number().optional().describe("New maximum allowed rotation in degrees."),
+  angle_deg: z.number().optional().describe("New current/nominal angle in degrees."),
+  flip: z.boolean().optional().describe("Optional FlipDimension override."),
+  component_1: z.string().min(1).optional().describe("First component name. Required to recreate if in-place edit fails."),
+  ref_1: z.string().min(1).optional().describe("Reference on the first component for recreate fallback."),
+  component_2: z.string().min(1).optional().describe("Second component name for recreate fallback."),
+  ref_2: z.string().min(1).optional().describe("Reference on the second component for recreate fallback."),
+  axis_ref: z.string().min(1).optional().describe("Optional rotation axis reference for recreate fallback."),
+  axis_component: z.string().min(1).optional().describe("Component containing the rotation axis for recreate fallback."),
+  seed_angle_deg: z.number().optional().describe("Seed angle for recreate fallback (defaults to angle_deg)."),
+  check_branch_stability: z.boolean().optional().describe(
+    "If true (default), suppress/unsuppress after update to detect opposite-branch pose flips.",
+  ),
+}).refine(
+  (data) =>
+    data.min_angle_deg != null
+    || data.max_angle_deg != null
+    || data.angle_deg != null
+    || data.flip != null,
+  { message: "Provide at least one of min_angle_deg, max_angle_deg, angle_deg, or flip." },
+).describe("Update min/max/current angle on an existing limit-angle mate; recreates when in-place edit fails and component refs are provided.");
 
 export const probeAngleTravelSchema = z.object({
   path: z.string().min(1).describe("Assembly path under an allowed CAD root."),
