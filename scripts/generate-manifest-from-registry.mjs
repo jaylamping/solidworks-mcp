@@ -4,10 +4,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { SCHEMA_BY_COMMAND } from "./schema-by-command.mjs";
+import { descriptionFor } from "./description-by-command.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const registryPath = path.join(root, "workers/SolidWorksComWorker/WorkerCommandRegistry.cs");
 const manifestPath = path.join(root, "tools/manifest.json");
+const checkOnly = process.argv.includes("--check");
 
 const HAND_REGISTERED = new Set([
   "invoke",
@@ -163,6 +165,8 @@ const tools = commands
   .map((command) => {
     const destructive = DESTRUCTIVE.has(command);
     const readOnly = READ_ONLY.has(command) || command.startsWith("list_") || command.startsWith("get_");
+    const schema = schemaFor(command);
+    const { description, source } = descriptionFor(command, schema);
     return {
       name: mcpName(command),
       workerCommand: command,
@@ -170,14 +174,25 @@ const tools = commands
       readOnly,
       destructive,
       confirmRequired: destructive,
-      description: `Worker command: ${command}`,
+      description,
+      descriptionSource: source,
       tags: [command.split("_")[0]],
       domains: command.includes("mate") ? ["assembly", "mate"] : ["document"],
-      schema: schemaFor(command),
+      schema,
     };
   });
 
 const manifest = { version: "1", tools };
 fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
-fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(`Wrote ${tools.length} tools to ${manifestPath}`);
+const expected = `${JSON.stringify(manifest, null, 2)}\n`;
+if (checkOnly) {
+  const actual = fs.existsSync(manifestPath) ? fs.readFileSync(manifestPath, "utf8") : "";
+  if (actual !== expected) {
+    console.error(`Manifest drift detected: ${manifestPath}`);
+    process.exit(1);
+  }
+  console.log(`Manifest is current (${tools.length} tools)`);
+} else {
+  fs.writeFileSync(manifestPath, expected);
+  console.log(`Wrote ${tools.length} tools to ${manifestPath}`);
+}
