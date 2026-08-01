@@ -64,7 +64,7 @@ Roughly 100+ tools across:
 | URDF helpers | readiness check, add coordinate-system frames |
 | Escape hatches | `solidworks_invoke` / `solidworks_batch_invoke`, API doc search |
 
-Discover tools at runtime with `solidworks_search_tools`. Per-tool notes live under [`docs/api/`](docs/api/).
+Discover tools at runtime with `solidworks_search_tools`. Per-tool pages under [`docs/api/`](docs/api/) are generated from the tool manifest and Zod schemas (summary, flags, and parameter tables). Do not edit those markdown files by hand; run `npm run docs:generate` and keep them in sync with `npm run docs:check`.
 
 Tool exposure is gated by `SOLIDWORKS_MCP_TOOL_TIER`: `core` · `extended` · `advanced` · `debug` · `all` (default).
 

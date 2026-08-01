@@ -8,7 +8,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: activate_document",
+      "description": "Activate document.",
+      "descriptionSource": "derived",
       "tags": [
         "activate"
       ],
@@ -24,7 +25,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: add_configuration_copy",
+      "description": "Add configuration copy.",
+      "descriptionSource": "derived",
       "tags": [
         "add"
       ],
@@ -40,7 +42,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: add_standard_views",
+      "description": "Add standard views.",
+      "descriptionSource": "derived",
       "tags": [
         "add"
       ],
@@ -56,7 +59,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: align_component_to_feature",
+      "description": "Align component to feature.",
+      "descriptionSource": "derived",
       "tags": [
         "align"
       ],
@@ -72,7 +76,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: assembly_diagnostics",
+      "description": "Summarize fixed, lightweight, suppressed, broken-reference, and mate state.",
+      "descriptionSource": "authored",
       "tags": [
         "assembly"
       ],
@@ -88,7 +93,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: checkpoint_document",
+      "description": "Save a recoverable checkpoint of the active or specified document.",
+      "descriptionSource": "authored",
       "tags": [
         "checkpoint"
       ],
@@ -104,7 +110,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: clone_solid_body_part",
+      "description": "Clone solid body part.",
+      "descriptionSource": "derived",
       "tags": [
         "clone"
       ],
@@ -120,7 +127,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: close_all_documents",
+      "description": "Close all documents.",
+      "descriptionSource": "derived",
       "tags": [
         "close"
       ],
@@ -136,7 +144,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: close_document",
+      "description": "Close document.",
+      "descriptionSource": "derived",
       "tags": [
         "close"
       ],
@@ -152,7 +161,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: component_mass_properties",
+      "description": "Return mass, center of mass, and inertia for a component.",
+      "descriptionSource": "authored",
       "tags": [
         "component"
       ],
@@ -168,7 +178,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: copy_with_mates",
+      "description": "Copy with mates.",
+      "descriptionSource": "derived",
       "tags": [
         "copy"
       ],
@@ -185,7 +196,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: create_drawing_from_model",
+      "description": "Create drawing from model.",
+      "descriptionSource": "derived",
       "tags": [
         "create"
       ],
@@ -201,7 +213,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: create_sketch",
+      "description": "Create sketch.",
+      "descriptionSource": "derived",
       "tags": [
         "create"
       ],
@@ -217,7 +230,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: create_subassembly",
+      "description": "Create subassembly.",
+      "descriptionSource": "derived",
       "tags": [
         "create"
       ],
@@ -233,7 +247,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: debug_mate_entities",
+      "description": "Debug mate entities.",
+      "descriptionSource": "derived",
       "tags": [
         "debug"
       ],
@@ -250,7 +265,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: delete_all_mates",
+      "description": "Delete all mates from an assembly.",
+      "descriptionSource": "authored",
       "tags": [
         "delete"
       ],
@@ -267,7 +283,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: delete_feature",
+      "description": "Delete feature.",
+      "descriptionSource": "derived",
       "tags": [
         "delete"
       ],
@@ -283,7 +300,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: delete_mate",
+      "description": "Delete a named mate feature from an assembly.",
+      "descriptionSource": "authored",
       "tags": [
         "delete"
       ],
@@ -300,7 +318,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: delete_mates_in_range",
+      "description": "Delete mates in range.",
+      "descriptionSource": "derived",
       "tags": [
         "delete"
       ],
@@ -317,7 +336,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: diagnose_com",
+      "description": "Diagnose SolidWorks COM attach, ROT, and worker mutex health.",
+      "descriptionSource": "authored",
       "tags": [
         "diagnose"
       ],
@@ -333,7 +353,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: diagnose_document",
+      "description": "Diagnose document.",
+      "descriptionSource": "derived",
       "tags": [
         "diagnose"
       ],
@@ -349,7 +370,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: diagnose_part_save",
+      "description": "Diagnose part save.",
+      "descriptionSource": "derived",
       "tags": [
         "diagnose"
       ],
@@ -365,7 +387,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: diagnose_selection",
+      "description": "Diagnose selection.",
+      "descriptionSource": "derived",
       "tags": [
         "diagnose"
       ],
@@ -381,7 +404,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: dissolve_component",
+      "description": "Dissolve component.",
+      "descriptionSource": "derived",
       "tags": [
         "dissolve"
       ],
@@ -397,7 +421,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: ensure_offset_plane",
+      "description": "Ensure offset plane.",
+      "descriptionSource": "derived",
       "tags": [
         "ensure"
       ],
@@ -413,7 +438,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: explain_error",
+      "description": "Explain error.",
+      "descriptionSource": "derived",
       "tags": [
         "explain"
       ],
@@ -429,7 +455,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: explode_view",
+      "description": "Explode view.",
+      "descriptionSource": "derived",
       "tags": [
         "explode"
       ],
@@ -445,7 +472,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: export",
+      "description": "Export a CAD document to STEP, STL, PDF, or PNG under an allowed CAD root.",
+      "descriptionSource": "authored",
       "tags": [
         "export"
       ],
@@ -461,7 +489,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: export_link_transforms",
+      "description": "Export link transforms.",
+      "descriptionSource": "derived",
       "tags": [
         "export"
       ],
@@ -477,7 +506,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: feature_chamfer",
+      "description": "Manage chamfer.",
+      "descriptionSource": "derived",
       "tags": [
         "feature"
       ],
@@ -493,7 +523,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: feature_circular_pattern",
+      "description": "Manage circular pattern.",
+      "descriptionSource": "derived",
       "tags": [
         "feature"
       ],
@@ -509,7 +540,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: feature_extrude_boss",
+      "description": "Manage extrude boss.",
+      "descriptionSource": "derived",
       "tags": [
         "feature"
       ],
@@ -525,7 +557,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: feature_extrude_cut",
+      "description": "Manage extrude cut.",
+      "descriptionSource": "derived",
       "tags": [
         "feature"
       ],
@@ -541,7 +574,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: feature_fillet",
+      "description": "Manage fillet.",
+      "descriptionSource": "derived",
       "tags": [
         "feature"
       ],
@@ -557,7 +591,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: feature_linear_pattern",
+      "description": "Manage linear pattern.",
+      "descriptionSource": "derived",
       "tags": [
         "feature"
       ],
@@ -573,7 +608,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: feature_mirror",
+      "description": "Manage mirror.",
+      "descriptionSource": "derived",
       "tags": [
         "feature"
       ],
@@ -589,7 +625,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_assembly_degrees_of_freedom",
+      "description": "Get assembly degrees of freedom.",
+      "descriptionSource": "derived",
       "tags": [
         "get"
       ],
@@ -605,7 +642,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_component_box",
+      "description": "Get component box.",
+      "descriptionSource": "derived",
       "tags": [
         "get"
       ],
@@ -621,7 +659,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_component_references",
+      "description": "Get component references.",
+      "descriptionSource": "derived",
       "tags": [
         "get"
       ],
@@ -637,7 +676,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_component_transform",
+      "description": "Return the 4x4 transform matrix for a named assembly component.",
+      "descriptionSource": "authored",
       "tags": [
         "get"
       ],
@@ -653,7 +693,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_equations",
+      "description": "Get equations.",
+      "descriptionSource": "derived",
       "tags": [
         "get"
       ],
@@ -669,7 +710,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_feature_box",
+      "description": "Return the assembly-space bounding box for a named component feature.",
+      "descriptionSource": "authored",
       "tags": [
         "get"
       ],
@@ -685,7 +727,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_mass_properties",
+      "description": "Get mass properties.",
+      "descriptionSource": "derived",
       "tags": [
         "get"
       ],
@@ -701,7 +744,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_material",
+      "description": "Return the material assigned to a part or component.",
+      "descriptionSource": "authored",
       "tags": [
         "get"
       ],
@@ -718,7 +762,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_open_documents",
+      "description": "Get open documents.",
+      "descriptionSource": "derived",
       "tags": [
         "get"
       ],
@@ -734,7 +779,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_part_feature_box",
+      "description": "Get part feature box.",
+      "descriptionSource": "derived",
       "tags": [
         "get"
       ],
@@ -750,7 +796,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_persist_reference",
+      "description": "Capture a base64 persist reference for a component reference.",
+      "descriptionSource": "authored",
       "tags": [
         "get"
       ],
@@ -766,7 +813,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_planar_face_index",
+      "description": "Get planar face index.",
+      "descriptionSource": "derived",
       "tags": [
         "get"
       ],
@@ -782,7 +830,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: get_selection",
+      "description": "Get selection.",
+      "descriptionSource": "derived",
       "tags": [
         "get"
       ],
@@ -798,7 +847,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: import_step",
+      "description": "Import step.",
+      "descriptionSource": "derived",
       "tags": [
         "import"
       ],
@@ -814,7 +864,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: insert_component",
+      "description": "Insert a part into an assembly from an allowed path.",
+      "descriptionSource": "authored",
       "tags": [
         "insert"
       ],
@@ -830,7 +881,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: insert_coord_sys",
+      "description": "Insert coord sys.",
+      "descriptionSource": "derived",
       "tags": [
         "insert"
       ],
@@ -846,7 +898,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: inspect_document",
+      "description": "Return document type, path, saved state, units, and custom properties.",
+      "descriptionSource": "authored",
       "tags": [
         "inspect"
       ],
@@ -862,7 +915,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_bodies",
+      "description": "List bodies.",
+      "descriptionSource": "derived",
       "tags": [
         "list"
       ],
@@ -878,7 +932,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_bom",
+      "description": "Return a flat component list as a bill-of-materials precursor.",
+      "descriptionSource": "authored",
       "tags": [
         "list"
       ],
@@ -894,7 +949,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_broken_references",
+      "description": "List broken references.",
+      "descriptionSource": "derived",
       "tags": [
         "list"
       ],
@@ -910,7 +966,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_components",
+      "description": "Return the assembly component tree with paths, quantities, and states.",
+      "descriptionSource": "authored",
       "tags": [
         "list"
       ],
@@ -926,7 +983,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_configurations",
+      "description": "List configuration names for a part document.",
+      "descriptionSource": "authored",
       "tags": [
         "list"
       ],
@@ -942,7 +1000,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_dimensions",
+      "description": "List driving dimensions in a part, optionally for one configuration.",
+      "descriptionSource": "authored",
       "tags": [
         "list"
       ],
@@ -958,7 +1017,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_display_states",
+      "description": "List display states.",
+      "descriptionSource": "derived",
       "tags": [
         "list"
       ],
@@ -974,7 +1034,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_features",
+      "description": "List top-level feature tree entries for a CAD document.",
+      "descriptionSource": "authored",
       "tags": [
         "list"
       ],
@@ -990,7 +1051,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_interferences",
+      "description": "Run interference detection on an assembly.",
+      "descriptionSource": "authored",
       "tags": [
         "list"
       ],
@@ -1006,7 +1068,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_mates",
+      "description": "Return mate feature names and types for an assembly.",
+      "descriptionSource": "authored",
       "tags": [
         "list"
       ],
@@ -1023,7 +1086,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_reference_geometry",
+      "description": "List named reference planes, axes, coordinate systems, and points.",
+      "descriptionSource": "authored",
       "tags": [
         "list"
       ],
@@ -1039,7 +1103,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_sheet_views",
+      "description": "List sheet views.",
+      "descriptionSource": "derived",
       "tags": [
         "list"
       ],
@@ -1055,7 +1120,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: list_sketches",
+      "description": "List sketches.",
+      "descriptionSource": "derived",
       "tags": [
         "list"
       ],
@@ -1071,7 +1137,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: make_component_independent",
+      "description": "Make component independent.",
+      "descriptionSource": "derived",
       "tags": [
         "make"
       ],
@@ -1087,7 +1154,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_coincident",
+      "description": "Add a coincident mate between two component references or selected faces.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1104,7 +1172,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_component_origin",
+      "description": "Create a component origin mate between assembly references.",
+      "descriptionSource": "derived",
       "tags": [
         "mate"
       ],
@@ -1121,7 +1190,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_coord_sys",
+      "description": "Create a coord sys mate between assembly references.",
+      "descriptionSource": "derived",
       "tags": [
         "mate"
       ],
@@ -1138,7 +1208,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_distance",
+      "description": "Add a distance mate between two component references or selected faces.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1155,7 +1226,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_limit_angle",
+      "description": "Add a limit-angle mate with min/max rotation about an axis.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1172,7 +1244,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_parallel",
+      "description": "Add a parallel mate between two component references or selected faces.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1189,7 +1262,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_perpendicular",
+      "description": "Add a perpendicular mate between two component references or selected faces.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1206,7 +1280,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_planes",
+      "description": "Add a coincident or parallel mate between named planes on two components.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1223,7 +1298,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_probe",
+      "description": "Inspect candidate mate entities and report whether a mate is likely to succeed.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1240,7 +1316,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_record_macro",
+      "description": "Create a record macro mate between assembly references.",
+      "descriptionSource": "derived",
       "tags": [
         "mate"
       ],
@@ -1257,7 +1334,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_replay_sequence",
+      "description": "Create a replay sequence mate between assembly references.",
+      "descriptionSource": "derived",
       "tags": [
         "mate"
       ],
@@ -1274,7 +1352,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_try_coincident",
+      "description": "Dry-run a coincident mate without committing it.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1291,7 +1370,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_try_distance",
+      "description": "Dry-run a distance mate without committing it.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1308,7 +1388,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_try_parallel",
+      "description": "Dry-run a parallel mate without committing it.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1325,7 +1406,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_try_perpendicular",
+      "description": "Dry-run a perpendicular mate without committing it.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1342,7 +1424,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_try_width",
+      "description": "Dry-run a width mate without committing it.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1359,7 +1442,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: mate_width",
+      "description": "Add a width mate between two component references or selected faces.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1376,7 +1460,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: measure",
+      "description": "Return bounding-box and mass-property metadata for a CAD document.",
+      "descriptionSource": "authored",
       "tags": [
         "measure"
       ],
@@ -1392,7 +1477,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: measure_distance",
+      "description": "Measure distance.",
+      "descriptionSource": "derived",
       "tags": [
         "measure"
       ],
@@ -1408,7 +1494,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: mirror_component",
+      "description": "Mirror component.",
+      "descriptionSource": "derived",
       "tags": [
         "mirror"
       ],
@@ -1424,7 +1511,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: mirror_part_file",
+      "description": "Mirror part file.",
+      "descriptionSource": "derived",
       "tags": [
         "mirror"
       ],
@@ -1440,7 +1528,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: new_document",
+      "description": "Create document.",
+      "descriptionSource": "derived",
       "tags": [
         "new"
       ],
@@ -1456,7 +1545,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: open",
+      "description": "Open a SolidWorks or STEP document from an allowed CAD root.",
+      "descriptionSource": "authored",
       "tags": [
         "open"
       ],
@@ -1472,7 +1562,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: pack_and_go",
+      "description": "Pack and go.",
+      "descriptionSource": "derived",
       "tags": [
         "pack"
       ],
@@ -1488,7 +1579,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: probe_angle_travel",
+      "description": "Probe angular travel of a component about an axis within optional limits.",
+      "descriptionSource": "authored",
       "tags": [
         "probe"
       ],
@@ -1504,7 +1596,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: probe_feature_faces",
+      "description": "List face count, area, and planarity for a component feature.",
+      "descriptionSource": "authored",
       "tags": [
         "probe"
       ],
@@ -1520,7 +1613,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: rebuild_document",
+      "description": "Rebuild the active model.",
+      "descriptionSource": "authored",
       "tags": [
         "rebuild"
       ],
@@ -1536,7 +1630,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: rename_component",
+      "description": "Rename component.",
+      "descriptionSource": "derived",
       "tags": [
         "rename"
       ],
@@ -1552,7 +1647,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: replace_component_path",
+      "description": "Replace component path.",
+      "descriptionSource": "derived",
       "tags": [
         "replace"
       ],
@@ -1568,7 +1664,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: replace_components_by_path",
+      "description": "Replace components by path.",
+      "descriptionSource": "derived",
       "tags": [
         "replace"
       ],
@@ -1584,7 +1681,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: reset_component_transform",
+      "description": "Reset component transform.",
+      "descriptionSource": "derived",
       "tags": [
         "reset"
       ],
@@ -1600,7 +1698,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: resolve_lightweight",
+      "description": "Resolve all lightweight components in an assembly.",
+      "descriptionSource": "authored",
       "tags": [
         "resolve"
       ],
@@ -1616,7 +1715,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: resolve_selection",
+      "description": "Resolve selection.",
+      "descriptionSource": "derived",
       "tags": [
         "resolve"
       ],
@@ -1632,7 +1732,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: round_side_arms_from_circle",
+      "description": "Round side arms from circle.",
+      "descriptionSource": "derived",
       "tags": [
         "round"
       ],
@@ -1648,7 +1749,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: save_document",
+      "description": "Save the active or specified SolidWorks document.",
+      "descriptionSource": "authored",
       "tags": [
         "save"
       ],
@@ -1664,7 +1766,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: select_by_persist_reference",
+      "description": "Select an entity using a base64 persist reference.",
+      "descriptionSource": "authored",
       "tags": [
         "select"
       ],
@@ -1680,7 +1783,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: select_face_by_ray",
+      "description": "Select face by ray.",
+      "descriptionSource": "derived",
       "tags": [
         "select"
       ],
@@ -1696,7 +1800,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: set_component_configuration",
+      "description": "Set component configuration.",
+      "descriptionSource": "derived",
       "tags": [
         "set"
       ],
@@ -1712,7 +1817,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: set_component_fixed",
+      "description": "Set component fixed.",
+      "descriptionSource": "derived",
       "tags": [
         "set"
       ],
@@ -1728,7 +1834,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: set_component_transform",
+      "description": "Apply a 4x4 transform matrix to an assembly component.",
+      "descriptionSource": "authored",
       "tags": [
         "set"
       ],
@@ -1744,7 +1851,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: set_component_visible",
+      "description": "Set component visible.",
+      "descriptionSource": "derived",
       "tags": [
         "set"
       ],
@@ -1760,7 +1868,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: set_custom_properties",
+      "description": "Set custom properties on a part or assembly and optionally save it.",
+      "descriptionSource": "authored",
       "tags": [
         "set"
       ],
@@ -1776,7 +1885,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: set_dimension",
+      "description": "Set a driving part dimension value in meters.",
+      "descriptionSource": "authored",
       "tags": [
         "set"
       ],
@@ -1792,7 +1902,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: set_feature_suppression",
+      "description": "Set feature suppression.",
+      "descriptionSource": "derived",
       "tags": [
         "set"
       ],
@@ -1808,7 +1919,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: set_mate_suppression",
+      "description": "Suppress or unsuppress a named mate.",
+      "descriptionSource": "authored",
       "tags": [
         "set"
       ],
@@ -1825,7 +1937,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: set_material",
+      "description": "Assign a material to a part or component.",
+      "descriptionSource": "authored",
       "tags": [
         "set"
       ],
@@ -1842,7 +1955,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: sketch_circle",
+      "description": "Create circle.",
+      "descriptionSource": "derived",
       "tags": [
         "sketch"
       ],
@@ -1858,7 +1972,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: sketch_exit",
+      "description": "Create exit.",
+      "descriptionSource": "derived",
       "tags": [
         "sketch"
       ],
@@ -1874,7 +1989,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: sketch_line",
+      "description": "Create line.",
+      "descriptionSource": "derived",
       "tags": [
         "sketch"
       ],
@@ -1890,7 +2006,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Worker command: sketch_rectangle",
+      "description": "Create rectangle.",
+      "descriptionSource": "derived",
       "tags": [
         "sketch"
       ],
@@ -1906,7 +2023,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: transform_component",
+      "description": "Transform component.",
+      "descriptionSource": "derived",
       "tags": [
         "transform"
       ],
@@ -1922,7 +2040,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Worker command: unfix_all_components",
+      "description": "Unfix all components.",
+      "descriptionSource": "derived",
       "tags": [
         "unfix"
       ],

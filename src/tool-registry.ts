@@ -97,6 +97,7 @@ export interface ToolManifestEntry {
   destructive?: boolean;
   confirmRequired?: boolean;
   description: string;
+  descriptionSource?: "authored" | "derived";
   tags?: string[];
   domains?: string[];
   schema?: SchemaKey | "custom";

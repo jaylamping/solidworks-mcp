@@ -1,29 +1,29 @@
 import { z } from "zod";
 
 export const selectionFieldsSchema = z.object({
-  use_selection: z.boolean().optional(),
-  selection_index: z.number().int().min(1).optional(),
+  use_selection: z.boolean().optional().describe("Use the current SolidWorks selection instead of named references."),
+  selection_index: z.number().int().min(1).optional().describe("1-based selection index when selecting a specific highlighted entity."),
 });
 
 export const optionalPathSchema = selectionFieldsSchema.extend({
-  path: z.string().min(1).optional(),
+  path: z.string().min(1).optional().describe("Optional document path under an allowed CAD root."),
 });
 
 export const openSchema = z.object({
-  path: z.string().min(1),
-  start_if_missing: z.boolean().optional(),
+  path: z.string().min(1).describe("SolidWorks or STEP document path under an allowed CAD root."),
+  start_if_missing: z.boolean().optional().describe("Start SolidWorks if no instance is running."),
 });
 
 export const exportSchema = z.object({
-  path: z.string().min(1).optional(),
-  output_path: z.string().min(1),
-  format: z.enum(["sldprt", "sldasm", "step", "stp", "stl", "pdf", "png"]),
-  start_if_missing: z.boolean().optional(),
+  path: z.string().min(1).optional().describe("Optional source document path under an allowed CAD root."),
+  output_path: z.string().min(1).describe("Destination file path under an allowed CAD root."),
+  format: z.enum(["sldprt", "sldasm", "step", "stp", "stl", "pdf", "png"]).describe("Output format."),
+  start_if_missing: z.boolean().optional().describe("Start SolidWorks if no instance is running."),
 });
 
 export const confirmPathSchema = selectionFieldsSchema.extend({
-  path: z.string().min(1).optional(),
-  confirm: z.literal(true),
+  path: z.string().min(1).optional().describe("Optional document path under an allowed CAD root."),
+  confirm: z.literal(true).describe("Acknowledge the requested state-changing operation."),
 });
 
 export const checkpointSchema = z.object({
