@@ -15,8 +15,8 @@ Create drawing from model.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `model_path` | string | yes | — | Value for model path. (allowed root) |
-| `output_path` | string | yes | — | Value for output path. (allowed root) |
+| `model_path` | string | yes | - | Value for model path. (allowed root) |
+| `output_path` | string | yes | - | Value for output path. (allowed root) |
 | `confirm` | const `true` | yes | `true` | Value for confirm. |
 
 ## Tags

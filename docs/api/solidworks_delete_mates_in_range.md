@@ -15,10 +15,10 @@ Delete mates in range.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | no | — | Value for path. (allowed root) |
-| `min_number` | integer | no | — | Value for min number. |
-| `max_number` | integer | no | — | Value for max number. |
-| `save` | boolean | no | — | Value for save. |
+| `path` | string | no | - | Value for path. (allowed root) |
+| `min_number` | integer | no | - | Value for min number. |
+| `max_number` | integer | no | - | Value for max number. |
+| `save` | boolean | no | - | Value for save. |
 | `confirm` | const `true` | yes | `true` | Value for confirm. |
 
 ## Tags

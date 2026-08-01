@@ -15,10 +15,10 @@ Set a driving part dimension value in meters.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `dimension` | string | yes | — | Value for dimension. |
-| `value_meters` | number | yes | — | Value for value meters. |
-| `configuration` | string | no | — | Value for configuration. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `dimension` | string | yes | - | Value for dimension. |
+| `value_meters` | number | yes | - | Value for value meters. |
+| `configuration` | string | no | - | Value for configuration. |
 
 ## Tags
 

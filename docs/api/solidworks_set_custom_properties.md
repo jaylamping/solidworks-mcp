@@ -15,9 +15,9 @@ Set custom properties on a part or assembly and optionally save it.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `properties` | object | yes | — | Value for properties. |
-| `save` | boolean | no | — | Value for save. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `properties` | object | yes | - | Value for properties. |
+| `save` | boolean | no | - | Value for save. |
 
 ## Tags
 

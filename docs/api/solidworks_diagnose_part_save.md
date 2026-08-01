@@ -15,7 +15,7 @@ Diagnose part save.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
+| `path` | string | yes | - | Value for path. (allowed root) |
 
 ## Tags
 

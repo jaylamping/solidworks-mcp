@@ -15,9 +15,9 @@ Make component independent.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `assembly_path` | string | yes | — | Value for assembly path. (allowed root) |
-| `component_name` | string | yes | — | Value for component name. |
-| `save` | boolean | no | — | Value for save. |
+| `assembly_path` | string | yes | - | Value for assembly path. (allowed root) |
+| `component_name` | string | yes | - | Value for component name. |
+| `save` | boolean | no | - | Value for save. |
 | `confirm` | const `true` | yes | `true` | Value for confirm. |
 
 ## Tags

@@ -15,9 +15,9 @@ Add configuration copy.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `from` | string | yes | — | Value for from. |
-| `to` | string | yes | — | Value for to. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `from` | string | yes | - | Value for from. |
+| `to` | string | yes | - | Value for to. |
 
 ## Tags
 

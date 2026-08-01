@@ -15,8 +15,8 @@ Close document.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `save` | boolean | no | — | Value for save. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `save` | boolean | no | - | Value for save. |
 
 ## Tags
 

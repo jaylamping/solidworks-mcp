@@ -15,8 +15,8 @@ Create document.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `doc_type` | `part`, `assembly`, `drawing` | no | — | Value for doc type. |
-| `output_path` | string | no | — | Value for output path. (allowed root) |
+| `doc_type` | `part`, `assembly`, `drawing` | no | - | Value for doc type. |
+| `output_path` | string | no | - | Value for output path. (allowed root) |
 | `confirm` | const `true` | yes | `true` | Value for confirm. |
 
 ## Tags

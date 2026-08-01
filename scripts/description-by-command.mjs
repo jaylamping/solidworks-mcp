@@ -29,6 +29,23 @@ export const DESCRIPTION_BY_COMMAND = {
   mate_parallel: "Add a parallel mate between two component references or selected faces.",
   mate_distance: "Add a distance mate between two component references or selected faces.",
   mate_perpendicular: "Add a perpendicular mate between two component references or selected faces.",
+  mate_limit_angle: "Add a limit-angle mate with min/max rotation about an axis.",
+  mate_width: "Add a width mate between two component references or selected faces.",
+  mate_planes: "Add a coincident or parallel mate between named planes on two components.",
+  mate_probe: "Inspect candidate mate entities and report whether a mate is likely to succeed.",
+  mate_try_coincident: "Dry-run a coincident mate without committing it.",
+  mate_try_parallel: "Dry-run a parallel mate without committing it.",
+  mate_try_distance: "Dry-run a distance mate without committing it.",
+  mate_try_perpendicular: "Dry-run a perpendicular mate without committing it.",
+  mate_try_width: "Dry-run a width mate without committing it.",
+  probe_angle_travel: "Probe angular travel of a component about an axis within optional limits.",
+  delete_mate: "Delete a named mate feature from an assembly.",
+  delete_all_mates: "Delete all mates from an assembly.",
+  set_mate_suppression: "Suppress or unsuppress a named mate.",
+  checkpoint_document: "Save a recoverable checkpoint of the active or specified document.",
+  diagnose_com: "Diagnose SolidWorks COM attach, ROT, and worker mutex health.",
+  get_material: "Return the material assigned to a part or component.",
+  set_material: "Assign a material to a part or component.",
   set_dimension: "Set a driving part dimension value in meters.",
   insert_component: "Insert a part into an assembly from an allowed path.",
   set_component_transform: "Apply a 4x4 transform matrix to an assembly component.",
@@ -80,6 +97,14 @@ function humanize(token) {
 
 export function deriveSummary(command, propertyNames = []) {
   const words = command.split("_");
+  if (words[0] === "mate" && words[1] === "try") {
+    const kind = words.slice(2).join(" ") || "mate";
+    return `Dry-run a ${kind} mate without committing it.`;
+  }
+  if (words[0] === "mate") {
+    const kind = words.slice(1).join(" ") || "mate";
+    return `Create a ${kind} mate between assembly references.`;
+  }
   const verb = VERB_OVERRIDES[words[0]] ?? humanize(words[0]);
   const subject = words.slice(1).join(" ") || "SolidWorks state";
   const args = propertyNames.filter(Boolean).slice(0, 3).join(", ");

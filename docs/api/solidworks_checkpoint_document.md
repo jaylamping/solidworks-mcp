@@ -1,6 +1,6 @@
 # solidworks_checkpoint_document
 
-Checkpoint document.
+Save a recoverable checkpoint of the active or specified document.
 
 | Field | Value |
 |-------|-------|
@@ -9,13 +9,13 @@ Checkpoint document.
 | Read only | false |
 | Destructive | false |
 | Confirm required | false |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
+| `path` | string | yes | - | Value for path. (allowed root) |
 
 ## Tags
 

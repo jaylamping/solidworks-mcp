@@ -15,9 +15,9 @@ Set component configuration.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `component_name` | string | yes | — | Value for component name. |
-| `configuration` | string | yes | — | Value for configuration. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `component_name` | string | yes | - | Value for component name. |
+| `configuration` | string | yes | - | Value for configuration. |
 
 ## Tags
 

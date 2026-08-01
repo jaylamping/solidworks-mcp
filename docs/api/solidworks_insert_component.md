@@ -15,11 +15,11 @@ Insert a part into an assembly from an allowed path.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `part_path` | string | yes | — | Value for part path. (allowed root) |
-| `name` | string | no | — | Value for name. |
-| `configuration` | string | no | — | Value for configuration. |
-| `save` | boolean | no | — | Value for save. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `part_path` | string | yes | - | Value for part path. (allowed root) |
+| `name` | string | no | - | Value for name. |
+| `configuration` | string | no | - | Value for configuration. |
+| `save` | boolean | no | - | Value for save. |
 
 ## Tags
 

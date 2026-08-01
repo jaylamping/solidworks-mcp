@@ -15,8 +15,8 @@ Export link transforms.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `output_path` | string | no | — | Value for output path. (allowed root) |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `output_path` | string | no | - | Value for output path. (allowed root) |
 
 ## Tags
 

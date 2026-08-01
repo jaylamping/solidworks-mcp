@@ -15,11 +15,11 @@ Replace components by path.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `from_part_path` | string | yes | — | Value for from part path. (allowed root) |
-| `to_part_path` | string | yes | — | Value for to part path. (allowed root) |
-| `configuration` | string | no | — | Value for configuration. |
-| `save` | boolean | no | — | Value for save. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `from_part_path` | string | yes | - | Value for from part path. (allowed root) |
+| `to_part_path` | string | yes | - | Value for to part path. (allowed root) |
+| `configuration` | string | no | - | Value for configuration. |
+| `save` | boolean | no | - | Value for save. |
 | `confirm` | const `true` | yes | `true` | Value for confirm. |
 
 ## Tags

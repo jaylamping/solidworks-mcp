@@ -1,6 +1,6 @@
 # solidworks_mate_replay_sequence
 
-Create replay sequence.
+Create a replay sequence mate between assembly references.
 
 | Field | Value |
 |-------|-------|
@@ -15,9 +15,9 @@ Create replay sequence.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `use_selection` | boolean | no | — | Use the current SolidWorks selection instead of named references. |
-| `selection_index` | integer | no | — | 1-based selection index when selecting a specific highlighted entity. |
-| `path` | string | no | — | Optional document path under an allowed CAD root. (allowed root) |
+| `use_selection` | boolean | no | - | Use the current SolidWorks selection instead of named references. |
+| `selection_index` | integer | no | - | 1-based selection index when selecting a specific highlighted entity. |
+| `path` | string | no | - | Optional document path under an allowed CAD root. (allowed root) |
 
 ## Tags
 

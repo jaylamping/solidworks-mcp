@@ -15,10 +15,10 @@ Set feature suppression.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `feature_name` | string | yes | — | Value for feature name. |
-| `suppressed` | boolean | no | — | Value for suppressed. |
-| `configuration` | string | no | — | Value for configuration. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `feature_name` | string | yes | - | Value for feature name. |
+| `suppressed` | boolean | no | - | Value for suppressed. |
+| `configuration` | string | no | - | Value for configuration. |
 
 ## Tags
 

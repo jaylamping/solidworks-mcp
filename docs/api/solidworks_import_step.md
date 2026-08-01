@@ -15,8 +15,8 @@ Import step.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `start_if_missing` | boolean | no | — | Value for start if missing. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `start_if_missing` | boolean | no | - | Value for start if missing. |
 
 ## Tags
 

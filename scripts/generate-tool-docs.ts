@@ -58,7 +58,7 @@ function escapeCell(value: string): string {
 }
 
 function formatValue(value: unknown): string {
-  if (value === undefined) return "—";
+  if (value === undefined) return "-";
   if (typeof value === "string") return `\`${escapeCell(value)}\``;
   if (typeof value === "boolean" || typeof value === "number") return `\`${value}\``;
   return `\`${escapeCell(JSON.stringify(value))}\``;
@@ -96,7 +96,7 @@ function renderParameters(schema: JsonObject): string {
     "|------|------|----------|---------|-------------|",
     ...(rows.length
       ? rows.map((row) => `| ${row.join(" | ")} |`)
-      : ["| — | — | no | — | No parameters. |"]),
+      : ["| - | - | no | - | No parameters. |"]),
   ];
   return `## Parameters\n\n${table.join("\n")}`;
 }

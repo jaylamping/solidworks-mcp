@@ -15,10 +15,10 @@ Explain error.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `code` | string | no | — | Value for code. |
-| `hresult` | string | no | — | Value for hresult. |
-| `sw_error_code` | number | no | — | Value for sw error code. |
-| `message` | string | no | — | Value for message. |
+| `code` | string | no | - | Value for code. |
+| `hresult` | string | no | - | Value for hresult. |
+| `sw_error_code` | number | no | - | Value for sw error code. |
+| `message` | string | no | - | Value for message. |
 
 ## Tags
 

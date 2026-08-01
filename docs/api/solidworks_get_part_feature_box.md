@@ -15,11 +15,11 @@ Get part feature box.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `part_path` | string | no | — | Value for part path. (allowed root) |
-| `path` | string | no | — | Value for path. (allowed root) |
-| `feature_name` | string | no | — | Value for feature name. |
-| `use_selection` | boolean | no | — | Use the current SolidWorks selection instead of named references. |
-| `selection_index` | integer | no | — | 1-based selection index when selecting a specific highlighted entity. |
+| `part_path` | string | no | - | Value for part path. (allowed root) |
+| `path` | string | no | - | Value for path. (allowed root) |
+| `feature_name` | string | no | - | Value for feature name. |
+| `use_selection` | boolean | no | - | Use the current SolidWorks selection instead of named references. |
+| `selection_index` | integer | no | - | 1-based selection index when selecting a specific highlighted entity. |
 
 ## Tags
 

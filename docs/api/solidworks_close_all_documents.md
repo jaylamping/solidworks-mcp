@@ -15,7 +15,7 @@ Close all documents.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `save_first` | boolean | no | — | Value for save first. |
+| `save_first` | boolean | no | - | Value for save first. |
 | `confirm` | const `true` | yes | `true` | Value for confirm. |
 
 ## Tags

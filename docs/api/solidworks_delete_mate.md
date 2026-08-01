@@ -1,6 +1,6 @@
 # solidworks_delete_mate
 
-Delete mate.
+Delete a named mate feature from an assembly.
 
 | Field | Value |
 |-------|-------|
@@ -9,14 +9,14 @@ Delete mate.
 | Read only | false |
 | Destructive | true |
 | Confirm required | true |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `mate_name` | string | yes | — | Value for mate name. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `mate_name` | string | yes | - | Value for mate name. |
 | `confirm` | const `true` | yes | `true` | Value for confirm. |
 
 ## Tags

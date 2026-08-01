@@ -15,8 +15,8 @@ Create subassembly.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `output_path` | string | yes | — | Value for output path. (allowed root) |
-| `component_path` | string | no | — | Value for component path. (allowed root) |
+| `output_path` | string | yes | - | Value for output path. (allowed root) |
+| `component_path` | string | no | - | Value for component path. (allowed root) |
 | `confirm` | const `true` | yes | `true` | Value for confirm. |
 
 ## Tags

@@ -93,8 +93,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Checkpoint document.",
-      "descriptionSource": "derived",
+      "description": "Save a recoverable checkpoint of the active or specified document.",
+      "descriptionSource": "authored",
       "tags": [
         "checkpoint"
       ],
@@ -265,8 +265,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Delete all mates.",
-      "descriptionSource": "derived",
+      "description": "Delete all mates from an assembly.",
+      "descriptionSource": "authored",
       "tags": [
         "delete"
       ],
@@ -300,8 +300,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Delete mate.",
-      "descriptionSource": "derived",
+      "description": "Delete a named mate feature from an assembly.",
+      "descriptionSource": "authored",
       "tags": [
         "delete"
       ],
@@ -336,8 +336,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Diagnose com.",
-      "descriptionSource": "derived",
+      "description": "Diagnose SolidWorks COM attach, ROT, and worker mutex health.",
+      "descriptionSource": "authored",
       "tags": [
         "diagnose"
       ],
@@ -744,8 +744,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Get material.",
-      "descriptionSource": "derived",
+      "description": "Return the material assigned to a part or component.",
+      "descriptionSource": "authored",
       "tags": [
         "get"
       ],
@@ -1172,7 +1172,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create component origin.",
+      "description": "Create a component origin mate between assembly references.",
       "descriptionSource": "derived",
       "tags": [
         "mate"
@@ -1190,7 +1190,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create coord sys.",
+      "description": "Create a coord sys mate between assembly references.",
       "descriptionSource": "derived",
       "tags": [
         "mate"
@@ -1226,8 +1226,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create limit angle.",
-      "descriptionSource": "derived",
+      "description": "Add a limit-angle mate with min/max rotation about an axis.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1280,8 +1280,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create planes.",
-      "descriptionSource": "derived",
+      "description": "Add a coincident or parallel mate between named planes on two components.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1298,8 +1298,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create probe.",
-      "descriptionSource": "derived",
+      "description": "Inspect candidate mate entities and report whether a mate is likely to succeed.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1316,7 +1316,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create record macro.",
+      "description": "Create a record macro mate between assembly references.",
       "descriptionSource": "derived",
       "tags": [
         "mate"
@@ -1334,7 +1334,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create replay sequence.",
+      "description": "Create a replay sequence mate between assembly references.",
       "descriptionSource": "derived",
       "tags": [
         "mate"
@@ -1352,8 +1352,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create try coincident.",
-      "descriptionSource": "derived",
+      "description": "Dry-run a coincident mate without committing it.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1370,8 +1370,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create try distance.",
-      "descriptionSource": "derived",
+      "description": "Dry-run a distance mate without committing it.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1388,8 +1388,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create try parallel.",
-      "descriptionSource": "derived",
+      "description": "Dry-run a parallel mate without committing it.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1406,8 +1406,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create try perpendicular.",
-      "descriptionSource": "derived",
+      "description": "Dry-run a perpendicular mate without committing it.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1424,8 +1424,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create try width.",
-      "descriptionSource": "derived",
+      "description": "Dry-run a width mate without committing it.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1442,8 +1442,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Create width.",
-      "descriptionSource": "derived",
+      "description": "Add a width mate between two component references or selected faces.",
+      "descriptionSource": "authored",
       "tags": [
         "mate"
       ],
@@ -1579,8 +1579,8 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Probe angle travel.",
-      "descriptionSource": "derived",
+      "description": "Probe angular travel of a component about an axis within optional limits.",
+      "descriptionSource": "authored",
       "tags": [
         "probe"
       ],
@@ -1919,8 +1919,8 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Set mate suppression.",
-      "descriptionSource": "derived",
+      "description": "Suppress or unsuppress a named mate.",
+      "descriptionSource": "authored",
       "tags": [
         "set"
       ],
@@ -1937,8 +1937,8 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
-      "description": "Set material.",
-      "descriptionSource": "derived",
+      "description": "Assign a material to a part or component.",
+      "descriptionSource": "authored",
       "tags": [
         "set"
       ],

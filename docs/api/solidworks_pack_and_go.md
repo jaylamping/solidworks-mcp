@@ -15,8 +15,8 @@ Pack and go.
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `output_dir` | string | yes | — | Value for output dir. (allowed root) |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `output_dir` | string | yes | - | Value for output dir. (allowed root) |
 
 ## Tags
 

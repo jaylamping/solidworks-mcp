@@ -1,6 +1,6 @@
 # solidworks_set_mate_suppression
 
-Set mate suppression.
+Suppress or unsuppress a named mate.
 
 | Field | Value |
 |-------|-------|
@@ -9,15 +9,15 @@ Set mate suppression.
 | Read only | false |
 | Destructive | false |
 | Confirm required | false |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `path` | string | yes | — | Value for path. (allowed root) |
-| `mate_name` | string | yes | — | Value for mate name. |
-| `suppressed` | boolean | no | — | Value for suppressed. |
+| `path` | string | yes | - | Value for path. (allowed root) |
+| `mate_name` | string | yes | - | Value for mate name. |
+| `suppressed` | boolean | no | - | Value for suppressed. |
 
 ## Tags
 
