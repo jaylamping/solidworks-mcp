@@ -40,13 +40,13 @@ export const mateLimitAngleSchema = mateRefsWithSelection
       "If true (default), suppress/unsuppress the new mate and detect opposite-branch pose flips common with Top/Top planar angles.",
     ),
     auto_stable_planes: z.boolean().optional().describe(
-      "If true (default), rewrite Top/Top to Front/Front before create, and recreate if a branch flip is still detected.",
+      "Deprecated/no-op for Front/Front rewrites. Previously rewrote Top/Top to Front/Front, which often fails to track an X-axis revolute. Kept for compatibility; emits a warning only.",
     ),
   })
   .refine(mateRefsRefine, {
     message: "Provide component/ref names or set use_selection: true with two highlights.",
   }).describe(
-    "Create a limit-angle mate between two references. Prefer Front/Front (or Right/Right) over Top/Top for revolute joints — Top/Top is often ambiguous and can jump sides on save/rebuild.",
+    "Create a limit-angle mate between two references. Choose plane normals perpendicular to the revolute axis (often Top/Top for X-roll). Front/Front or Right/Right can stay at a constant angle and never clamp travel.",
   );
 
 export const setMateLimitAngleSchema = z.object({

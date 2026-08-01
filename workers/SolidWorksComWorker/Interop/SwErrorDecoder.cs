@@ -68,7 +68,7 @@ internal static class SwErrorDecoder
             [
                 "Selection marks/entities are wrong for this mate type.",
                 "Limit-angle mates usually work with two planes only; axis_ref is optional and including it can leave the mate ill-defined.",
-                "Prefer Front/Front or Right/Right plane pairs over Top/Top for revolute joints.",
+                "Prefer plane normals perpendicular to the revolute axis (often Top/Top for X-roll). Front/Front frequently fails to limit travel.",
                 "Run debug_mate_entities to inspect selection marks and entity types.",
             ],
             5 =>
@@ -86,7 +86,7 @@ internal static class SwErrorDecoder
             [
                 "Run debug_mate_entities to inspect selection marks and entity types.",
                 "Confirm components are not fixed unless the mate requires it.",
-                "For revolute limit-angle mates prefer Front/Front (or Right/Right); Top/Top is often ambiguous across rebuild.",
+                "For revolute limit-angle mates, choose plane normals perpendicular to the joint axis (often Top/Top for an X-axis roll). Front/Front or Right/Right can leave travel unlimited.",
             ],
         };
 

@@ -29,7 +29,7 @@ export const DESCRIPTION_BY_COMMAND = {
   mate_parallel: "Add a parallel mate between two component references or selected faces.",
   mate_distance: "Add a distance mate between two component references or selected faces.",
   mate_perpendicular: "Add a perpendicular mate between two component references or selected faces.",
-  mate_limit_angle: "Add a limit-angle mate with min/max rotation. Prefers stable Front/Front planes over ambiguous Top/Top; supports flip and branch-stability checks.",
+  mate_limit_angle: "Add a limit-angle mate with min/max rotation. Prefer plane normals perpendicular to the joint axis (often Top/Top for X-roll); Front/Front may not clamp.",
   set_mate_limit_angle: "Update min/max/current angle on an existing limit-angle mate; recreates when in-place edit fails and component refs are provided.",
   mate_width: "Add a width mate between two component references or selected faces.",
   mate_planes: "Add a coincident or parallel mate between named planes on two components.",

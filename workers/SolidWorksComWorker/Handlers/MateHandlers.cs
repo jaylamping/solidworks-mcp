@@ -424,8 +424,8 @@ internal static partial class Program
             && (flipEl.ValueKind is JsonValueKind.True or JsonValueKind.False);
         bool flipValue = BoolArg(args, "flip", defaultValue: false);
         bool checkBranchStability = BoolArg(args, "check_branch_stability", defaultValue: true);
-        bool autoStablePlanes = BoolArg(args, "auto_stable_planes", defaultValue: true);
-        bool stablePlaneRetry = BoolArg(args, "_stable_plane_retry", defaultValue: false);
+        // Kept for API compatibility; must NOT rewrite to Front/Front (that pair often fails to track roll).
+        bool autoStablePlanes = BoolArg(args, "auto_stable_planes", defaultValue: false);
         var warnings = new List<string>();
 
         if (minDeg > maxDeg)
@@ -436,14 +436,15 @@ internal static partial class Program
         if (IsAmbiguousPlanarAnglePair(ref1, ref2))
         {
             warnings.Add(
-                "ambiguous_plane_pair_top_top: Prefer Front/Front or Right/Right for revolute limit-angle mates; Top/Top often shares two opposite poses and can jump sides on save/rebuild.");
-            if (autoStablePlanes && !stablePlaneRetry)
-            {
-                warnings.Add(
-                    "auto_stable_planes: Rewriting Top/Top selections to Front/Front before create to avoid opposite-branch flips.");
-                ref1 = "Front Plane";
-                ref2 = "Front Plane";
-            }
+                "ambiguous_plane_pair_top_top: Top/Top planar angles are unsigned-ambiguous (two poses share one angle). Keep Top/Top when the revolute axis is along Right/X; do not rewrite to Front/Front or Right/Right — those normals are parallel to an X-axis revolute and will not limit roll.");
+        }
+
+        // Validate that chosen plane normals can actually change about a likely revolute.
+        // Blind Front/Front "stabilization" previously created always-satisfied 90° mates.
+        if (LooksLikeAxisAlignedPlanePair(ref1, ref2))
+        {
+            warnings.Add(
+                "plane_pair_may_not_track_revolve: Front/Front or Right/Right often have normals parallel to a principal revolute axis, so the limit angle stays constant and never clamps travel. Prefer the plane pair whose normals are perpendicular to the joint axis (commonly Top/Top for an X-axis roll).");
         }
 
         string effectiveRef1 = ref1;
@@ -813,7 +814,7 @@ internal static partial class Program
                 if (code == 47)
                 {
                     warnings.Add(
-                        "mate_illdefined: Feature error 47 — planar angle may be ambiguous or seed yanked the joint. Prefer Front/Front planes, pass seed_angle_deg from the live pose, and avoid mating the axis with AddMate5.");
+                        "mate_illdefined: Feature error 47 — planar angle may be ambiguous or seed yanked the joint. Pass seed_angle_deg from the live pose, prefer plane normals perpendicular to the revolute axis, and avoid mating the axis with AddMate5.");
                 }
 
                 if (TryUpdateLimitAngleMate(mateFeature, doc, minDeg, maxDeg, nominalDeg, flip: flipSpecified ? flipValue : null))
@@ -839,91 +840,10 @@ internal static partial class Program
                 {
                     warnings.Add(
                         $"branch_unstable: Suppress/unsuppress changed the moving component pose (rotDelta={branchRotationDelta:F3}, detail={branchDetail}). Opposite-branch planar angles are unsafe across save/rebuild.");
-
-                    if (autoStablePlanes
-                        && !stablePlaneRetry
-                        && IsAmbiguousPlanarAnglePair(ref1, ref2))
+                    if (autoStablePlanes)
                     {
-                        string? failedName = Try(() => mateFeature.Name) as string;
-                        doc.ClearSelection2(true);
-                        bool selected = Try(() => mateFeature.Select2(false, 0)) as bool? ?? false;
-                        bool deleted = false;
-                        if (selected)
-                        {
-                            deleted = Try(() => doc.Extension.DeleteSelection2(
-                                (int)swDeleteSelectionOptions_e.swDelete_Absorbed)) as bool? ?? false;
-                            doc.EditRebuild3();
-                        }
-
-                        if (deleted)
-                        {
-                            warnings.Add(
-                                "auto_stable_planes: Deleted unstable Top/Top limit mate and recreating with Front/Front.");
-                            var retryArgs = new Dictionary<string, object?>
-                            {
-                                ["path"] = inputPath,
-                                ["component_1"] = component1,
-                                ["ref_1"] = "Front Plane",
-                                ["component_2"] = component2,
-                                ["ref_2"] = "Front Plane",
-                                ["min_angle_deg"] = minDeg,
-                                ["max_angle_deg"] = maxDeg,
-                                ["check_branch_stability"] = checkBranchStability,
-                                ["auto_stable_planes"] = false,
-                                ["_stable_plane_retry"] = true,
-                            };
-                            if (!double.IsNaN(seedAngleDeg))
-                            {
-                                retryArgs["seed_angle_deg"] = seedAngleDeg;
-                            }
-
-                            if (flipSpecified)
-                            {
-                                retryArgs["flip"] = flipValue;
-                            }
-
-                            if (!string.IsNullOrWhiteSpace(axisRef))
-                            {
-                                retryArgs["axis_ref"] = axisRef;
-                            }
-
-                            if (!string.IsNullOrWhiteSpace(axisComponentName))
-                            {
-                                retryArgs["axis_component"] = axisComponentName;
-                            }
-
-                            object retryResult = MateLimitAngle(JsonSerializer.SerializeToElement(retryArgs));
-                            // Merge prior warnings into the retry payload via JSON round-trip.
-                            string retryJson = JsonSerializer.Serialize(retryResult);
-                            using JsonDocument parsed = JsonDocument.Parse(retryJson);
-                            var merged = new Dictionary<string, object?>();
-                            foreach (JsonProperty prop in parsed.RootElement.EnumerateObject())
-                            {
-                                merged[prop.Name] = JsonSerializer.Deserialize<object>(prop.Value.GetRawText());
-                            }
-
-                            var mergedWarnings = new List<string>(warnings);
-                            if (parsed.RootElement.TryGetProperty("warnings", out JsonElement wEl)
-                                && wEl.ValueKind == JsonValueKind.Array)
-                            {
-                                foreach (JsonElement item in wEl.EnumerateArray())
-                                {
-                                    if (item.ValueKind == JsonValueKind.String
-                                        && item.GetString() is string s
-                                        && !mergedWarnings.Contains(s))
-                                    {
-                                        mergedWarnings.Add(s);
-                                    }
-                                }
-                            }
-
-                            merged["warnings"] = mergedWarnings;
-                            merged["autoStablePlanesFrom"] = failedName;
-                            merged["autoStablePlanesTo"] = new[] { "Front Plane", "Front Plane" };
-                            return merged;
-                        }
-
-                        warnings.Add("auto_stable_planes_failed: Could not delete unstable Top/Top mate for Front/Front retry.");
+                        warnings.Add(
+                            "auto_stable_planes_ignored: Refusing to rewrite to Front/Front — that pair often has normals parallel to the revolute axis and will not clamp travel. Keep the tracking plane pair (often Top/Top), set flip/seed carefully, and avoid large drag steps that jump branches.");
                     }
                 }
             }
@@ -937,12 +857,13 @@ internal static partial class Program
 
         (string errorName, string[] remediation) = SwErrorDecoder.DecodeMateError(mateError);
         if (IsAmbiguousPlanarAnglePair(effectiveRef1, effectiveRef2)
-            && remediation.All(r => !r.Contains("Front/Front", StringComparison.Ordinal)))
+            && remediation.All(r => !r.Contains("Top/Top", StringComparison.Ordinal)))
         {
             remediation = remediation
                 .Concat(new[]
                 {
-                    "Prefer Front Plane ↔ Front Plane (or Right ↔ Right) over Top ↔ Top for revolute limit mates.",
+                    "Top/Top is usually the correct pair when the revolute axis is along Right/X; Front/Front will not limit that joint.",
+                    "Seed with the live pose and use flip to pick the travel side; avoid large single-step drags that jump the opposite branch.",
                 })
                 .ToArray();
         }
@@ -994,6 +915,18 @@ internal static partial class Program
         string a = NormalizePlaneName(ref1);
         string b = NormalizePlaneName(ref2);
         return (a is "topplane" or "top") && (b is "topplane" or "top");
+    }
+
+    private static bool LooksLikeAxisAlignedPlanePair(string ref1, string ref2)
+    {
+        static string NormalizePlaneName(string value) =>
+            value.Trim().Replace(" ", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+
+        string a = NormalizePlaneName(ref1);
+        string b = NormalizePlaneName(ref2);
+        bool front = (a is "frontplane" or "front") && (b is "frontplane" or "front");
+        bool right = (a is "rightplane" or "right") && (b is "rightplane" or "right");
+        return front || right;
     }
 
     private static bool IsPlausiblePlaneAngleDeg(double deg)
@@ -1468,7 +1401,7 @@ internal static partial class Program
                 if (branchStable == false)
                 {
                     warnings.Add(
-                        $"branch_unstable: Suppress/unsuppress changed pose (rotDelta={branchRotationDelta:F3}, detail={branchDetail}). Prefer Front/Front planes if this is a Top/Top limit mate.");
+                        $"branch_unstable: Suppress/unsuppress changed pose (rotDelta={branchRotationDelta:F3}, detail={branchDetail}). Prefer the plane pair whose normals are perpendicular to the revolute axis (often Top/Top for X-roll).");
                 }
             }
         }

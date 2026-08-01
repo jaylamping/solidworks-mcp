@@ -1,6 +1,6 @@
 # solidworks_mate_limit_angle
 
-Add a limit-angle mate with min/max rotation. Prefers stable Front/Front planes over ambiguous Top/Top; supports flip and branch-stability checks.
+Add a limit-angle mate with min/max rotation. Prefer plane normals perpendicular to the joint axis (often Top/Top for X-roll); Front/Front may not clamp.
 
 | Field | Value |
 |-------|-------|
@@ -32,7 +32,7 @@ Add a limit-angle mate with min/max rotation. Prefers stable Front/Front planes 
 | `seed_angle_deg` | number | no | - | Current/nominal angle in degrees. Prefer the live pose angle so creation does not yank the joint to the range midpoint. |
 | `flip` | boolean | no | - | FlipDimension sense for the limit-angle mate. |
 | `check_branch_stability` | boolean | no | - | If true (default), suppress/unsuppress the new mate and detect opposite-branch pose flips common with Top/Top planar angles. |
-| `auto_stable_planes` | boolean | no | - | If true (default), rewrite Top/Top to Front/Front before create, and recreate if a branch flip is still detected. |
+| `auto_stable_planes` | boolean | no | - | Deprecated/no-op for Front/Front rewrites. Previously rewrote Top/Top to Front/Front, which often fails to track an X-axis revolute. Kept for compatibility; emits a warning only. |
 
 ## Tags
 

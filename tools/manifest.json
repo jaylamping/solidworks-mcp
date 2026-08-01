@@ -1226,7 +1226,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
-      "description": "Add a limit-angle mate with min/max rotation. Prefers stable Front/Front planes over ambiguous Top/Top; supports flip and branch-stability checks.",
+      "description": "Add a limit-angle mate with min/max rotation. Prefer plane normals perpendicular to the joint axis (often Top/Top for X-roll); Front/Front may not clamp.",
       "descriptionSource": "authored",
       "tags": [
         "mate"
