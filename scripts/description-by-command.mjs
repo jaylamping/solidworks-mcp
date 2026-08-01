@@ -8,6 +8,7 @@ export const DESCRIPTION_BY_COMMAND = {
   open: "Open a SolidWorks or STEP document from an allowed CAD root.",
   export: "Export a CAD document to STEP, STL, PDF, or PNG under an allowed CAD root. PNG supports keep_view for stable before/after screenshots.",
   save_document: "Save the active or specified SolidWorks document.",
+  confirm_and_save: "After the user says the viewport looks good: checkpoint, lock pose, heal warning mates, save, and verify the pose did not jump.",
   set_custom_properties: "Set custom properties on a part or assembly and optionally save it.",
   measure: "Return bounding-box and mass-property metadata for a CAD document.",
   list_features: "List top-level feature tree entries for a CAD document.",

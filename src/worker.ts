@@ -18,6 +18,7 @@ export type WorkerCommand =
   | "close_all_documents"
   | "close_document"
   | "component_mass_properties"
+  | "confirm_and_save"
   | "copy_with_mates"
   | "create_drawing_from_model"
   | "create_sketch"

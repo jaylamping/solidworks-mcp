@@ -80,3 +80,19 @@ export const setCustomPropertiesSchema = z.object({
 });
 
 export const saveDocumentSchema = optionalPathSchema;
+
+export const confirmAndSaveSchema = z.object({
+  path: z.string().min(1).optional().describe("Assembly/part path under an allowed CAD root. Defaults to the active document."),
+  looks_good: z.literal(true).describe(
+    "User visually approved the current viewport. Do not set this until the user answers yes to 'Does this look good?'.",
+  ),
+  confirm: z.literal(true).describe("Acknowledge the save/heal operation."),
+  preview_path: z.string().min(1).optional().describe(
+    "Optional PNG path for a keep_view screenshot captured before save.",
+  ),
+  checkpoint: z.boolean().optional().describe("Create a checkpoint before save (default true)."),
+  pose_tolerance: z.number().optional().describe("Max sum of absolute transform deltas allowed after save/rebuild."),
+  max_heal_attempts: z.number().int().optional().describe("How many fix/save/restore cycles to try when the pose jumps."),
+}).describe(
+  "Ask the user 'Does this look good?' first. Only then call with looks_good:true to checkpoint, lock pose, heal warning mates, save, and verify the pose did not jump.",
+);

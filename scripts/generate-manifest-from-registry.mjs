@@ -50,6 +50,7 @@ const DESTRUCTIVE = new Set([
   "explode_view",
   "copy_with_mates",
   "create_drawing_from_model",
+  "confirm_and_save",
 ]);
 
 const READ_ONLY = new Set([
@@ -109,6 +110,7 @@ const CORE = new Set([
   "list_reference_geometry",
   "mate_limit_angle",
   "save_document",
+  "confirm_and_save",
   "set_custom_properties",
   "mate_coincident",
   "mate_parallel",

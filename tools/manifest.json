@@ -172,6 +172,23 @@
       "schema": "componentName"
     },
     {
+      "name": "solidworks_confirm_and_save",
+      "workerCommand": "confirm_and_save",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "After the user says the viewport looks good: checkpoint, lock pose, heal warning mates, save, and verify the pose did not jump.",
+      "descriptionSource": "authored",
+      "tags": [
+        "confirm"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "confirmAndSave"
+    },
+    {
       "name": "solidworks_copy_with_mates",
       "workerCommand": "copy_with_mates",
       "tier": "extended",

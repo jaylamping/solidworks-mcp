@@ -32,6 +32,7 @@ export const SCHEMA_MAP = {
   unfixAllComponents: documentSchemas.unfixAllComponentsSchema,
   setCustomProperties: documentSchemas.setCustomPropertiesSchema,
   saveDocument: documentSchemas.saveDocumentSchema,
+  confirmAndSave: documentSchemas.confirmAndSaveSchema,
   componentName: assemblySchemas.componentNameSchema,
   transformComponent: assemblySchemas.transformComponentSchema,
   setComponentTransform: assemblySchemas.setComponentTransformSchema,

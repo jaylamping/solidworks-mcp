@@ -84,6 +84,7 @@ internal static partial class Program
             ["invoke"] = Invoke,
             ["batch_invoke"] = BatchInvoke,
             ["checkpoint_document"] = CheckpointDocument,
+            ["confirm_and_save"] = ConfirmAndSave,
             ["diagnose_com"] = DiagnoseCom,
             ["diagnose_document"] = DiagnoseDocument,
             ["diagnose_selection"] = DiagnoseSelection,
