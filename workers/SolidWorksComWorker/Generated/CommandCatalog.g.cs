@@ -83,7 +83,6 @@ internal static class CommandPolicyCatalog
             ["mate_width"] = new CommandPolicy(false, true, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("component_1", SelectionSource.SelectedComponentName, 1), new GeneratedSelectionBinding("ref_1", SelectionSource.SelectedRefName, 1), new GeneratedSelectionBinding("component_2", SelectionSource.SelectedComponentName, 2), new GeneratedSelectionBinding("ref_2", SelectionSource.SelectedRefName, 2)]),
             ["mate_limit_angle"] = new CommandPolicy(false, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["set_mate_limit_angle"] = new CommandPolicy(false, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
-            ["create_hinge_limit"] = new CommandPolicy(false, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["probe_angle_travel"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["mate_record_macro"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["mate_replay_sequence"] = new CommandPolicy(false, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),

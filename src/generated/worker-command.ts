@@ -16,7 +16,6 @@ export const WORKER_COMMANDS = [
   "confirm_and_save",
   "copy_with_mates",
   "create_drawing_from_model",
-  "create_hinge_limit",
   "create_sketch",
   "create_subassembly",
   "debug_mate_entities",
