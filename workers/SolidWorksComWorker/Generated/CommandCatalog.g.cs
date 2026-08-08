@@ -154,7 +154,7 @@ internal static class CommandPolicyCatalog
             ["set_sketch_circle_diameter"] = new CommandPolicy(true, true, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("sketch_name", SelectionSource.SelectedFeatureName, 1)]),
             ["sketch_exit"] = new CommandPolicy(false, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["feature_extrude_cut"] = new CommandPolicy(true, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
-            ["combine_bodies"] = new CommandPolicy(true, true, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("body_name", SelectionSource.SelectedBodyName, 1)]),
+            ["combine_bodies"] = new CommandPolicy(true, true, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("body_name", SelectionSource.SelectedBodyName, 1), new GeneratedSelectionBinding("tool_body_name", SelectionSource.SelectedBodyName, 2)]),
             ["round_side_arms_from_circle"] = new CommandPolicy(true, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["feature_fillet"] = new CommandPolicy(true, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["feature_chamfer"] = new CommandPolicy(true, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),

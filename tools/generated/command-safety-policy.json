@@ -1892,6 +1892,11 @@
             "targetArg": "body_name",
             "source": "selectedBodyName",
             "selectionIndex": 1
+          },
+          {
+            "targetArg": "tool_body_name",
+            "source": "selectedBodyName",
+            "selectionIndex": 2
           }
         ]
       },

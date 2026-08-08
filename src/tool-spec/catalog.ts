@@ -1799,14 +1799,17 @@ export const TOOL_SPECS = [
       name: "solidworks_combine_bodies",
       tier: "extended",
       description:
-        "Combine solid bodies (common/add/subtract). Common may be synthesized through subtract for exactly two bodies when InsertCombineFeature cannot create it. Use keep_body_names to copy a container body first so it survives while trimming another body to its volume. Prefer body_names over feature_names for early features (Loft/Shell): Feature.GetFaces can mis-attribute ownership in multi-body parts.",
+        "Combine solid bodies (common/add/subtract). Common supports exactly two bodies and may be synthesized through subtract when InsertCombineFeature cannot create it. body_names[0] is the target/main body for subtract and common. With use_selection, highlight two bodies for dual selection via body_name (index 1) and tool_body_name (index 2). keep_body_names are copied and never consumed as synthesis subtract mains. Prefer body_names over feature_names for early features (Loft/Shell): Feature.GetFaces can mis-attribute ownership in multi-body parts.",
       descriptionSource: "authored",
       input: SCHEMAS["combineBodies"],
       tags: ["feature", "body", "boolean"],
       domains: ["document"],
     }),
     safety: modelMutation({ destructive: true }),
-    selection: bindSelection([{ targetArg: "body_name", source: "selectedBodyName", selectionIndex: 1 }]),
+    selection: bindSelection([
+      { targetArg: "body_name", source: "selectedBodyName", selectionIndex: 1 },
+      { targetArg: "tool_body_name", source: "selectedBodyName", selectionIndex: 2 },
+    ]),
   }),
   tool({
     implementation: worker("round_side_arms_from_circle", "Program.RoundSideArmsFromCircle"),

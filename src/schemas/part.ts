@@ -58,13 +58,20 @@ export const combineBodiesSchema = optionalPathSchema
       .string()
       .min(1)
       .optional()
-      .describe("Primary body name. For subtract this is the main body. Filled from selection when use_selection is true."),
+      .describe(
+        "Primary/target body name. body_names[0] and this field are the main body for subtract and common. Filled from selection index 1 when use_selection is true.",
+      ),
+    tool_body_name: z
+      .string()
+      .min(1)
+      .optional()
+      .describe("Second/tool body name. Filled from selection index 2 when use_selection is true."),
     body_names: z
       .array(z.string().min(1))
       .min(1)
       .optional()
       .describe(
-        "Solid body names to combine. Prefer body_names over feature_names, especially for early Loft/Shell features. For subtract, the first body is the main body and the rest are tools.",
+        "Solid body names to combine. body_names[0] is the target/main body for subtract and common; the rest are tools. Prefer body_names over feature_names, especially for early Loft/Shell features.",
       ),
     feature_names: z
       .array(z.string().min(1))
@@ -85,11 +92,15 @@ export const combineBodiesSchema = optionalPathSchema
   })
   .superRefine((value, ctx) => {
     const named =
-      (value.body_name ? 1 : 0) + (value.body_names?.length ?? 0) + (value.feature_names?.length ?? 0);
-    if (named < 1 && !value.use_selection) {
+      (value.body_name ? 1 : 0)
+      + (value.tool_body_name ? 1 : 0)
+      + (value.body_names?.length ?? 0)
+      + (value.feature_names?.length ?? 0);
+    if (named < 2 && !value.use_selection) {
       ctx.addIssue({
         code: "custom",
-        message: "Provide body_name/body_names/feature_names, or set use_selection: true.",
+        message:
+          "Provide at least two body_name/tool_body_name/body_names/feature_names entries, or set use_selection: true to bind two highlighted bodies.",
       });
     }
   });
@@ -98,17 +109,31 @@ export const probePartFeatureGeometrySchema = optionalPathSchema.extend({
   feature_name: z.string().min(1),
 });
 
-export const setSketchCircleDiameterSchema = optionalPathSchema.extend({
-  sketch_name: z.string().min(1),
-  diameter_m: z.number().optional(),
-  diameter_mm: z.number().optional(),
-  delta_m: z.number().optional(),
-  delta_mm: z.number().optional(),
-  match_diameter_m: z.number().optional(),
-  match_diameter_mm: z.number().optional(),
-  prefer_inner: z.boolean().optional(),
-  ...confirmField,
-});
+export const setSketchCircleDiameterSchema = optionalPathSchema
+  .extend({
+    sketch_name: z.string().min(1),
+    diameter_m: z.number().optional(),
+    diameter_mm: z.number().optional(),
+    delta_m: z.number().optional(),
+    delta_mm: z.number().optional(),
+    match_diameter_m: z.number().optional(),
+    match_diameter_mm: z.number().optional(),
+    prefer_inner: z.boolean().optional(),
+    ...confirmField,
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.diameter_m === undefined
+      && value.diameter_mm === undefined
+      && value.delta_m === undefined
+      && value.delta_mm === undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Provide diameter_m/diameter_mm or delta_m/delta_mm.",
+      });
+    }
+  });
 
 export const featureExtrudeBossSchema = optionalPathSchema.extend({
   depth_m: z.number().optional(),
