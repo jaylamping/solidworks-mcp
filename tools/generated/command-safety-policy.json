@@ -880,6 +880,19 @@
       "exposure": "mcp"
     },
     {
+      "command": "create_hinge_limit",
+      "csharpHandler": "Program.CreateHingeLimit",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
       "command": "probe_angle_travel",
       "csharpHandler": "Program.ProbeAngleTravel",
       "safety": {

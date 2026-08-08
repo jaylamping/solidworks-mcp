@@ -236,6 +236,27 @@
       "schema": "createDrawingFromModel"
     },
     {
+      "name": "solidworks_create_hinge_limit",
+      "workerCommand": "create_hinge_limit",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Build a strict coaxial+mount+axis-backed LimitAngle hinge on an explicit align/flip branch. Suppresses only release_mates, refuses NoAxis/standard-angle fallbacks, force-rebuilds, probes motion/clearance samples, and restores the pre-change checkpoint on any failed stage (ok:false + restored). Does not save — after a collision-free preview looks good, call confirm_and_save and require ok/poseStable.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate",
+        "hinge",
+        "limit"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "createHingeLimit"
+    },
+    {
       "name": "solidworks_create_sketch",
       "workerCommand": "create_sketch",
       "tier": "extended",

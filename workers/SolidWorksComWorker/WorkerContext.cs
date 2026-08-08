@@ -534,4 +534,80 @@ internal static partial class Program
         return values.ToArray();
     }
 
+    private static string[] StringArrayArg(JsonElement? args, string name, bool required = true)
+    {
+        if (args is null || args.Value.ValueKind != JsonValueKind.Object)
+        {
+            if (required)
+            {
+                throw new ArgumentException($"Missing required argument: {name}");
+            }
+
+            return [];
+        }
+
+        if (!args.Value.TryGetProperty(name, out JsonElement value) || value.ValueKind != JsonValueKind.Array)
+        {
+            if (required)
+            {
+                throw new ArgumentException($"Missing required array argument: {name}");
+            }
+
+            return [];
+        }
+
+        var values = new List<string>();
+        foreach (JsonElement entry in value.EnumerateArray())
+        {
+            if (entry.ValueKind != JsonValueKind.String)
+            {
+                throw new ArgumentException($"Array argument {name} must contain only strings.");
+            }
+
+            string? text = entry.GetString();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                values.Add(text);
+            }
+        }
+
+        if (required && values.Count == 0)
+        {
+            throw new ArgumentException($"Array argument {name} must contain at least one string.");
+        }
+
+        return values.ToArray();
+    }
+
+    private static double[] OptionalDoubleArrayArg(JsonElement? args, string name)
+    {
+        if (args is null
+            || args.Value.ValueKind != JsonValueKind.Object
+            || !args.Value.TryGetProperty(name, out JsonElement value)
+            || value.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        var values = new List<double>();
+        foreach (JsonElement entry in value.EnumerateArray())
+        {
+            if (entry.ValueKind == JsonValueKind.Number)
+            {
+                values.Add(entry.GetDouble());
+            }
+            else if (entry.ValueKind == JsonValueKind.String
+                && double.TryParse(entry.GetString(), out double parsed))
+            {
+                values.Add(parsed);
+            }
+            else
+            {
+                throw new ArgumentException($"Array argument {name} must contain only numbers.");
+            }
+        }
+
+        return values.ToArray();
+    }
+
 }

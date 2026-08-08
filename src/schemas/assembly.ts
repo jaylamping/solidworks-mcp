@@ -4,6 +4,7 @@ import { confirmPathSchema, optionalPathSchema, selectionFieldsSchema } from "./
 import { confirmField } from "./shared.js";
 
 export {
+  createHingeLimitSchema,
   mateLimitAngleSchema,
   mateRefsSchema,
   mateTrySchema,

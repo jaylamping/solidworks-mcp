@@ -51,6 +51,7 @@ internal static partial class Program
             ["mate_width"] = MateWidth,
             ["mate_limit_angle"] = MateLimitAngle,
             ["set_mate_limit_angle"] = SetMateLimitAngle,
+            ["create_hinge_limit"] = CreateHingeLimit,
             ["probe_angle_travel"] = ProbeAngleTravel,
             ["mate_record_macro"] = MateRecordMacro,
             ["mate_replay_sequence"] = MateReplaySequence,
