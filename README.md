@@ -1,13 +1,9 @@
 # SolidWorks MCP
 
-Talk to an AI assistant about your SolidWorks work, and let it drive the CAD session for you.
+MCP server that drives SolidWorks on Windows from Cursor (or another MCP client). Open documents, mates, measures, exports, modeling — without writing macros.
 
-Open assemblies, inspect mates, move parts, measure geometry, export files, and more. You stay in charge of what looks right. The assistant uses this project as the bridge into SolidWorks on Windows.
-
-You do not need to write macros or learn the SolidWorks API. If you can describe the job in plain language, you can use this.
-
-> **Needs:** Windows · a licensed SolidWorks install · [Cursor](https://cursor.com) (or another MCP client) · Node.js 20+ · .NET 8 SDK  
-> SolidWorks should be open (or able to launch) on the same desktop as the assistant.
+> **Needs:** Windows · licensed SolidWorks · [Cursor](https://cursor.com) (or another MCP client) · Node.js 20+ · .NET 8 SDK  
+> SolidWorks should be open (or launchable) on the same machine.
 
 ## Workflow
 
@@ -16,7 +12,7 @@ You do not need to write macros or learn the SolidWorks API. If you can describe
 3. The assistant drives SolidWorks through this server.
 4. Check the model, then confirm before it saves.
 
-Examples you can ask:
+Examples:
 
 - "List the mates on this assembly and tell me which ones are failing."
 - "Measure the distance between these two faces."
@@ -25,19 +21,17 @@ Examples you can ask:
 - "Extrude a cube, then cut cylinders all the way through on each face."
 - "Save a checkpoint before we change anything."
 
-Destructive steps (delete mates, replace components, and similar) ask for an explicit confirm. Meaningful edit cycles should end with your "yes" before a hard save.
+Destructive tools require `confirm: true`. Don't save until you've said the model looks right.
 
-## Set up once
+## Setup
 
-Do this on the Windows machine that runs SolidWorks.
+On the Windows machine that runs SolidWorks:
 
-### 1. Install the tooling
+### 1. Install Node and .NET
 
-Install [Node.js 20+](https://nodejs.org/) and the [.NET 8 SDK](https://dotnet.microsoft.com/download). You can leave them alone after that. They only need to be present so this project can talk to SolidWorks.
+[Node.js 20+](https://nodejs.org/) and the [.NET 8 SDK](https://dotnet.microsoft.com/download).
 
-### 2. Get the project and build it
-
-In PowerShell:
+### 2. Clone and build
 
 ```powershell
 git clone https://github.com/jaylamping/solidworks-mcp.git
@@ -46,19 +40,19 @@ npm install
 npm run build
 ```
 
-### 3. Check that SolidWorks is reachable
+### 3. Check SolidWorks
 
-Start SolidWorks from the Start Menu, then run:
+Start SolidWorks, then:
 
 ```powershell
 npm run worker:status
 ```
 
-You should see a live connection and, if a document is open, its title and path. If the check fails, open SolidWorks once by hand and try again.
+You should see a live COM connection (and the open document if any).
 
 ### 4. Connect Cursor
 
-In Cursor MCP settings (or a project `.cursor/mcp.json`), point a server at your clone. Replace the path with your real folder:
+Point MCP at your clone (path placeholders → your real folder):
 
 ```json
 {
@@ -79,17 +73,13 @@ In Cursor MCP settings (or a project `.cursor/mcp.json`), point a server at your
 }
 ```
 
-What those settings mean:
+| Variable | Meaning |
+|----------|---------|
+| `SOLIDWORKS_MCP_ALLOWED_ROOTS` | Semicolon-separated folders allowed for open/save. Open docs are trusted even if omitted. |
+| `SOLIDWORKS_MCP_TOOL_TIER` | `core` / `extended` / `advanced` / `debug` / `all`. `extended` is a good default. |
+| `SOLIDWORKS_MCP_PERSISTENT_WORKER` | `1` keeps a warm worker (faster). |
 
-| Setting | Plain meaning |
-|---------|----------------|
-| `SOLIDWORKS_MCP_ALLOWED_ROOTS` | Folders the assistant is allowed to open or save under. Use your CAD library paths. Include `<clone>/.demo` if you want the demo part saved there. Separate with `;`. The document already open in SolidWorks is trusted even if you skip this. |
-| `SOLIDWORKS_MCP_TOOL_TIER` | How many tools to expose. `extended` is a good daily default. `all` shows everything. |
-| `SOLIDWORKS_MCP_PERSISTENT_WORKER` | Keep one warm worker process. Faster tool calls. Recommended for interactive CAD work. |
-
-After you save the config, reload MCP / restart Cursor so it picks up the server.
-
-**Important:** do not ask the assistant to run many SolidWorks tools at once in parallel. SolidWorks COM is single-threaded. Call tools one at a time.
+Reload MCP after saving. Call SolidWorks tools one at a time — COM is single-threaded.
 
 ## Try the demo
 
@@ -101,37 +91,22 @@ With SolidWorks open and MCP connected, ask:
 
 Or from the repo: `npm run demo:build-part`.
 
-## What the assistant can do
+## Tools
 
-There are 100+ tools. Broadly:
+100+ tools across documents, assemblies, mates, modeling, measure/inspect, selection, URDF helpers, and low-level API invoke. Search with `solidworks_search_tools`, or see [`docs/api/`](docs/api/).
 
-| Area | Examples |
-|------|----------|
-| Documents | Open, save, close, rebuild, pack-and-go, export |
-| Assemblies | List components, transforms, interference, BOM, degrees of freedom |
-| Mates | Coincident, distance, parallel, perpendicular, width, limit angle, suppress or delete |
-| Modeling | Sketches, extrude/cut, fillet/chamfer, patterns, mirror |
-| Measure / inspect | Mass properties, measure, feature and body boxes, stable face references |
-| Selection | Use what you clicked in SolidWorks, or pick by ray / persist reference |
-| Robot / URDF helpers | Readiness check, add coordinate-system frames |
-| Escape hatches | Low-level API invoke, API doc search |
+## Safety
 
-Ask the assistant to search tools with `solidworks_search_tools`, or browse generated pages under [`docs/api/`](docs/api/).
+- Mutating tools often auto-checkpoint under `.checkpoints/` next to the document.
+- Confirm the model (or a PNG) before a hard save.
+- Assembly lock-in uses `confirm_and_save` (rebuild → mate health → save → reopen → pose check).
+- Paths outside `SOLIDWORKS_MCP_ALLOWED_ROOTS` are rejected.
 
-## Safety habits that matter in the shop
-
-- Prefer a checkpoint before risky edits. Mutating tools often stage one automatically under `.checkpoints/` next to the document.
-- After a change, look at the model or a PNG export and answer "Does this look good?" before a final save.
-- Lock-in for assemblies goes through `confirm_and_save`, which rebuilds, checks mate health, saves, and reopens to prove the pose stayed put.
-- Paths outside `SOLIDWORKS_MCP_ALLOWED_ROOTS` are rejected on purpose so the assistant cannot wander the disk.
-
-More detail: [Troubleshooting](docs/troubleshooting.md).
+See [Troubleshooting](docs/troubleshooting.md).
 
 ---
 
 ## For developers
-
-### Architecture
 
 ```text
 Cursor (or other MCP client)
@@ -140,23 +115,17 @@ Cursor (or other MCP client)
   → SolidWorks COM
 ```
 
-- **Node** owns MCP protocol, tool catalog, path guards, and the worker session.
-- **Worker** attaches to `SldWorks.Application` and runs commands. Default is one process per call. Set `SOLIDWORKS_MCP_PERSISTENT_WORKER=1` (or `SOLIDWORKS_MCP_WORKER_MODE=session`) for a long-lived NDJSON session.
-- **Tool metadata** lives in `src/tool-spec/catalog.ts`. Run `npm run generate:tools` to refresh the manifest and generated C# policy. Do not hand-edit generated allowlists.
-
-### Environment variables
+Tool metadata: `src/tool-spec/catalog.ts`. Refresh with `npm run generate:tools` — don't hand-edit generated allowlists. Persistent worker: `SOLIDWORKS_MCP_PERSISTENT_WORKER=1` or `SOLIDWORKS_MCP_WORKER_MODE=session`.
 
 | Variable | Purpose |
 |----------|---------|
-| `SOLIDWORKS_MCP_ALLOWED_ROOTS` | Semicolon-separated directories allowed for open/save/export paths |
+| `SOLIDWORKS_MCP_ALLOWED_ROOTS` | Allowed open/save/export roots |
 | `SOLIDWORKS_MCP_TOOL_TIER` | `core` / `extended` / `advanced` / `debug` / `all` |
-| `SOLIDWORKS_MCP_INVOKE_WRITE` | Allow write members through `solidworks_invoke` |
-| `SOLIDWORKS_MCP_PERSISTENT_WORKER` | `1` for the warm session worker |
-| `SOLIDWORKS_MCP_WORKER_MODE` | `session` for the same path; omit for ephemeral oneshot |
-| `SOLIDWORKS_MCP_AUTO_CHECKPOINT` | `0` to disable auto pre-change checkpoints |
-| `SOLIDWORKS_MCP_CHECKPOINT_DEBOUNCE_SEC` | Reuse window for checkpoints (default `45`) |
-
-### Checks
+| `SOLIDWORKS_MCP_INVOKE_WRITE` | Allow writes via `solidworks_invoke` |
+| `SOLIDWORKS_MCP_PERSISTENT_WORKER` | `1` for warm session worker |
+| `SOLIDWORKS_MCP_WORKER_MODE` | `session` or omit for ephemeral |
+| `SOLIDWORKS_MCP_AUTO_CHECKPOINT` | `0` disables auto checkpoints |
+| `SOLIDWORKS_MCP_CHECKPOINT_DEBOUNCE_SEC` | Checkpoint reuse window (default `45`) |
 
 ```powershell
 npm run typecheck
@@ -168,15 +137,13 @@ npm run validate:tools
 npm run demo:build-part
 ```
 
-`validate:tools` smoke-probes the API and worker. It reports a missing SolidWorks session without needing a particular CAD workspace. `demo:build-part` needs a live SolidWorks session and writes under `.demo/`. `demo:record-video` captures the SolidWorks window into `docs/assets/` (needs `ffmpeg`).
-
-### Further reading
+`demo:record-video` regenerates `docs/assets/` (needs SolidWorks + Edge + `ffmpeg`).
 
 - [Troubleshooting](docs/troubleshooting.md)
 - [Error catalog](docs/errors/README.md)
 - [CAD automation notes](docs/cad-automation.md)
 - [COM invoke ABI](docs/com-invoke-abi.md)
-- [API reference corpus](docs/api-reference/README.md) (generated / scraped locally)
+- [API reference corpus](docs/api-reference/README.md)
 
 ## License
 
