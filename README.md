@@ -10,8 +10,8 @@
 
 MCP server that drives SolidWorks on Windows from Cursor (or another MCP client). Open documents, mates, measures, exports, modeling — without writing macros.
 
-> [!WARNING]
-> **Heavy WIP.** This project is under active development and is **not** complete, stable, or production-ready. APIs, tools, and behavior will change. Expect rough edges, missing coverage, and breaking updates. Use it to experiment — not as a finished product.
+> [!NOTE]
+> **Heavy WIP.** This project is under active development. APIs, tools, and behavior will change. Expect rough edges, missing coverage, and breaking updates.
 
 > **Needs:** Windows · licensed SolidWorks · [Cursor](https://cursor.com) (or another MCP client) · Node.js 20+ · .NET 8 SDK  
 > SolidWorks should be open (or launchable) on the same machine.
