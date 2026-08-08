@@ -22,7 +22,7 @@ Examples you can ask:
 - "Measure the distance between these two faces."
 - "Add a coincident mate between the flange face and the bracket face."
 - "Export a PNG of the current view so I can check the pose."
-- "Build the demo part" (a cube with cylinders cut through each face).
+- "Extrude a cube, then cut cylinders all the way through on each face."
 - "Save a checkpoint before we change anything."
 
 Destructive steps (delete mates, replace components, and similar) ask for an explicit confirm. Meaningful edit cycles should end with your "yes" before a hard save.
@@ -95,15 +95,23 @@ After you save the config, reload MCP / restart Cursor so it picks up the server
 
 Once SolidWorks is open and the MCP server is connected (or after `npm run build`), you can build a known good part two ways. Same geometry either way: a **40 mm** cube with **Ø18 mm** cylinders cut through Front, Top, and Right.
 
-![Demo: ask Cursor to build the part, then watch SolidWorks](docs/assets/demo-build-part.gif)
+<!-- GIF autoplays in the README; click it (or the MP4 link) for GitHub’s native video player. -->
+[![Demo: ask Cursor to extrude a cube with through-cylinders, then watch SolidWorks](docs/assets/demo-build-part.gif)](https://github.com/jaylamping/solidworks-mcp/blob/main/docs/assets/demo-build-part.mp4)
 
-[Higher-quality MP4](docs/assets/demo-build-part.mp4). Re-record locally (SolidWorks open, Edge installed): `npm run demo:record-video`.
+Both formats live under [`docs/assets/`](docs/assets/):
+
+| File | Best for |
+|------|----------|
+| [`demo-build-part.gif`](docs/assets/demo-build-part.gif) | Autoplay preview in the README |
+| [`demo-build-part.mp4`](https://github.com/jaylamping/solidworks-mcp/blob/main/docs/assets/demo-build-part.mp4) | Sharper playback in GitHub’s video player |
+
+Re-record locally (SolidWorks open, Edge installed): `npm run demo:record-video`.
 
 ### From Cursor chat (MCP)
 
-Ask:
+Ask something like:
 
-> Build the demo part
+> Extrude a cube, then cut cylinders all the way through on each face.
 
 The assistant should call `solidworks_demo_build_part` with `confirm: true`. Watch SolidWorks as the cube and through-holes appear. To save under a fixed path, include your clone’s `.demo` folder in `SOLIDWORKS_MCP_ALLOWED_ROOTS` (see the example above) and pass something like:
 
