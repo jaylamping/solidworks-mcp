@@ -69,6 +69,7 @@ internal static partial class Program
             ["list_interferences"] = ListInterferences,
             ["set_mate_suppression"] = SetMateSuppression,
             ["save_document"] = SaveDocument,
+            ["confirm_and_save"] = ConfirmAndSave,
             ["close_all_documents"] = CloseAllDocuments,
             ["diagnose_part_save"] = DiagnosePartSave,
             ["clone_solid_body_part"] = CloneSolidBodyPart,

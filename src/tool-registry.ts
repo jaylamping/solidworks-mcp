@@ -34,6 +34,7 @@ export const SCHEMA_MAP = {
   unfixAllComponents: documentSchemas.unfixAllComponentsSchema,
   setCustomProperties: documentSchemas.setCustomPropertiesSchema,
   saveDocument: documentSchemas.saveDocumentSchema,
+  confirmAndSave: documentSchemas.confirmAndSaveSchema,
   componentName: assemblySchemas.componentNameSchema,
   transformComponent: assemblySchemas.transformComponentSchema,
   setComponentTransform: assemblySchemas.setComponentTransformSchema,
@@ -208,20 +209,27 @@ export function registerAllTools(server: McpServer): void {
           const workerArgs = prepareArgs(entry, record);
           const data = await runWorker({ command: entry.workerCommand, args: workerArgs });
           if (!entry.readOnly) {
-            const preCheckpoint =
-              data && typeof data === "object" && "preCheckpoint" in data
-                ? (data as { preCheckpoint?: { checkpointPath?: string } }).preCheckpoint
-                : undefined;
+            const recordData = data && typeof data === "object"
+              ? (data as {
+                ok?: unknown;
+                preCheckpoint?: { checkpointPath?: string };
+                checkpoint?: { checkpointPath?: string };
+              })
+              : undefined;
+            const okFlag = typeof recordData?.ok === "boolean" ? recordData.ok : true;
+            const checkpointPath =
+              typeof recordData?.preCheckpoint?.checkpointPath === "string"
+                ? recordData.preCheckpoint.checkpointPath
+                : typeof recordData?.checkpoint?.checkpointPath === "string"
+                  ? recordData.checkpoint.checkpointPath
+                  : undefined;
             appendAuditEntry({
               tool: entry.name,
               command: entry.workerCommand,
-              ok: true,
+              ok: okFlag,
               destructive: entry.destructive,
               path: typeof workerArgs.path === "string" ? workerArgs.path : undefined,
-              checkpointPath:
-                typeof preCheckpoint?.checkpointPath === "string"
-                  ? preCheckpoint.checkpointPath
-                  : undefined,
+              checkpointPath,
             });
           }
           return jsonResult(data);

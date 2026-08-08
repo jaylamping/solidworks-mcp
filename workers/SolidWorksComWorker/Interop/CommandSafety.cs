@@ -33,6 +33,7 @@ internal static class CommandSafety
         "copy_with_mates",
         "create_drawing_from_model",
         "restore_from_checkpoint",
+        "confirm_and_save",
     };
 
     /// <summary>
@@ -46,6 +47,7 @@ internal static class CommandSafety
         "add_urdf_frame",
         "align_component_to_feature",
         "clone_solid_body_part",
+        "confirm_and_save",
         "copy_with_mates",
         "create_drawing_from_model",
         "create_sketch",

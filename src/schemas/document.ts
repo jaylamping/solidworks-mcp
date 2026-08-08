@@ -88,4 +88,15 @@ export const setCustomPropertiesSchema = z.object({
   save: z.boolean().optional(),
 });
 
-export const saveDocumentSchema = optionalPathSchema;
+export const saveDocumentSchema = optionalPathSchema.extend({
+  skip_mate_validation: z.boolean().optional(),
+});
+
+export const confirmAndSaveSchema = z.object({
+  path: z.string().min(1),
+  looks_good: z.literal(true),
+  confirm: z.literal(true),
+  preview_path: z.string().min(1).optional(),
+  reopen: z.boolean().optional(),
+  pose_tolerance: z.number().positive().optional(),
+});

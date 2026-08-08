@@ -10,11 +10,48 @@ internal static partial class Program
     private static object SaveDocument(JsonElement? args)
     {
         string? inputPath = StringArg(args, "path");
+        // Assemblies validate mate health via force rebuild unless explicitly skipped.
+        bool skipMateValidation = BoolArg(args, "skip_mate_validation", defaultValue: false);
         ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
         ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
         if (doc is null)
         {
             throw new InvalidOperationException("No active SolidWorks document to save.");
+        }
+
+        bool isAssembly = doc.GetType() == (int)swDocumentTypes_e.swDocASSEMBLY;
+        List<object> preSaveMateFailures = [];
+        List<object> postSaveMateFailures = [];
+        bool? preForceOk = null;
+        bool? postForceOk = null;
+
+        if (isAssembly && !skipMateValidation)
+        {
+            preForceOk = ForceRebuildDocument(doc, out bool forceOk);
+            _ = forceOk;
+            List<MateHealthEntry> preMates = CollectMateHealthEntries(doc);
+            preSaveMateFailures = MateFailuresFrom(preMates);
+            if (preSaveMateFailures.Count > 0)
+            {
+                return new
+                {
+                    document = DescribeDocument(doc),
+                    ok = false,
+                    saved = false,
+                    errors = 0,
+                    warnings = 0,
+                    mateValidation = true,
+                    preForceOk,
+                    preSaveMateFailures,
+                    postSaveMateFailures,
+                    remediation = new[]
+                    {
+                        "Force rebuild exposed unsolved mates before save.",
+                        "Heal mates (or restore a checkpoint), then retry save_document / confirm_and_save.",
+                        "Do not treat this as locked-in. skip_mate_validation is recovery-only.",
+                    },
+                };
+            }
         }
 
         int errors = 0;
@@ -29,12 +66,231 @@ internal static partial class Program
             throw new InvalidOperationException($"Save failed. errors={errors}, warnings={warnings}");
         }
 
+        if (isAssembly && !skipMateValidation)
+        {
+            postForceOk = ForceRebuildDocument(doc, out bool forceOk);
+            _ = forceOk;
+            List<MateHealthEntry> postMates = CollectMateHealthEntries(doc);
+            postSaveMateFailures = MateFailuresFrom(postMates);
+            if (postSaveMateFailures.Count > 0)
+            {
+                return new
+                {
+                    document = DescribeDocument(doc),
+                    ok = false,
+                    saved = true,
+                    errors,
+                    warnings,
+                    mateValidation = true,
+                    preForceOk,
+                    postForceOk,
+                    preSaveMateFailures,
+                    postSaveMateFailures,
+                    remediation = new[]
+                    {
+                        "Save wrote the file, but force rebuild after save exposed unsolved mates.",
+                        "Restore from the latest checkpoint, heal mates, then confirm_and_save.",
+                    },
+                };
+            }
+        }
+
         return new
         {
             document = DescribeDocument(doc),
+            ok = true,
             saved = true,
             errors,
             warnings,
+            mateValidation = isAssembly && !skipMateValidation,
+            preForceOk,
+            postForceOk,
+            preSaveMateFailures,
+            postSaveMateFailures,
+        };
+    }
+
+    private static object ConfirmAndSave(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        bool looksGood = BoolArg(args, "looks_good", defaultValue: false);
+        bool confirm = BoolArg(args, "confirm", defaultValue: false);
+        bool reopen = BoolArg(args, "reopen", defaultValue: true);
+        string? previewPath = StringArg(args, "preview_path");
+        double poseTolerance = DoubleArg(args, "pose_tolerance", 1e-6);
+
+        if (!looksGood || !confirm)
+        {
+            throw new InvalidOperationException(
+                "confirm_and_save requires looks_good: true and confirm: true after explicit user approval.");
+        }
+
+        string allowedPath = PathGuard.AssertAllowedPath(inputPath);
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, allowedPath);
+        bool isAssembly = doc.GetType() == (int)swDocumentTypes_e.swDocASSEMBLY;
+
+        object checkpoint = CreateDocumentCheckpoint(allowedPath, reason: "confirm_and_save", force: true);
+
+        Dictionary<string, double[]>? preTransforms = null;
+        if (isAssembly)
+        {
+            preTransforms = CaptureComponentTransforms((IAssemblyDoc)doc);
+        }
+
+        bool preForceOk = ForceRebuildDocument(doc, out _);
+        List<MateHealthEntry> preMates = isAssembly ? CollectMateHealthEntries(doc) : [];
+        List<object> preMateFailures = MateFailuresFrom(preMates);
+        if (preMateFailures.Count > 0)
+        {
+            return new
+            {
+                document = DescribeDocument(doc),
+                ok = false,
+                saved = false,
+                poseStable = false,
+                looksGood,
+                previewPath,
+                reopen = false,
+                preForceOk,
+                preMateFailures,
+                postSaveMateFailures = Array.Empty<object>(),
+                postReopenMateFailures = Array.Empty<object>(),
+                jumpedComponents = Array.Empty<object>(),
+                checkpoint,
+                remediation = new[]
+                {
+                    "Force rebuild before save exposed unsolved mates (What's Wrong class failures).",
+                    "Do not declare locked-in. Heal or restore_from_checkpoint, then retry confirm_and_save.",
+                },
+            };
+        }
+
+        int saveErrors = 0;
+        int saveWarnings = 0;
+        bool saved = doc.Save3(
+            (int)swSaveAsOptions_e.swSaveAsOptions_Silent,
+            ref saveErrors,
+            ref saveWarnings);
+        if (!saved || saveErrors != 0)
+        {
+            return new
+            {
+                document = DescribeDocument(doc),
+                ok = false,
+                saved = false,
+                poseStable = false,
+                looksGood,
+                previewPath,
+                reopen = false,
+                preForceOk,
+                saveErrors,
+                saveWarnings,
+                saveErrorMeaning = DecodeSaveErrors(saveErrors),
+                preMateFailures,
+                postSaveMateFailures = Array.Empty<object>(),
+                postReopenMateFailures = Array.Empty<object>(),
+                jumpedComponents = Array.Empty<object>(),
+                checkpoint,
+                remediation = new[]
+                {
+                    $"Save3 failed. errors={saveErrors} warnings={saveWarnings}.",
+                },
+            };
+        }
+
+        bool postSaveForceOk = ForceRebuildDocument(doc, out _);
+        List<MateHealthEntry> postSaveMates = isAssembly ? CollectMateHealthEntries(doc) : [];
+        List<object> postSaveMateFailures = MateFailuresFrom(postSaveMates);
+        if (postSaveMateFailures.Count > 0)
+        {
+            return new
+            {
+                document = DescribeDocument(doc),
+                ok = false,
+                saved = true,
+                poseStable = false,
+                looksGood,
+                previewPath,
+                reopen = false,
+                preForceOk,
+                postSaveForceOk,
+                saveErrors,
+                saveWarnings,
+                preMateFailures,
+                postSaveMateFailures,
+                postReopenMateFailures = Array.Empty<object>(),
+                jumpedComponents = Array.Empty<object>(),
+                checkpoint,
+                remediation = new[]
+                {
+                    "Save succeeded, but force rebuild after save exposed unsolved mates.",
+                    "Restore from checkpoint, heal, ask the user again, then retry confirm_and_save.",
+                },
+            };
+        }
+
+        bool didReopen = false;
+        bool postReopenForceOk = true;
+        List<object> postReopenMateFailures = [];
+        List<object> jumpedComponents = [];
+        bool poseStable = true;
+
+        if (reopen && isAssembly)
+        {
+            string? title = Try(() => doc.GetTitle()) as string;
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                TryVoid(() => app.CloseDoc(title));
+            }
+
+            doc = OpenDocument(app, allowedPath);
+            didReopen = true;
+            postReopenForceOk = ForceRebuildDocument(doc, out _);
+            List<MateHealthEntry> postReopenMates = CollectMateHealthEntries(doc);
+            postReopenMateFailures = MateFailuresFrom(postReopenMates);
+
+            Dictionary<string, double[]> afterTransforms = CaptureComponentTransforms((IAssemblyDoc)doc);
+            if (preTransforms is not null)
+            {
+                jumpedComponents = DiffComponentTransforms(preTransforms, afterTransforms, poseTolerance);
+            }
+
+            poseStable = jumpedComponents.Count == 0 && postReopenMateFailures.Count == 0;
+        }
+
+        bool ok = saved
+            && preMateFailures.Count == 0
+            && postSaveMateFailures.Count == 0
+            && postReopenMateFailures.Count == 0
+            && poseStable;
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            ok,
+            saved = true,
+            poseStable,
+            looksGood,
+            previewPath,
+            reopen = didReopen,
+            preForceOk,
+            postSaveForceOk,
+            postReopenForceOk,
+            saveErrors,
+            saveWarnings,
+            preMateFailures,
+            postSaveMateFailures,
+            postReopenMateFailures,
+            jumpedComponents,
+            checkpoint,
+            remediation = ok
+                ? Array.Empty<string>()
+                : new[]
+                {
+                    "confirm_and_save gate failed after reopen/pose check.",
+                    "Restore from checkpoint if needed, heal, and retry only after user re-approval.",
+                },
         };
     }
 

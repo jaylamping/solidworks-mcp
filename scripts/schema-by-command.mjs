@@ -108,6 +108,7 @@ export const SCHEMA_BY_COMMAND = {
   resolve_selection: "optionalPath",
   round_side_arms_from_circle: "roundSideArmsFromCircle",
   save_document: "saveDocument",
+  confirm_and_save: "confirmAndSave",
   select_by_persist_reference: "selectByPersistReference",
   set_custom_properties: "setCustomProperties",
   set_component_configuration: "setComponentConfiguration",

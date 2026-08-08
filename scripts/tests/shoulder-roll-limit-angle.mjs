@@ -158,14 +158,30 @@ console.log("force rebuild");
 runWorker("rebuild_document", { path: ASM, force: true });
 assertAssemblyHealthy("post-force-rebuild");
 
-console.log("save_document");
-const save = runWorker("save_document", { path: ASM });
-check(save?.saved === true, `save_document saved=${save?.saved}`);
-check((save?.errors ?? 0) === 0, `save_document errors=${save?.errors}`);
+console.log("confirm_and_save (server hard gate)");
+const confirm = runWorker("confirm_and_save", {
+  path: ASM,
+  looks_good: true,
+  confirm: true,
+  reopen: true,
+});
+check(confirm?.ok === true, `confirm_and_save ok=${confirm?.ok}`);
+check(confirm?.saved === true, `confirm_and_save saved=${confirm?.saved}`);
+check(confirm?.poseStable === true, `confirm_and_save poseStable=${confirm?.poseStable}`);
+check(
+  !Array.isArray(confirm?.preMateFailures) || confirm.preMateFailures.length === 0,
+  `confirm_and_save preMateFailures=${JSON.stringify(confirm?.preMateFailures)}`,
+);
+check(
+  !Array.isArray(confirm?.postSaveMateFailures) || confirm.postSaveMateFailures.length === 0,
+  `confirm_and_save postSaveMateFailures=${JSON.stringify(confirm?.postSaveMateFailures)}`,
+);
+check(
+  !Array.isArray(confirm?.postReopenMateFailures) || confirm.postReopenMateFailures.length === 0,
+  `confirm_and_save postReopenMateFailures=${JSON.stringify(confirm?.postReopenMateFailures)}`,
+);
 
-console.log("force rebuild after save");
-runWorker("rebuild_document", { path: ASM, force: true });
-const final = assertAssemblyHealthy("post-save-force-rebuild");
+const final = assertAssemblyHealthy("post-confirm-and-save");
 
 if (failures.length) {
   console.error("FAIL");
@@ -187,7 +203,7 @@ console.log(
         angleDeg: final.limit.angleDeg,
         errorCode: final.limit.errorCode,
       },
-      save,
+      confirm,
     },
     null,
     2,

@@ -335,6 +335,206 @@ internal static partial class Program
         return mateCount;
     }
 
+    private sealed class MateHealthEntry
+    {
+        public string? Name { get; init; }
+        public string? Type { get; init; }
+        public int? ErrorCode { get; init; }
+        public bool? Suppressed { get; init; }
+        public bool? IsAdvancedMate { get; init; }
+        public double? MinAngleDeg { get; init; }
+        public double? MaxAngleDeg { get; init; }
+        public double? AngleDeg { get; init; }
+        public bool? FlipDimension { get; init; }
+
+        public object ToListItem() => new
+        {
+            name = Name,
+            type = Type,
+            errorCode = ErrorCode,
+            suppressed = Suppressed,
+            isAdvancedMate = IsAdvancedMate,
+            minAngleDeg = MinAngleDeg,
+            maxAngleDeg = MaxAngleDeg,
+            angleDeg = AngleDeg,
+            flipDimension = FlipDimension,
+        };
+
+        public bool IsFailure
+        {
+            get
+            {
+                if (Suppressed == true)
+                {
+                    return false;
+                }
+
+                // Null errorCode means health could not be read — treat as unsafe.
+                return ErrorCode is null or not 0;
+            }
+        }
+    }
+
+    private static List<MateHealthEntry> CollectMateHealthEntries(ModelDoc2 doc)
+    {
+        var mates = new List<MateHealthEntry>();
+        Feature? mateGroup = FindFeatureByName(doc, "Mates");
+        if (mateGroup is null)
+        {
+            return mates;
+        }
+
+        object? subFeature = Try(() => mateGroup.GetFirstSubFeature());
+        int guard = 0;
+        while (subFeature is not null && guard++ < 200)
+        {
+            Feature current = (Feature)subFeature;
+            string? name = Try(() => current.Name) as string;
+            string? typeName = Try(() => current.GetTypeName2()) as string;
+            int? errorCode = null;
+            try
+            {
+                bool isWarning = false;
+                errorCode = current.GetErrorCode2(out isWarning);
+            }
+            catch
+            {
+                errorCode = Try(() => current.GetErrorCode()) as int?;
+            }
+
+            bool? suppressed = Try(() => current.IsSuppressed()) as bool?;
+            bool? isAdvancedMate = null;
+            double? minAngleDeg = null;
+            double? maxAngleDeg = null;
+            double? angleDeg = null;
+            bool? flipDimension = null;
+            if (Try(() => current.GetDefinition()) is IAngleMateFeatureData angleMate)
+            {
+                isAdvancedMate = Try(() => angleMate.IsAdvancedMate) as bool?;
+                double? minRad = Try(() => angleMate.MinimumAngle) as double?;
+                double? maxRad = Try(() => angleMate.MaximumAngle) as double?;
+                double? angRad = Try(() => angleMate.Angle) as double?;
+                flipDimension = Try(() => angleMate.FlipDimension) as bool?;
+                if (minRad is double min) minAngleDeg = min * 180.0 / Math.PI;
+                if (maxRad is double max) maxAngleDeg = max * 180.0 / Math.PI;
+                if (angRad is double ang) angleDeg = ang * 180.0 / Math.PI;
+            }
+
+            mates.Add(new MateHealthEntry
+            {
+                Name = name,
+                Type = typeName,
+                ErrorCode = errorCode,
+                Suppressed = suppressed,
+                IsAdvancedMate = isAdvancedMate,
+                MinAngleDeg = minAngleDeg,
+                MaxAngleDeg = maxAngleDeg,
+                AngleDeg = angleDeg,
+                FlipDimension = flipDimension,
+            });
+            subFeature = Try(() => current.GetNextSubFeature());
+        }
+
+        return mates;
+    }
+
+    private static List<object> MateFailuresFrom(IEnumerable<MateHealthEntry> mates) =>
+        mates.Where(m => m.IsFailure)
+            .Select(m => (object)new
+            {
+                name = m.Name,
+                type = m.Type,
+                errorCode = m.ErrorCode,
+                suppressed = m.Suppressed,
+            })
+            .ToList();
+
+    private static bool ForceRebuildDocument(ModelDoc2 doc, out bool forceOk)
+    {
+        forceOk = Try(() => doc.ForceRebuild3(false)) as bool? ?? false;
+        doc.EditRebuild3();
+        return forceOk;
+    }
+
+    private static Dictionary<string, double[]> CaptureComponentTransforms(IAssemblyDoc assembly)
+    {
+        var transforms = new Dictionary<string, double[]>(StringComparer.OrdinalIgnoreCase);
+        object[]? roots = Try(() => assembly.GetComponents(true)) as object[];
+        if (roots is null)
+        {
+            return transforms;
+        }
+
+        foreach (object entry in roots)
+        {
+            if (entry is not Component2 component)
+            {
+                continue;
+            }
+
+            string? name = Try(() => component.Name2) as string;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                continue;
+            }
+
+            try
+            {
+                transforms[name] = ReadComponentTransformMatrix(component);
+            }
+            catch
+            {
+                // Skip components whose transforms cannot be read.
+            }
+        }
+
+        return transforms;
+    }
+
+    private static List<object> DiffComponentTransforms(
+        Dictionary<string, double[]> before,
+        Dictionary<string, double[]> after,
+        double tolerance)
+    {
+        var jumped = new List<object>();
+        foreach ((string name, double[] beforeMatrix) in before)
+        {
+            if (!after.TryGetValue(name, out double[]? afterMatrix))
+            {
+                jumped.Add(new { name, reason = "missing_after" });
+                continue;
+            }
+
+            bool close = beforeMatrix.Length == afterMatrix.Length;
+            if (close)
+            {
+                for (int i = 0; i < beforeMatrix.Length; i++)
+                {
+                    if (Math.Abs(beforeMatrix[i] - afterMatrix[i]) > tolerance)
+                    {
+                        close = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!close)
+            {
+                jumped.Add(new { name, reason = "transform_delta", before = beforeMatrix, after = afterMatrix });
+            }
+        }
+
+        foreach (string name in after.Keys)
+        {
+            if (!before.ContainsKey(name))
+            {
+                jumped.Add(new { name, reason = "missing_before" });
+            }
+        }
+
+        return jumped;
+    }
+
     private static object ListMates(JsonElement? args)
     {
         string? inputPath = StringArg(args, "path");
@@ -350,67 +550,14 @@ internal static partial class Program
             throw new InvalidOperationException("list_mates requires an assembly document.");
         }
 
-        var mates = new List<object>();
-        Feature? mateGroup = FindFeatureByName(doc, "Mates");
-        if (mateGroup is not null)
-        {
-            object? subFeature = Try(() => mateGroup.GetFirstSubFeature());
-            int guard = 0;
-            while (subFeature is not null && guard++ < 200)
-            {
-                Feature current = (Feature)subFeature;
-                string? name = Try(() => current.Name) as string;
-                string? typeName = Try(() => current.GetTypeName2()) as string;
-                int? errorCode = null;
-                try
-                {
-                    bool isWarning = false;
-                    errorCode = current.GetErrorCode2(out isWarning);
-                }
-                catch
-                {
-                    errorCode = Try(() => current.GetErrorCode()) as int?;
-                }
-
-                bool? suppressed = Try(() => current.IsSuppressed()) as bool?;
-                bool? isAdvancedMate = null;
-                double? minAngleDeg = null;
-                double? maxAngleDeg = null;
-                double? angleDeg = null;
-                bool? flipDimension = null;
-                if (Try(() => current.GetDefinition()) is IAngleMateFeatureData angleMate)
-                {
-                    isAdvancedMate = Try(() => angleMate.IsAdvancedMate) as bool?;
-                    double? minRad = Try(() => angleMate.MinimumAngle) as double?;
-                    double? maxRad = Try(() => angleMate.MaximumAngle) as double?;
-                    double? angRad = Try(() => angleMate.Angle) as double?;
-                    flipDimension = Try(() => angleMate.FlipDimension) as bool?;
-                    if (minRad is double min) minAngleDeg = min * 180.0 / Math.PI;
-                    if (maxRad is double max) maxAngleDeg = max * 180.0 / Math.PI;
-                    if (angRad is double ang) angleDeg = ang * 180.0 / Math.PI;
-                }
-
-                mates.Add(new
-                {
-                    name,
-                    type = typeName,
-                    errorCode,
-                    suppressed,
-                    isAdvancedMate,
-                    minAngleDeg,
-                    maxAngleDeg,
-                    angleDeg,
-                    flipDimension,
-                });
-                subFeature = Try(() => current.GetNextSubFeature());
-            }
-        }
-
+        List<MateHealthEntry> entries = CollectMateHealthEntries(doc);
         return new
         {
             document = DescribeDocument(doc),
-            mates,
+            mates = entries.Select(e => e.ToListItem()).ToList(),
             mateCount = CountAssemblyMates(doc),
+            mateFailures = MateFailuresFrom(entries),
+            mateHealthy = !entries.Any(e => e.IsFailure),
         };
     }
 
