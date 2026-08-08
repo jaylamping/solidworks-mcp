@@ -1,0 +1,43 @@
+---
+description: Do not mutate CAD docs after confirm_and_save lock-in until the user asks
+alwaysApply: true
+---
+
+# Frozen SolidWorks documents
+
+After a document reaches a user-approved locked-in state, **stop all CAD mutation** on that document until the user explicitly asks to edit it again.
+
+## When a doc becomes frozen
+
+A document is frozen when **all** of the following are true:
+
+1. The user approved the result ("looks good" / equivalent).
+2. `solidworks_confirm_and_save` returned `ok: true` (and `poseStable: true` for assemblies).
+3. You told the user it is locked in.
+
+Also treat as frozen if the user says freeze / leave it / don't touch it / hands off for a named document.
+
+## While frozen — allowed
+
+- Read-only inspect: `list_*`, `status`, `measure`, `export` PNG (read-only view capture), `diagnose_*`, `search_*`
+- Answering questions about the frozen doc from inspection or prior context
+
+## While frozen — forbidden (unless user explicitly re-opens work)
+
+- Any mate create/edit/delete/suppress
+- `set_mate_limit_angle`, transforms, dimensions, features, rebuilds meant to "heal"
+- `save_document`, `confirm_and_save`, checkpoint restore, replace/insert/delete components
+- "Just one more force rebuild / park / flip / recreate" loops
+- Opening a healing script against the frozen path
+
+If save/inspect shows mate errors on a frozen doc, **report them and wait**. Do not auto-heal.
+
+## Unfreeze
+
+Only when the user clearly asks to change that document again (e.g. "fix the roll limit", "edit the arm asm", "unfreeze marengo_arm_right_asm"). Then resume the normal confirm-and-save workflow.
+
+## Session hygiene
+
+- Prefer one locked-in assembly per conversation turn; after lock-in, switch to read-only or stop.
+- Do not keep probing/healing the same joint across turns "to be safe".
+- Scratch `.tmp-*` heal scripts must not target a frozen doc.
