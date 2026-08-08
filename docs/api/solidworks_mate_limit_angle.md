@@ -2,6 +2,10 @@
 
 Add a limit-angle mate with min/max rotation about an axis.
 
+Create and edit operations now run a force rebuild and gate their response on
+the resulting mate health. A soft `EditRebuild3` result is not sufficient to
+declare a limit-angle mate valid.
+
 | Field | Value |
 |-------|-------|
 | Worker command | `mate_limit_angle` |

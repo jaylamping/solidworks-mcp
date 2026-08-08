@@ -565,6 +565,10 @@ internal static partial class Program
         int mateError = 0;
         int? createMateErrorStatus = null;
         var attempts = new List<object>();
+        HashSet<string> existingMateNames = CollectMateHealthEntries(doc)
+            .Select(m => m.Name)
+            .OfType<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         void AttemptCreate(
             string attemptName,
@@ -725,6 +729,53 @@ internal static partial class Program
         }
 
         doc.EditRebuild3();
+        bool forceOk = ForceRebuildDocument(doc, out _);
+        string? mateName = Try(() => mateFeature?.Name) as string;
+        int? postForceErrorCode = null;
+        bool? isWarning = null;
+        if (mateFeature is not null)
+        {
+            try
+            {
+                bool warning = false;
+                postForceErrorCode = mateFeature.GetErrorCode2(out warning);
+                isWarning = warning;
+            }
+            catch
+            {
+                postForceErrorCode = Try(() => mateFeature.GetErrorCode()) as int?;
+            }
+        }
+
+        string? postForceErrorName = postForceErrorCode is int featureErrorCode
+            ? SwErrorDecoder.DecodeFeatureError(featureErrorCode).Name
+            : null;
+        bool? suppressed = Try(() => mateFeature?.IsSuppressed()) as bool?;
+        MateHealthEntry? createdMateHealth = CollectMateHealthEntries(doc)
+            .Where(m => m.Name is not null && !existingMateNames.Contains(m.Name))
+            .LastOrDefault();
+        if (createdMateHealth is not null)
+        {
+            mateName ??= createdMateHealth.Name;
+            if (mateFeature is null)
+            {
+                postForceErrorCode = createdMateHealth.ErrorCode;
+                postForceErrorName = createdMateHealth.ErrorName;
+                isWarning = createdMateHealth.IsWarning;
+                suppressed = createdMateHealth.Suppressed;
+            }
+        }
+
+        if (mateCreated
+            && suppressed != true
+            && (postForceErrorCode is null or not 0))
+        {
+            throw new InvalidOperationException(
+                $"Mate '{mateName ?? "<unnamed>"}' failed force-rebuild health with feature error "
+                + $"{postForceErrorName ?? "swFeatureErrorUnknown"} (code {postForceErrorCode?.ToString() ?? "null"}). "
+                + "Soft EditRebuild3 is insufficient; force rebuild failed mate health.");
+        }
+
         (string errorName, string[] remediation) = SwErrorDecoder.DecodeMateError(mateError);
 
         return new
@@ -745,7 +796,7 @@ internal static partial class Program
             maxAngleDeg = maxDeg,
             isAdvancedMate = true,
             mateCreated,
-            mateName = Try(() => mateFeature?.Name),
+            mateName,
             mateError,
             createMateErrorStatus,
             mateErrorName = errorName,
@@ -753,6 +804,10 @@ internal static partial class Program
             mateMethod = method,
             attempts,
             mateCount = CountAssemblyMates(doc),
+            forceOk,
+            postForceErrorCode,
+            postForceErrorName,
+            isWarning,
         };
     }
 
@@ -819,17 +874,32 @@ internal static partial class Program
 
         bool modifyOk = Try(() => mateFeature.ModifyDefinition(editable, doc, null)) as bool? ?? false;
         doc.EditRebuild3();
+        bool forceOk = ForceRebuildDocument(doc, out _);
 
         IAngleMateFeatureData? afterDef = Try(() => mateFeature.GetDefinition()) as IAngleMateFeatureData;
-        int? errorCode = null;
+        int? postForceErrorCode = null;
+        bool? isWarning = null;
         try
         {
-            bool isWarning = false;
-            errorCode = mateFeature.GetErrorCode2(out isWarning);
+            bool warning = false;
+            postForceErrorCode = mateFeature.GetErrorCode2(out warning);
+            isWarning = warning;
         }
         catch
         {
-            errorCode = Try(() => mateFeature.GetErrorCode()) as int?;
+            postForceErrorCode = Try(() => mateFeature.GetErrorCode()) as int?;
+        }
+
+        string? postForceErrorName = postForceErrorCode is int featureErrorCode
+            ? SwErrorDecoder.DecodeFeatureError(featureErrorCode).Name
+            : null;
+        bool? suppressed = Try(() => mateFeature.IsSuppressed()) as bool?;
+        if (suppressed != true && (postForceErrorCode is null or not 0))
+        {
+            throw new InvalidOperationException(
+                $"Mate '{mateName}' failed force-rebuild health with feature error "
+                + $"{postForceErrorName ?? "swFeatureErrorUnknown"} (code {postForceErrorCode?.ToString() ?? "null"}). "
+                + "Soft EditRebuild3 is insufficient; force rebuild failed mate health.");
         }
 
         return new
@@ -837,7 +907,11 @@ internal static partial class Program
             document = DescribeDocument(doc),
             mateName = Try(() => mateFeature.Name),
             modifyOk,
-            errorCode,
+            errorCode = postForceErrorCode,
+            forceOk,
+            postForceErrorCode,
+            postForceErrorName,
+            isWarning,
             before = new
             {
                 isAdvancedMate = beforeAdvanced,
