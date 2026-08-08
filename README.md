@@ -8,7 +8,7 @@
 [![MCP](https://img.shields.io/badge/MCP-server-black)](https://modelcontextprotocol.io/)
 [![Status](https://img.shields.io/badge/status-heavy%20WIP-orange)](#)
 
-MCP server that drives SolidWorks on Windows from Cursor (or another MCP client). Open documents, mates, measures, exports, modeling — without writing macros.
+MCP server that drives SolidWorks on Windows from Cursor (or another MCP client). Open and edit parts and assemblies, create geometry, mates, measure, rebuild, export, and more — without writing macros.
 
 > [!NOTE]
 > **Heavy WIP.** This project is under active development. APIs, tools, and behavior will change. Expect rough edges, missing coverage, and breaking updates.
