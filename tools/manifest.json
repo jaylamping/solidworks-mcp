@@ -1078,6 +1078,23 @@
       "schema": "optionalPath"
     },
     {
+      "name": "solidworks_list_mate_entities",
+      "workerCommand": "list_mate_entities",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: list_mate_entities",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "optionalPath"
+    },
+    {
       "name": "solidworks_list_mates",
       "workerCommand": "list_mates",
       "tier": "core",

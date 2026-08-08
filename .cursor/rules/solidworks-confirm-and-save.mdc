@@ -10,13 +10,16 @@ When editing assemblies/parts through SolidWorks MCP / the COM worker:
 1. Mutating CAD tools **auto-stage a pre-change checkpoint** under `<doc-dir>/.checkpoints/` before applying changes. Responses include `preCheckpoint` with `checkpointPath` when staging ran.
 2. If a change goes wrong, call `solidworks_list_checkpoints` then `solidworks_restore_from_checkpoint` with `confirm: true` (and `path` if needed) before continuing.
 3. After each meaningful CAD change cycle, capture a `export` PNG with `keep_view: true` (or describe the live viewport) and **ask the user**: "Does this look good?"
-4. Do **not** call `save_document` as the happy path after pose/mate work.
-5. Only after the user explicitly says yes, call `confirm_and_save` with:
-   - `looks_good: true`
-   - `confirm: true`
-   - optional `preview_path` for an audit screenshot
-6. If `confirm_and_save` returns `ok: false` or `poseStable: false`, report the jumped components / mate warnings, restore/heal, ask the user again, and retry. Do not declare success until `ok: true`.
-7. Yellow mate warnings (`errorCode != 0`) after a user-approved pose are blockers for “done” — heal or explain before another save attempt.
+4. Do **not** call `save_document` as the happy path after pose/mate work until the user approves the preview.
+5. Only after the user explicitly says yes, persist with this **hard gate** (never skip):
+   1. `list_mates` — every mate `errorCode === 0` (yellow/red mates are blockers)
+   2. `rebuild_document` with `force: true` — re-check mates still all `errorCode === 0`
+   3. `save_document` — `saved: true` and `errors: 0`
+   4. `rebuild_document` with `force: true` again — mates still clean
+   5. Prefer close+reopen (or re-open path) and force-rebuild once more when locking joint/limit work
+6. Soft `list_mates` / in-session heal that reports `errorCode: 0` is **not** enough. Force rebuild often exposes latent LimitAngle / coincident failures that UI "What's Wrong" shows on save.
+7. If `confirm_and_save` exists, use it with `looks_good: true`, `confirm: true`, and optional `preview_path`; still require the force-rebuild gate above. If it returns `ok: false` or `poseStable: false`, report jumped components / mate warnings, restore/heal, ask again, and retry.
+8. Do **not** declare PASS, "locked in", or done until the hard gate succeeds. Regression tests for mate/pose work must include save + force rebuild, not property checks alone.
 
 ## Checkpoint notes
 

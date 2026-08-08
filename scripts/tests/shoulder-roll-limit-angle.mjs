@@ -5,7 +5,10 @@
  * at the parked / nominal pose, the RS02 actuator bbox center must sit on the
  * clear side of the joint (negative assembly Y for this right-arm frame).
  *
- * Also asserts LimitAngle sense/stops and that roll/RS02 stay float.
+ * Also asserts LimitAngle sense/stops, roll/RS02 stay float, and — critically —
+ * that the assembly stays mate-healthy through save + force rebuild. Soft
+ * list_mates checks alone are insufficient (SolidWorks can report errorCode 0
+ * until a force rebuild / UI save surfaces What's Wrong).
  *
  * Usage (PowerShell):
  *   $env:SOLIDWORKS_MCP_ALLOWED_ROOTS = "\\wsl$\Ubuntu\home\joey\code\marengo;C:\code\marengo"
@@ -47,9 +50,96 @@ function yCenter(boundingBox) {
   return (boundingBox[1] + boundingBox[4]) / 2;
 }
 
+function listMates() {
+  return runWorker("list_mates", { path: ASM }).mates || [];
+}
+
+function badMates(mates) {
+  return mates.filter((m) => (m.errorCode ?? 0) !== 0);
+}
+
+function rs02YCenter() {
+  return yCenter(
+    runWorker("get_component_box", {
+      path: ASM,
+      component_name: RS02,
+    }).boundingBox,
+  );
+}
+
 const failures = [];
 function check(cond, message) {
   if (!cond) failures.push(message);
+}
+
+function assertAssemblyHealthy(label) {
+  const mates = listMates();
+  const limit = findLimitMate(mates);
+  const bad = badMates(mates);
+  const y = rs02YCenter();
+  console.log(
+    label,
+    JSON.stringify(
+      {
+        rs02Y: y,
+        bad: bad.map((m) => ({ name: m.name, errorCode: m.errorCode })),
+        limit: limit && {
+          name: limit.name,
+          errorCode: limit.errorCode,
+          flipDimension: limit.flipDimension,
+          minAngleDeg: limit.minAngleDeg,
+          maxAngleDeg: limit.maxAngleDeg,
+          angleDeg: limit.angleDeg,
+          suppressed: limit.suppressed,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  check(limit != null, `${label}: No LimitAngle* mate found`);
+  check(bad.length === 0, `${label}: unsolved mates: ${bad.map((m) => `${m.name}:${m.errorCode}`).join(", ")}`);
+  check(y <= CLEAR_SIDE_Y_MAX, `${label}: clear-side fail rs02Y=${y}`);
+
+  if (!limit) return { mates, limit: null, y };
+
+  check(limit.suppressed !== true, `${label}: ${limit.name} is suppressed`);
+  check((limit.errorCode ?? 0) === 0, `${label}: ${limit.name} errorCode=${limit.errorCode}`);
+  check(limit.isAdvancedMate === true, `${label}: ${limit.name} isAdvancedMate=${limit.isAdvancedMate}`);
+  check(
+    limit.flipDimension === FLIP,
+    `${label}: ${limit.name} flipDimension=${limit.flipDimension}, expected ${FLIP}`,
+  );
+  check(
+    limit.flipDimension !== undefined && limit.minAngleDeg !== undefined && limit.maxAngleDeg !== undefined,
+    `${label}: list_mates must expose flipDimension, minAngleDeg, maxAngleDeg`,
+  );
+
+  if (typeof limit.minAngleDeg === "number" && typeof limit.maxAngleDeg === "number") {
+    try {
+      near(limit.minAngleDeg, EXPECT_MIN, LIMIT_TOL_DEG, `${label} minAngleDeg`);
+    } catch (e) {
+      failures.push(e.message);
+    }
+    try {
+      near(limit.maxAngleDeg, EXPECT_MAX, LIMIT_TOL_DEG, `${label} maxAngleDeg`);
+    } catch (e) {
+      failures.push(e.message);
+    }
+  }
+
+  for (const mateName of ["Perpendicular2", "Coincident40", "Coincident87"]) {
+    const mate = mates.find((m) => m.name === mateName);
+    if (mate) {
+      check(
+        mate.suppressed === true,
+        `${label}: ${mateName} must stay suppressed (grounds RS02 / locks roll)`,
+      );
+    }
+  }
+
+  return { mates, limit, y };
 }
 
 console.log("assembly", ASM);
@@ -62,51 +152,20 @@ check(rs02Comp != null, `missing component ${RS02}`);
 check(rollComp?.isFixed !== true, `${ROLL} is Fixed (cannot drag-rotate)`);
 check(rs02Comp?.isFixed !== true, `${RS02} is Fixed (locks roll via attach mates)`);
 
-const rs02Box = runWorker("get_component_box", {
-  path: ASM,
-  component_name: RS02,
-}).boundingBox;
-const rs02Y = yCenter(rs02Box);
-console.log("rs02 Y center", rs02Y);
-check(
-  rs02Y <= CLEAR_SIDE_Y_MAX,
-  `roll travel is on the shoulder-collision side (rs02 Y=${rs02Y}, need <= ${CLEAR_SIDE_Y_MAX})`,
-);
+assertAssemblyHealthy("pre-force");
 
-const listed = runWorker("list_mates", { path: ASM });
-const limit = findLimitMate(listed.mates || []);
-assert(limit, "No LimitAngle* mate found");
-console.log("limit mate", JSON.stringify(limit, null, 2));
+console.log("force rebuild");
+runWorker("rebuild_document", { path: ASM, force: true });
+assertAssemblyHealthy("post-force-rebuild");
 
-check(
-  limit.flipDimension !== undefined && limit.minAngleDeg !== undefined && limit.maxAngleDeg !== undefined,
-  "list_mates must expose flipDimension, minAngleDeg, maxAngleDeg for angle mates",
-);
-check(limit.suppressed !== true, `${limit.name} is suppressed`);
-check((limit.errorCode ?? 0) === 0, `${limit.name} errorCode=${limit.errorCode}`);
-check(limit.isAdvancedMate === true, `${limit.name} isAdvancedMate=${limit.isAdvancedMate}`);
-check(limit.flipDimension === FLIP, `${limit.name} flipDimension=${limit.flipDimension}, expected ${FLIP}`);
+console.log("save_document");
+const save = runWorker("save_document", { path: ASM });
+check(save?.saved === true, `save_document saved=${save?.saved}`);
+check((save?.errors ?? 0) === 0, `save_document errors=${save?.errors}`);
 
-if (typeof limit.minAngleDeg === "number" && typeof limit.maxAngleDeg === "number") {
-  try {
-    near(limit.minAngleDeg, EXPECT_MIN, LIMIT_TOL_DEG, "minAngleDeg");
-  } catch (e) {
-    failures.push(e.message);
-  }
-  try {
-    near(limit.maxAngleDeg, EXPECT_MAX, LIMIT_TOL_DEG, "maxAngleDeg");
-  } catch (e) {
-    failures.push(e.message);
-  }
-}
-
-// Ground mates that pin RS02 to the assembly must stay suppressed.
-for (const mateName of ["Perpendicular2", "Coincident40", "Coincident87"]) {
-  const mate = (listed.mates || []).find((m) => m.name === mateName);
-  if (mate) {
-    check(mate.suppressed === true, `${mateName} must stay suppressed (grounds RS02 / locks roll)`);
-  }
-}
+console.log("force rebuild after save");
+runWorker("rebuild_document", { path: ASM, force: true });
+const final = assertAssemblyHealthy("post-save-force-rebuild");
 
 if (failures.length) {
   console.error("FAIL");
@@ -118,16 +177,17 @@ console.log("PASS");
 console.log(
   JSON.stringify(
     {
-      rs02Y,
+      rs02Y: final.y,
       clearSideYMax: CLEAR_SIDE_Y_MAX,
-      mate: {
-        name: limit.name,
-        flipDimension: limit.flipDimension,
-        minAngleDeg: limit.minAngleDeg,
-        maxAngleDeg: limit.maxAngleDeg,
-        angleDeg: limit.angleDeg,
-        errorCode: limit.errorCode,
+      mate: final.limit && {
+        name: final.limit.name,
+        flipDimension: final.limit.flipDimension,
+        minAngleDeg: final.limit.minAngleDeg,
+        maxAngleDeg: final.limit.maxAngleDeg,
+        angleDeg: final.limit.angleDeg,
+        errorCode: final.limit.errorCode,
       },
+      save,
     },
     null,
     2,
