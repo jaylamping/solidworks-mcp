@@ -7,8 +7,8 @@ MCP server that drives SolidWorks on Windows from Cursor (or another MCP client)
 
 ## Workflow
 
-1. Open your part or assembly in SolidWorks.
-2. In Cursor, ask for the change you want.
+1. Have SolidWorks running (open a document, or start from a blank session).
+2. In Cursor, ask for the change you want — edit what’s open, or build a new part from scratch.
 3. The assistant drives SolidWorks through this server.
 4. Check the model, then confirm before it saves.
 
