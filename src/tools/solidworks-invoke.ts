@@ -64,7 +64,7 @@ export function registerSolidWorksInvokeTools(server: McpServer): void {
       try {
         const calls = args.calls.map((call) => ({
           ...call,
-          path: call.path ? prepareDocumentPath(call.path) : undefined;
+          path: call.path ? prepareDocumentPath(call.path) : undefined,
         }));
         return jsonResult(await runWorker({ command: "batch_invoke", args: { calls } }));
       } catch (error) {
