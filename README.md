@@ -95,6 +95,10 @@ After you save the config, reload MCP / restart Cursor so it picks up the server
 
 Once SolidWorks is open and the MCP server is connected (or after `npm run build`), you can build a known good part two ways. Same geometry either way: a **40 mm** cube with **Ø18 mm** cylinders cut through Front, Top, and Right.
 
+![Demo: ask Cursor to build the part, then watch SolidWorks](docs/assets/demo-build-part.gif)
+
+[Higher-quality MP4](docs/assets/demo-build-part.mp4). Re-record locally (SolidWorks open, Edge installed): `npm run demo:record-video`.
+
 ### From Cursor chat (MCP)
 
 Ask:
@@ -189,7 +193,7 @@ npm run validate:tools
 npm run demo:build-part
 ```
 
-`validate:tools` smoke-probes the API and worker. It reports a missing SolidWorks session without needing a particular CAD workspace. `demo:build-part` needs a live SolidWorks session and writes under `.demo/`.
+`validate:tools` smoke-probes the API and worker. It reports a missing SolidWorks session without needing a particular CAD workspace. `demo:build-part` needs a live SolidWorks session and writes under `.demo/`. `demo:record-video` captures the SolidWorks window into `docs/assets/` (needs `ffmpeg`).
 
 ### Further reading
 

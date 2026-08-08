@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SolidWorks MCP · demo prompt</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #181818;
+        --panel: #1e1e1e;
+        --border: #2b2b2b;
+        --text: #e6e6e6;
+        --muted: #9b9b9b;
+        --user: #2a2a2a;
+        --accent: #7c8cff;
+        --chip: #252836;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font: 18px/1.45 ui-sans-serif, "Segoe UI", system-ui, sans-serif;
+        overflow: hidden;
+      }
+      .app {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        height: 100%;
+      }
+      .sidebar {
+        background: #141414;
+        border-right: 1px solid var(--border);
+        padding: 16px 12px;
+      }
+      .brand {
+        font-weight: 650;
+        letter-spacing: 0.02em;
+        margin-bottom: 18px;
+      }
+      .nav {
+        color: var(--muted);
+        font-size: 13px;
+        display: grid;
+        gap: 8px;
+      }
+      .nav .active {
+        color: var(--text);
+        background: #222;
+        border-radius: 8px;
+        padding: 8px 10px;
+      }
+      .main {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-width: 0;
+      }
+      .top {
+        border-bottom: 1px solid var(--border);
+        padding: 12px 18px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .top strong { color: var(--text); font-weight: 600; }
+      .chat {
+        padding: 28px 48px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        justify-content: flex-end;
+      }
+      .bubble {
+        max-width: 820px;
+        border-radius: 14px;
+        padding: 16px 18px;
+        white-space: pre-wrap;
+        font-size: 20px;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .user {
+        align-self: flex-end;
+        background: var(--user);
+        border: 1px solid var(--border);
+      }
+      .assistant {
+        align-self: flex-start;
+        background: transparent;
+        color: var(--muted);
+        opacity: 0;
+      }
+      .assistant.show { opacity: 1; transition: opacity 0.35s ease; }
+      .tool {
+        align-self: flex-start;
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        background: var(--chip);
+        border: 1px solid #343a55;
+        color: #c9d0ff;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 15px;
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      .tool.show {
+        opacity: 1;
+        transform: none;
+        transition: opacity 0.35s ease, transform 0.35s ease;
+      }
+      .composer {
+        margin: 0 48px 28px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 14px;
+        padding: 16px 18px;
+        min-height: 80px;
+        color: var(--muted);
+        font-size: 20px;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .composer .typed {
+        color: var(--text);
+      }
+      .caret {
+        display: inline-block;
+        width: 8px;
+        height: 1.1em;
+        background: var(--accent);
+        margin-left: 2px;
+        vertical-align: text-bottom;
+        animation: blink 0.9s step-end infinite;
+      }
+      .caret.hide { display: none; }
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+      .hint {
+        margin: 0 48px 18px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">Cursor</div>
+        <div class="nav">
+          <div class="active">Agent</div>
+          <div>solidworks-mcp</div>
+          <div>Chat</div>
+        </div>
+      </aside>
+      <section class="main">
+        <div class="top">Agent · <strong>solidworks-mcp</strong></div>
+        <div class="chat">
+          <div id="sent" class="bubble user" hidden></div>
+          <div id="tool" class="tool">⚙ solidworks_demo_build_part</div>
+          <div id="assistant" class="assistant bubble">
+            On it — extruding the cube and cutting through-cylinders in SolidWorks…
+          </div>
+        </div>
+        <div id="composer" class="composer">
+          <span id="typed" class="typed"></span><span id="caret" class="caret"></span>
+        </div>
+        <p class="hint">Same prompt you’d type with the SolidWorks MCP server connected.</p>
+      </section>
+    </div>
+    <script>
+      const prompt =
+        "Extrude a cube, then cut cylinders all the way through on each face.";
+      const typed = document.getElementById("typed");
+      const caret = document.getElementById("caret");
+      const sent = document.getElementById("sent");
+      const composer = document.getElementById("composer");
+      const tool = document.getElementById("tool");
+      const assistant = document.getElementById("assistant");
+      let i = 0;
+
+      function typeNext() {
+        if (i <= prompt.length) {
+          typed.textContent = prompt.slice(0, i);
+          i += 1;
+          setTimeout(typeNext, 40);
+          return;
+        }
+        setTimeout(() => {
+          caret.classList.add("hide");
+          composer.style.display = "none";
+          sent.hidden = false;
+          sent.textContent = prompt;
+          setTimeout(() => tool.classList.add("show"), 350);
+          setTimeout(() => assistant.classList.add("show"), 700);
+        }, 350);
+      }
+      setTimeout(typeNext, 400);
+    </script>
+  </body>
+</html>

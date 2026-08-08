@@ -14,6 +14,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "worker:status": "node scripts/worker-status.mjs",
     "demo:build-part": "node scripts/demo-build-part.mjs",
+    "demo:record-video": "node scripts/record-demo-video.mjs",
     "generate:tools": "tsx scripts/generate-tools.mjs",
     "validate:tools": "node scripts/validate-tools.mjs",
     "handshake:mcp": "node scripts/mcp-handshake.mjs",
