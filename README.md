@@ -91,38 +91,15 @@ After you save the config, reload MCP / restart Cursor so it picks up the server
 
 **Important:** do not ask the assistant to run many SolidWorks tools at once in parallel. SolidWorks COM is single-threaded. Call tools one at a time.
 
-## Try the demo part
+## Try the demo
 
-Once SolidWorks is open and the MCP server is connected (or after `npm run build`), you can build a known good part two ways. Same geometry either way: a **40 mm** cube with **Ø18 mm** cylinders cut through Front, Top, and Right.
-
-[![Demo: ask Cursor to extrude a cube with through-cylinders, then watch SolidWorks](docs/assets/demo-build-part.gif)](https://github.com/jaylamping/solidworks-mcp/blob/main/docs/assets/demo-build-part.mp4)
-
-### From Cursor chat (MCP)
-
-Ask something like:
+With SolidWorks open and MCP connected, ask:
 
 > Extrude a cube, then cut cylinders all the way through on each face.
 
-The assistant should call `solidworks_demo_build_part` with `confirm: true`. Watch SolidWorks as the cube and through-holes appear. To save under a fixed path, include your clone’s `.demo` folder in `SOLIDWORKS_MCP_ALLOWED_ROOTS` (see the example above) and pass something like:
+[![Demo: Cursor prompt, then SolidWorks building the part](docs/assets/demo-build-part.gif)](https://github.com/jaylamping/solidworks-mcp/blob/main/docs/assets/demo-build-part.mp4)
 
-`output_path: C:/path/to/solidworks-mcp/.demo/DemoCube.SLDPRT`
-
-### From the terminal (deterministic smoke)
-
-No chat needed. From the repo root:
-
-```powershell
-npm run demo:build-part
-```
-
-That always writes:
-
-| File | Purpose |
-|------|---------|
-| `.demo/DemoCube.SLDPRT` | Saved part |
-| `.demo/DemoCube.png` | Isometric preview |
-
-It also checks that the solid volume matches the expected through-hole geometry. Exit code `0` means the demo passed.
+Or from the repo: `npm run demo:build-part`.
 
 ## What the assistant can do
 
