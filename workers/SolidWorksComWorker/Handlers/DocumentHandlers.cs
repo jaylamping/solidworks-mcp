@@ -340,6 +340,8 @@ internal static partial class Program
         public string? Name { get; init; }
         public string? Type { get; init; }
         public int? ErrorCode { get; init; }
+        public bool? IsWarning { get; init; }
+        public string? ErrorName { get; init; }
         public bool? Suppressed { get; init; }
         public bool? IsAdvancedMate { get; init; }
         public double? MinAngleDeg { get; init; }
@@ -352,6 +354,8 @@ internal static partial class Program
             name = Name,
             type = Type,
             errorCode = ErrorCode,
+            isWarning = IsWarning,
+            errorName = ErrorName,
             suppressed = Suppressed,
             isAdvancedMate = IsAdvancedMate,
             minAngleDeg = MinAngleDeg,
@@ -392,16 +396,21 @@ internal static partial class Program
             string? name = Try(() => current.Name) as string;
             string? typeName = Try(() => current.GetTypeName2()) as string;
             int? errorCode = null;
+            bool? isWarning = null;
             try
             {
-                bool isWarning = false;
-                errorCode = current.GetErrorCode2(out isWarning);
+                bool warning = false;
+                errorCode = current.GetErrorCode2(out warning);
+                isWarning = warning;
             }
             catch
             {
                 errorCode = Try(() => current.GetErrorCode()) as int?;
             }
 
+            string? errorName = errorCode is int code
+                ? SwErrorDecoder.DecodeFeatureError(code).Name
+                : null;
             bool? suppressed = Try(() => current.IsSuppressed()) as bool?;
             bool? isAdvancedMate = null;
             double? minAngleDeg = null;
@@ -425,6 +434,8 @@ internal static partial class Program
                 Name = name,
                 Type = typeName,
                 ErrorCode = errorCode,
+                IsWarning = isWarning,
+                ErrorName = errorName,
                 Suppressed = suppressed,
                 IsAdvancedMate = isAdvancedMate,
                 MinAngleDeg = minAngleDeg,
@@ -445,6 +456,8 @@ internal static partial class Program
                 name = m.Name,
                 type = m.Type,
                 errorCode = m.ErrorCode,
+                isWarning = m.IsWarning,
+                errorName = m.ErrorName,
                 suppressed = m.Suppressed,
             })
             .ToList();

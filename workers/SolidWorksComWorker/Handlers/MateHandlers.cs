@@ -565,6 +565,10 @@ internal static partial class Program
         int mateError = 0;
         int? createMateErrorStatus = null;
         var attempts = new List<object>();
+        HashSet<string> existingMateNames = CollectMateHealthEntries(doc)
+            .Select(m => m.Name)
+            .OfType<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         void AttemptCreate(
             string attemptName,
@@ -724,12 +728,35 @@ internal static partial class Program
             attempts.Add(new { attempt = "AddMate5", ok = mateCreated, status = mateError });
         }
 
-        doc.EditRebuild3();
+        bool forceRebuildOk = ForceRebuildDocument(doc, out _);
+        List<MateHealthEntry> postForceMates = CollectMateHealthEntries(doc);
+        List<object> mateFailures = MateFailuresFrom(postForceMates);
+        bool mateHealthy = mateFailures.Count == 0;
+        string? mateName = Try(() => mateFeature?.Name) as string;
+        MateHealthEntry? createdMateHealth = postForceMates
+            .Where(m => m.Name is not null && !existingMateNames.Contains(m.Name))
+            .LastOrDefault();
+        mateName ??= createdMateHealth?.Name;
+        MateHealthEntry? namedMateHealth = mateName is null
+            ? null
+            : postForceMates.FirstOrDefault(m =>
+                string.Equals(m.Name, mateName, StringComparison.OrdinalIgnoreCase));
+        int? postForceErrorCode = namedMateHealth?.ErrorCode ?? createdMateHealth?.ErrorCode;
+        bool? isWarning = namedMateHealth?.IsWarning ?? createdMateHealth?.IsWarning;
+        string? featureErrorName = postForceErrorCode is int featureErrorCode
+            ? SwErrorDecoder.DecodeFeatureError(featureErrorCode).Name
+            : namedMateHealth?.ErrorName ?? createdMateHealth?.ErrorName;
+        bool ok = mateCreated && mateHealthy;
+
         (string errorName, string[] remediation) = SwErrorDecoder.DecodeMateError(mateError);
 
         return new
         {
             document = DescribeDocument(doc),
+            ok,
+            forceRebuildOk,
+            mateHealthy,
+            mateFailures,
             component1 = Try(() => first.Name2),
             component2 = Try(() => second.Name2),
             ref1,
@@ -745,7 +772,7 @@ internal static partial class Program
             maxAngleDeg = maxDeg,
             isAdvancedMate = true,
             mateCreated,
-            mateName = Try(() => mateFeature?.Name),
+            mateName,
             mateError,
             createMateErrorStatus,
             mateErrorName = errorName,
@@ -753,6 +780,12 @@ internal static partial class Program
             mateMethod = method,
             attempts,
             mateCount = CountAssemblyMates(doc),
+            forceOk = forceRebuildOk,
+            errorCode = postForceErrorCode,
+            postForceErrorCode,
+            postForceErrorName = featureErrorName,
+            featureErrorName,
+            isWarning,
         };
     }
 
@@ -818,26 +851,50 @@ internal static partial class Program
         editable.FlipDimension = flip;
 
         bool modifyOk = Try(() => mateFeature.ModifyDefinition(editable, doc, null)) as bool? ?? false;
-        doc.EditRebuild3();
+        bool forceRebuildOk = ForceRebuildDocument(doc, out _);
+        List<MateHealthEntry> postForceMates = CollectMateHealthEntries(doc);
+        List<object> mateFailures = MateFailuresFrom(postForceMates);
+        bool mateHealthy = mateFailures.Count == 0;
 
         IAngleMateFeatureData? afterDef = Try(() => mateFeature.GetDefinition()) as IAngleMateFeatureData;
-        int? errorCode = null;
-        try
+        MateHealthEntry? mateHealth = postForceMates.FirstOrDefault(m =>
+            string.Equals(m.Name, mateName, StringComparison.OrdinalIgnoreCase));
+        int? postForceErrorCode = mateHealth?.ErrorCode;
+        bool? isWarning = mateHealth?.IsWarning;
+        if (postForceErrorCode is null)
         {
-            bool isWarning = false;
-            errorCode = mateFeature.GetErrorCode2(out isWarning);
+            try
+            {
+                bool warning = false;
+                postForceErrorCode = mateFeature.GetErrorCode2(out warning);
+                isWarning = warning;
+            }
+            catch
+            {
+                postForceErrorCode = Try(() => mateFeature.GetErrorCode()) as int?;
+            }
         }
-        catch
-        {
-            errorCode = Try(() => mateFeature.GetErrorCode()) as int?;
-        }
+
+        string? featureErrorName = postForceErrorCode is int featureErrorCode
+            ? SwErrorDecoder.DecodeFeatureError(featureErrorCode).Name
+            : mateHealth?.ErrorName;
+        bool ok = modifyOk && mateHealthy;
 
         return new
         {
             document = DescribeDocument(doc),
+            ok,
+            forceRebuildOk,
+            mateHealthy,
+            mateFailures,
             mateName = Try(() => mateFeature.Name),
             modifyOk,
-            errorCode,
+            errorCode = postForceErrorCode,
+            forceOk = forceRebuildOk,
+            postForceErrorCode,
+            postForceErrorName = featureErrorName,
+            featureErrorName,
+            isWarning,
             before = new
             {
                 isAdvancedMate = beforeAdvanced,

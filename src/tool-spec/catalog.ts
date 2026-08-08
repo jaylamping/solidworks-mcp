@@ -791,7 +791,8 @@ export const TOOL_SPECS = [
     exposure: mcp({
       name: "solidworks_mate_limit_angle",
       tier: "core",
-      description: "Add a limit-angle mate with min/max rotation about an axis.",
+      description:
+        "Add a limit-angle mate with min/max rotation about an axis. Force-rebuilds and returns ok:false if any active mate fails health.",
       descriptionSource: "authored",
       input: SCHEMAS["mateLimitAngle"],
       tags: ["mate"],
@@ -805,7 +806,8 @@ export const TOOL_SPECS = [
     exposure: mcp({
       name: "solidworks_set_mate_limit_angle",
       tier: "extended",
-      description: "Worker command: set_mate_limit_angle",
+      description:
+        "Edit a limit-angle mate (min/max/angle/flip). Force-rebuilds and returns ok:false if any active mate fails health.",
       input: SCHEMAS["setMateLimitAngle"],
       tags: ["set"],
       domains: ["assembly", "mate"],

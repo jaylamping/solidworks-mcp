@@ -19,6 +19,7 @@ When editing assemblies/parts through SolidWorks MCP / the COM worker:
 6. Treat `confirm_and_save` / assembly `save_document` `ok: false` as failure even if `saved: true`. Report `preMateFailures` / `postSaveMateFailures` / `postReopenMateFailures` / `jumpedComponents`, restore/heal, ask the user again, and retry. Do **not** declare success until `ok: true`.
 7. Soft `list_mates` with `errorCode: 0` after a heal is **not** enough. The server force-rebuilds before/after save; agents must still wait for `confirm_and_save.ok === true`.
 8. Never tell the user something is "locked in" / PASS until `confirm_and_save` returns `ok: true` (and `poseStable: true` for assemblies).
+9. Once locked in, treat the document as **frozen** (see `solidworks-frozen-docs.mdc`): no further mate/heal/save/rebuild loops until the user explicitly asks to edit that document again.
 
 ## Server hard gates (already enforced)
 

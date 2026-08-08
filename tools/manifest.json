@@ -1370,7 +1370,7 @@
       "destructive": false,
       "confirmRequired": false,
       "autoCheckpoint": true,
-      "description": "Add a limit-angle mate with min/max rotation about an axis.",
+      "description": "Add a limit-angle mate with min/max rotation about an axis. Force-rebuilds and returns ok:false if any active mate fails health.",
       "descriptionSource": "authored",
       "tags": [
         "mate"
@@ -2138,7 +2138,7 @@
       "destructive": false,
       "confirmRequired": false,
       "autoCheckpoint": true,
-      "description": "Worker command: set_mate_limit_angle",
+      "description": "Edit a limit-angle mate (min/max/angle/flip). Force-rebuilds and returns ok:false if any active mate fails health.",
       "tags": [
         "set"
       ],

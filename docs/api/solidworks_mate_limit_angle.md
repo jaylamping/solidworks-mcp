@@ -1,6 +1,6 @@
 # solidworks_mate_limit_angle
 
-Add a limit-angle mate with min/max rotation about an axis.
+Add a limit-angle mate with min/max rotation about an axis. Force-rebuilds and returns ok:false if any active mate fails health.
 
 | Field | Value |
 |-------|-------|
@@ -27,6 +27,7 @@ Add a limit-angle mate with min/max rotation about an axis.
 | `selection_index` | integer | no | - | 1-based selection index when selecting a specific highlighted entity. |
 | `min_angle_deg` | number | no | - | Minimum allowed rotation in degrees. |
 | `max_angle_deg` | number | no | - | Maximum allowed rotation in degrees. |
+| `angle_deg` | number | no | - | Current or initial angle in degrees. |
 | `axis_ref` | string | no | - | Optional rotation axis reference. |
 | `axis_component` | string | no | - | Component containing the rotation axis. |
 

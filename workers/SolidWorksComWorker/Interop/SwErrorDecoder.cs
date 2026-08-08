@@ -84,6 +84,46 @@ internal static class SwErrorDecoder
         return (name, remediation);
     }
 
+    public static (string Name, string[] Remediation) DecodeFeatureError(int code)
+    {
+        // Matches SolidWorks.Interop.swconst.swFeatureError_e.
+        string name = code switch
+        {
+            0 => "swFeatureErrorNone",
+            1 => "swFeatureErrorUnknown",
+            38 => "swFeatureErrorMateInvalidEdge",
+            39 => "swFeatureErrorMateInvalidFace",
+            40 => "swFeatureErrorMateFailedCreatingSurface",
+            41 => "swFeatureErrorMateInvalidEntity",
+            42 => "swFeatureErrorMateUnknownTangent",
+            43 => "swFeatureErrorMateDanglingGeometry",
+            44 => "swFeatureErrorMateEntityNotLinear",
+            45 => "swFeatureErrorMateEntityFailed",
+            46 => "swFeatureErrorMateOverdefined",
+            47 => "swFeatureErrorMateIlldefined",
+            48 => "swFeatureErrorMateBroken",
+            _ => $"swFeatureErrorUnknown_{code}",
+        };
+
+        string[] remediation = code switch
+        {
+            0 => [],
+            >= 38 and <= 48 =>
+            [
+                "Force rebuild the document before trusting mate health.",
+                "Check mate flip, alignment, sense, and reference geometry.",
+                "Consider removing the planar limit mate for this degree of freedom.",
+            ],
+            _ =>
+            [
+                "Force rebuild the document and re-check feature health.",
+                "Inspect the feature references and SolidWorks What's Wrong details.",
+            ],
+        };
+
+        return (name, remediation);
+    }
+
     public static string DecodeHresult(int hresult) => $"0x{hresult & 0xFFFFFFFF:X8}";
 
     private static string DecodeHresultCode(int hresult)

@@ -5,10 +5,10 @@
  * at the parked / nominal pose, the RS02 actuator bbox center must sit on the
  * clear side of the joint (negative assembly Y for this right-arm frame).
  *
- * Also asserts LimitAngle sense/stops, roll/RS02 stay float, and — critically —
- * that the assembly stays mate-healthy through save + force rebuild. Soft
- * list_mates checks alone are insufficient (SolidWorks can report errorCode 0
- * until a force rebuild / UI save surfaces What's Wrong).
+ * Requires a healthy advanced LimitAngle on the roll DOF (Top↔Top about
+ * shoulder_roll_axis, parked clear-side) plus force-rebuild / confirm_and_save
+ * health. Soft list_mates alone is insufficient — SolidWorks can report
+ * errorCode 0 until ForceRebuild3 / What's Wrong surfaces failures.
  *
  * Usage (PowerShell):
  *   $env:SOLIDWORKS_MCP_ALLOWED_ROOTS = "\\wsl$\Ubuntu\home\joey\code\marengo;C:\code\marengo"
@@ -50,12 +50,8 @@ function yCenter(boundingBox) {
   return (boundingBox[1] + boundingBox[4]) / 2;
 }
 
-function listMates() {
-  return runWorker("list_mates", { path: ASM }).mates || [];
-}
-
-function badMates(mates) {
-  return mates.filter((m) => (m.errorCode ?? 0) !== 0);
+function listMatesPayload() {
+  return runWorker("list_mates", { path: ASM });
 }
 
 function rs02YCenter() {
@@ -73,16 +69,18 @@ function check(cond, message) {
 }
 
 function assertAssemblyHealthy(label) {
-  const mates = listMates();
+  const payload = listMatesPayload();
+  const mates = payload.mates || [];
   const limit = findLimitMate(mates);
-  const bad = badMates(mates);
+  const bad = payload.mateFailures || [];
   const y = rs02YCenter();
   console.log(
     label,
     JSON.stringify(
       {
         rs02Y: y,
-        bad: bad.map((m) => ({ name: m.name, errorCode: m.errorCode })),
+        mateHealthy: payload.mateHealthy,
+        bad,
         limit: limit && {
           name: limit.name,
           errorCode: limit.errorCode,
@@ -98,14 +96,28 @@ function assertAssemblyHealthy(label) {
     ),
   );
 
-  check(limit != null, `${label}: No LimitAngle* mate found`);
-  check(bad.length === 0, `${label}: unsolved mates: ${bad.map((m) => `${m.name}:${m.errorCode}`).join(", ")}`);
+  check(payload.mateHealthy === true, `${label}: mateHealthy=${payload.mateHealthy}`);
+  check(
+    bad.length === 0,
+    `${label}: unsolved mates: ${bad.map((m) => `${m.name}:${m.errorCode}`).join(", ")}`,
+  );
   check(y <= CLEAR_SIDE_Y_MAX, `${label}: clear-side fail rs02Y=${y}`);
+  check(limit != null, `${label}: No LimitAngle* mate found`);
+
+  for (const mateName of ["Perpendicular2", "Coincident40", "Coincident87"]) {
+    const mate = mates.find((m) => m.name === mateName);
+    if (mate) {
+      check(
+        mate.suppressed === true,
+        `${label}: ${mateName} must stay suppressed (grounds RS02 / locks roll)`,
+      );
+    }
+  }
 
   if (!limit) return { mates, limit: null, y };
 
   check(limit.suppressed !== true, `${label}: ${limit.name} is suppressed`);
-  check((limit.errorCode ?? 0) === 0, `${label}: ${limit.name} errorCode=${limit.errorCode}`);
+  check(limit.errorCode === 0, `${label}: ${limit.name} errorCode=${limit.errorCode}`);
   check(limit.isAdvancedMate === true, `${label}: ${limit.name} isAdvancedMate=${limit.isAdvancedMate}`);
   check(
     limit.flipDimension === FLIP,
@@ -126,16 +138,6 @@ function assertAssemblyHealthy(label) {
       near(limit.maxAngleDeg, EXPECT_MAX, LIMIT_TOL_DEG, `${label} maxAngleDeg`);
     } catch (e) {
       failures.push(e.message);
-    }
-  }
-
-  for (const mateName of ["Perpendicular2", "Coincident40", "Coincident87"]) {
-    const mate = mates.find((m) => m.name === mateName);
-    if (mate) {
-      check(
-        mate.suppressed === true,
-        `${label}: ${mateName} must stay suppressed (grounds RS02 / locks roll)`,
-      );
     }
   }
 
