@@ -218,6 +218,19 @@
       "exposure": "mcp"
     },
     {
+      "command": "rename_feature",
+      "csharpHandler": "Program.RenameFeature",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
       "command": "mate_coord_sys",
       "csharpHandler": "Program.MateCoordSys",
       "safety": {
@@ -1983,6 +1996,19 @@
     {
       "command": "set_material",
       "csharpHandler": "Program.SetMaterial",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_mass_override",
+      "csharpHandler": "Program.SetMassOverride",
       "safety": {
         "kind": "modelMutation",
         "destructive": true,

@@ -88,6 +88,21 @@ export const setCustomPropertiesSchema = z.object({
   save: z.boolean().optional(),
 });
 
+export const renameFeatureSchema = z.object({
+  path: z.string().min(1).optional(),
+  from_name: z.string().min(1),
+  to_name: z.string().min(1),
+  save: z.boolean().default(false),
+  confirm: z.literal(true),
+});
+
+export const setMassOverrideSchema = z.object({
+  path: z.string().min(1),
+  mass_kg: z.number().positive(),
+  save: z.boolean().default(false),
+  confirm: z.literal(true),
+});
+
 export const saveDocumentSchema = optionalPathSchema.extend({
   skip_mate_validation: z.boolean().optional(),
 });

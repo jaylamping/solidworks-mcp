@@ -1865,6 +1865,25 @@
       "schema": "componentName"
     },
     {
+      "name": "solidworks_rename_feature",
+      "workerCommand": "rename_feature",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "autoCheckpoint": true,
+      "description": "Rename a FeatureManager feature, including mates and reference geometry.",
+      "descriptionSource": "authored",
+      "tags": [
+        "rename",
+        "feature"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "renameFeature"
+    },
+    {
       "name": "solidworks_replace_component_path",
       "workerCommand": "replace_component_path",
       "tier": "extended",
@@ -2168,6 +2187,25 @@
         "document"
       ],
       "schema": "setFeatureSuppression"
+    },
+    {
+      "name": "solidworks_set_mass_override",
+      "workerCommand": "set_mass_override",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "autoCheckpoint": true,
+      "description": "Set the assigned mass override on a part document in kilograms.",
+      "descriptionSource": "authored",
+      "tags": [
+        "set",
+        "mass"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "setMassOverride"
     },
     {
       "name": "solidworks_set_mate_limit_angle",

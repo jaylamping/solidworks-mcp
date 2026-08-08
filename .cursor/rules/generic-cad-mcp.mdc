@@ -1,0 +1,24 @@
+---
+description: Keep SolidWorks MCP CAD-generic; no robot/product-specific assumptions
+alwaysApply: true
+---
+
+# Generic CAD MCP
+
+`solidworks-mcp` is a **generic** SolidWorks automation surface. It must not become a Marengo, humanoid, or any other product-specific toolkit.
+
+## Do
+
+- Name tools, schemas, handlers, docs, and examples around SolidWorks concepts (mates, features, mass override, reference geometry, URDF *helpers* that take caller-supplied names).
+- Accept joint/link/frame names, materials, and mass values as **caller inputs**.
+- Keep demo assets under `.demo/` product-neutral.
+
+## Do not
+
+- Hardcode product names, robot families, limb sides, or joint trees (`marengo_*`, `right_shoulder_*`, humanoid link maps) into MCP tools, worker commands, schemas, or generated catalogs.
+- Add Marengo-only scripts, fixtures, or “arm naming pass” workflows to this repo. Those belong in the consumer CAD/project repo.
+- Bake humanoid kinematics, actuator SKUs, or vendor part numbers into default URDF readiness beyond configurable required-ref names.
+
+## Boundary
+
+CAD content in a consumer assembly may use any naming the owner wants. The MCP layer only provides generic rename / material / mass / frame operations to apply those names.
