@@ -1,124 +1,69 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { assertAllowedPath, packageRoot } from "./config.js";
+import { assertAllowedPath } from "./config.js";
 import { appendAuditEntry } from "./audit-log.js";
 import { formatErrorForMcp } from "./errors.js";
-import * as assemblySchemas from "./schemas/assembly.js";
-import * as documentSchemas from "./schemas/document.js";
-import * as mateSchemas from "./schemas/mate.js";
-import * as partSchemas from "./schemas/part.js";
-import { runWorker, type WorkerCommand } from "./worker.js";
+import {
+  TOOL_SPECS,
+  type McpExposure,
+  type ToolSafety,
+  type ToolSpec,
+  type ToolTier,
+} from "./tool-spec/catalog.js";
+import { runWorker } from "./worker.js";
 
-export type ToolTier = "core" | "extended" | "advanced" | "debug";
+const TIER_ORDER: ToolTier[] = ["core", "extended", "advanced", "debug"];
+const PATH_FIELDS = [
+  "path",
+  "part_path",
+  "output_path",
+  "output_part_path",
+  "source_part_path",
+  "assembly_path",
+  "from_part_path",
+  "to_part_path",
+  "model_path",
+  "component_path",
+  "output_dir",
+];
 
-export const SCHEMA_MAP = {
-  optionalPath: documentSchemas.optionalPathSchema,
-  open: documentSchemas.openSchema,
-  export: documentSchemas.exportSchema,
-  diagnose: documentSchemas.diagnoseSchema,
-  explainError: documentSchemas.explainErrorSchema,
-  checkpoint: documentSchemas.checkpointSchema,
-  listCheckpoints: documentSchemas.listCheckpointsSchema,
-  restoreFromCheckpoint: documentSchemas.restoreFromCheckpointSchema,
-  confirmPath: documentSchemas.confirmPathSchema,
-  closeDocument: documentSchemas.closeDocumentSchema,
-  closeAllDocuments: documentSchemas.closeAllDocumentsSchema,
-  rebuildDocument: documentSchemas.rebuildDocumentSchema,
-  importStep: documentSchemas.importStepSchema,
-  diagnosePartSave: documentSchemas.diagnosePartSaveSchema,
-  resolveLightweight: documentSchemas.resolveLightweightSchema,
-  unfixAllComponents: documentSchemas.unfixAllComponentsSchema,
-  setCustomProperties: documentSchemas.setCustomPropertiesSchema,
-  saveDocument: documentSchemas.saveDocumentSchema,
-  confirmAndSave: documentSchemas.confirmAndSaveSchema,
-  componentName: assemblySchemas.componentNameSchema,
-  transformComponent: assemblySchemas.transformComponentSchema,
-  setComponentTransform: assemblySchemas.setComponentTransformSchema,
-  setDimension: assemblySchemas.setDimensionSchema,
-  align: assemblySchemas.alignSchema,
-  featureProbe: assemblySchemas.featureProbeSchema,
-  partFeatureProbe: assemblySchemas.partFeatureProbeSchema,
-  persistRef: assemblySchemas.persistRefSchema,
-  selectByPersistReference: assemblySchemas.selectByPersistReferenceSchema,
-  insertComponent: assemblySchemas.insertComponentSchema,
-  deleteMate: assemblySchemas.deleteMateSchema,
-  deleteMatesInRange: assemblySchemas.deleteMatesInRangeSchema,
-  deleteAllMates: assemblySchemas.deleteAllMatesSchema,
-  dissolveComponent: assemblySchemas.dissolveComponentSchema,
-  mirrorComponent: assemblySchemas.mirrorComponentSchema,
-  copyWithMates: assemblySchemas.copyWithMatesSchema,
-  explodeView: assemblySchemas.explodeViewSchema,
-  setFeatureSuppression: assemblySchemas.setFeatureSuppressionSchema,
-  setMateSuppression: assemblySchemas.setMateSuppressionSchema,
-  setComponentConfiguration: assemblySchemas.setComponentConfigurationSchema,
-  cloneSolidBodyPart: assemblySchemas.cloneSolidBodyPartSchema,
-  mirrorPartFile: assemblySchemas.mirrorPartFileSchema,
-  makeComponentIndependent: assemblySchemas.makeComponentIndependentSchema,
-  replaceComponentsByPath: assemblySchemas.replaceComponentsByPathSchema,
-  replaceComponentPath: assemblySchemas.replaceComponentPathSchema,
-  exportLinkTransforms: assemblySchemas.exportLinkTransformsSchema,
-  measureDistance: assemblySchemas.measureDistanceSchema,
-  getAssemblyDegreesOfFreedom: assemblySchemas.getAssemblyDegreesOfFreedomSchema,
-  mateRefs: mateSchemas.mateRefsSchema,
-  mateLimitAngle: mateSchemas.mateLimitAngleSchema,
-  setMateLimitAngle: mateSchemas.setMateLimitAngleSchema,
-  probeAngleTravel: mateSchemas.probeAngleTravelSchema,
-  mateTry: mateSchemas.mateTrySchema,
-  createSketch: partSchemas.createSketchSchema,
-  sketchLine: partSchemas.sketchLineSchema,
-  sketchCircle: partSchemas.sketchCircleSchema,
-  sketchRectangle: partSchemas.sketchRectangleSchema,
-  featureExtrudeCut: partSchemas.featureExtrudeCutSchema,
-  featureExtrudeBoss: partSchemas.featureExtrudeBossSchema,
-  deleteFeature: partSchemas.deleteFeatureSchema,
-  featureFillet: partSchemas.featureFilletSchema,
-  featureChamfer: partSchemas.featureChamferSchema,
-  featureMirror: partSchemas.featureMirrorSchema,
-  featureLinearPattern: partSchemas.featureLinearPatternSchema,
-  featureCircularPattern: partSchemas.featureCircularPatternSchema,
-  setMaterial: partSchemas.setMaterialSchema,
-  roundSideArmsFromCircle: partSchemas.roundSideArmsFromCircleSchema,
-  newDocument: partSchemas.newDocumentSchema,
-  createSubassembly: partSchemas.createSubassemblySchema,
-  createDrawingFromModel: partSchemas.createDrawingFromModelSchema,
-  addStandardViews: partSchemas.addStandardViewsSchema,
-  addConfigurationCopy: partSchemas.addConfigurationCopySchema,
-  ensureOffsetPlane: partSchemas.ensureOffsetPlaneSchema,
-  packAndGo: partSchemas.packAndGoSchema,
-} as const satisfies Record<string, z.ZodTypeAny>;
+type McpToolSpec = ToolSpec & { readonly exposure: McpExposure };
 
-export type SchemaKey = keyof typeof SCHEMA_MAP;
-
-export interface ToolManifestEntry {
-  name: string;
-  workerCommand: WorkerCommand;
-  tier: ToolTier;
-  readOnly: boolean;
-  destructive?: boolean;
-  confirmRequired?: boolean;
-  description: string;
-  descriptionSource?: "authored" | "derived";
-  tags?: string[];
-  domains?: string[];
-  schema?: SchemaKey | "custom";
+interface SafetyProjection {
+  readonly readOnly: boolean;
+  readonly destructive: boolean;
+  readonly confirmRequired: boolean;
 }
 
-interface ToolManifest {
-  version: string;
-  tools: ToolManifestEntry[];
+function isMcpTool(spec: ToolSpec): spec is McpToolSpec {
+  return spec.exposure.kind === "mcp";
 }
 
-function manifestPath(): string {
-  return path.join(packageRoot(), "tools/manifest.json");
+function projectSafety(safety: ToolSafety): SafetyProjection {
+  switch (safety.kind) {
+    case "read":
+      return { readOnly: true, destructive: false, confirmRequired: false };
+    case "modelMutation":
+      return {
+        readOnly: false,
+        destructive: safety.destructive,
+        confirmRequired: safety.destructive,
+      };
+    case "nonModelSideEffect":
+      return {
+        readOnly: false,
+        destructive: safety.destructive,
+        confirmRequired: safety.destructive,
+      };
+    default: {
+      const exhaustive: never = safety;
+      return exhaustive;
+    }
+  }
 }
 
-export function loadManifest(): ToolManifest {
-  return JSON.parse(readFileSync(manifestPath(), "utf8")) as ToolManifest;
-}
+export type { ToolTier };
 
 export function activeToolTier(): ToolTier | "all" {
   const raw = process.env.SOLIDWORKS_MCP_TOOL_TIER?.toLowerCase();
@@ -130,8 +75,6 @@ export function activeToolTier(): ToolTier | "all" {
   }
   return "core";
 }
-
-const TIER_ORDER: ToolTier[] = ["core", "extended", "advanced", "debug"];
 
 function tierAllowed(toolTier: ToolTier, maxTier: ToolTier | "all"): boolean {
   if (maxTier === "all") {
@@ -153,95 +96,86 @@ function errorResult(error: unknown) {
   };
 }
 
-function resolveSchema(entry: ToolManifestEntry): z.ZodTypeAny {
-  if (!entry.schema || entry.schema === "custom") {
-    return documentSchemas.optionalPathSchema;
-  }
-  return SCHEMA_MAP[entry.schema];
-}
-
-function prepareArgs(entry: ToolManifestEntry, args: Record<string, unknown>): Record<string, unknown> {
+function prepareArgs(
+  spec: McpToolSpec,
+  args: Record<string, unknown>,
+): Record<string, unknown> {
   const prepared = { ...args };
-  for (const key of [
-    "path",
-    "part_path",
-    "output_path",
-    "output_part_path",
-    "source_part_path",
-    "assembly_path",
-    "from_part_path",
-    "to_part_path",
-    "model_path",
-    "component_path",
-    "output_dir",
-  ]) {
+  for (const key of PATH_FIELDS) {
     const value = prepared[key];
     if (typeof value === "string") {
       prepared[key] = assertAllowedPath(value);
     }
   }
 
-  if (entry.confirmRequired && prepared.confirm !== true) {
-    throw new Error(`Destructive tool ${entry.name} requires confirm: true`);
+  const safety = projectSafety(spec.safety);
+  if (safety.confirmRequired && prepared.confirm !== true) {
+    throw new Error(`Destructive tool ${spec.exposure.name} requires confirm: true`);
   }
 
   return prepared;
 }
 
-export function registerAllTools(server: McpServer): void {
-  const manifest = loadManifest();
-  const maxTier = activeToolTier();
-  const registered = manifest.tools.filter((tool) => tierAllowed(tool.tier, maxTier));
+function audit(
+  spec: McpToolSpec,
+  ok: boolean,
+  workerArgs: Record<string, unknown>,
+  data?: unknown,
+  error?: unknown,
+): void {
+  const recordData = data && typeof data === "object"
+    ? data as {
+        ok?: unknown;
+        preCheckpoint?: { checkpointPath?: string };
+        checkpoint?: { checkpointPath?: string };
+      }
+    : undefined;
+  const checkpointPath =
+    typeof recordData?.preCheckpoint?.checkpointPath === "string"
+      ? recordData.preCheckpoint.checkpointPath
+      : typeof recordData?.checkpoint?.checkpointPath === "string"
+        ? recordData.checkpoint.checkpointPath
+        : undefined;
 
-  for (const entry of registered) {
-    const inputSchema = resolveSchema(entry);
+  appendAuditEntry({
+    tool: spec.exposure.name,
+    command: spec.implementation.command,
+    ok: typeof recordData?.ok === "boolean" ? recordData.ok : ok,
+    destructive: projectSafety(spec.safety).destructive,
+    path: typeof workerArgs.path === "string" ? workerArgs.path : undefined,
+    checkpointPath,
+    error: error instanceof Error ? error.message : error === undefined ? undefined : String(error),
+  });
+}
+
+export function registerSolidWorksTools(server: McpServer): void {
+  const maxTier = activeToolTier();
+  const registered = TOOL_SPECS
+    .filter(isMcpTool)
+    .filter((spec) => tierAllowed(spec.exposure.tier, maxTier));
+
+  for (const spec of registered) {
+    const safety = projectSafety(spec.safety);
     server.registerTool(
-      entry.name,
+      spec.exposure.name,
       {
-        title: entry.name.replaceAll("_", " "),
-        description: entry.description,
-        inputSchema,
-        annotations: { readOnlyHint: entry.readOnly },
+        title: spec.exposure.name.replaceAll("_", " "),
+        description: spec.exposure.description,
+        inputSchema: spec.exposure.input.value,
+        annotations: { readOnlyHint: safety.readOnly },
       },
       async (args: unknown) => {
+        const record = (args ?? {}) as Record<string, unknown>;
         try {
-          const record = (args ?? {}) as Record<string, unknown>;
-          const workerArgs = prepareArgs(entry, record);
-          const data = await runWorker({ command: entry.workerCommand, args: workerArgs });
-          if (!entry.readOnly) {
-            const recordData = data && typeof data === "object"
-              ? (data as {
-                ok?: unknown;
-                preCheckpoint?: { checkpointPath?: string };
-                checkpoint?: { checkpointPath?: string };
-              })
-              : undefined;
-            const okFlag = typeof recordData?.ok === "boolean" ? recordData.ok : true;
-            const checkpointPath =
-              typeof recordData?.preCheckpoint?.checkpointPath === "string"
-                ? recordData.preCheckpoint.checkpointPath
-                : typeof recordData?.checkpoint?.checkpointPath === "string"
-                  ? recordData.checkpoint.checkpointPath
-                  : undefined;
-            appendAuditEntry({
-              tool: entry.name,
-              command: entry.workerCommand,
-              ok: okFlag,
-              destructive: entry.destructive,
-              path: typeof workerArgs.path === "string" ? workerArgs.path : undefined,
-              checkpointPath,
-            });
+          const workerArgs = prepareArgs(spec, record);
+          const data = await runWorker({ command: spec.implementation.command, args: workerArgs });
+          if (!safety.readOnly) {
+            audit(spec, true, workerArgs, data);
           }
           return jsonResult(data);
         } catch (error) {
-          if (!entry.readOnly) {
-            appendAuditEntry({
-              tool: entry.name,
-              command: entry.workerCommand,
-              ok: false,
-              destructive: entry.destructive,
-              error: error instanceof Error ? error.message : String(error),
-            });
+          if (!safety.readOnly) {
+            audit(spec, false, record, undefined, error);
           }
           return errorResult(error);
         }
@@ -261,25 +195,28 @@ export function registerAllTools(server: McpServer): void {
       annotations: { readOnlyHint: true },
     },
     async (args: { query: string; limit?: number }) => {
-      const q = args.query.toLowerCase();
+      const query = args.query.toLowerCase();
       const limit = args.limit ?? 20;
       const matches = registered
         .filter(
-          (tool) =>
-            tool.name.toLowerCase().includes(q)
-            || tool.description.toLowerCase().includes(q)
-            || (tool.tags ?? []).some((tag) => tag.toLowerCase().includes(q))
-            || (tool.domains ?? []).some((domain) => domain.toLowerCase().includes(q)),
+          (spec) =>
+            spec.exposure.name.toLowerCase().includes(query)
+            || spec.exposure.description.toLowerCase().includes(query)
+            || spec.exposure.tags.some((tag) => tag.toLowerCase().includes(query))
+            || spec.exposure.domains.some((domain) => domain.toLowerCase().includes(query)),
         )
         .slice(0, limit)
-        .map((tool) => ({
-          name: tool.name,
-          workerCommand: tool.workerCommand,
-          tier: tool.tier,
-          readOnly: tool.readOnly,
-          destructive: tool.destructive ?? false,
-          description: tool.description,
-        }));
+        .map((spec) => {
+          const safety = projectSafety(spec.safety);
+          return {
+            name: spec.exposure.name,
+            workerCommand: spec.implementation.command,
+            tier: spec.exposure.tier,
+            readOnly: safety.readOnly,
+            destructive: safety.destructive,
+            description: spec.exposure.description,
+          };
+        });
 
       return jsonResult({ query: args.query, tier: maxTier, count: matches.length, tools: matches });
     },

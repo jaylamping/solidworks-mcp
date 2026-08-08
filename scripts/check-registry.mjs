@@ -1,31 +1,27 @@
-#!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { TOOL_SPECS } from "../src/tool-spec/catalog.ts";
+import { WORKER_COMMANDS } from "../src/generated/worker-command.ts";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const registryPath = path.join(root, "workers/SolidWorksComWorker/WorkerCommandRegistry.cs");
 
-function parseRegistryCommands() {
-  const text = fs.readFileSync(
-    path.join(root, "workers/SolidWorksComWorker/WorkerCommandRegistry.cs"),
-    "utf8",
-  );
-  return [...new Set([...text.matchAll(/\["([a-z0-9_]+)"\]\s*=/g)].map((m) => m[1]))].sort();
-}
-
-function parseWorkerTsCommands() {
-  const text = fs.readFileSync(path.join(root, "src/worker.ts"), "utf8");
-  const block = text.match(/export type WorkerCommand =([\s\S]*?);/);
-  if (!block) return [];
-  return [...block[1].matchAll(/\|\s*"([a-z0-9_]+)"/g)].map((m) => m[1]).sort();
+function parseRegistryEntries() {
+  const text = fs.readFileSync(registryPath, "utf8");
+  return [...text.matchAll(/\["([a-z0-9_]+)"\]\s*=\s*([A-Za-z0-9_]+)/g)]
+    .map(([, command, handler]) => ({ command, handler }))
+    .sort((left, right) => left.command.localeCompare(right.command));
 }
 
 function parseScriptCommands() {
-  const scriptsDir = path.join(root, "scripts");
   const commands = new Set();
-  for (const file of fs.readdirSync(scriptsDir)) {
-    if (!file.endsWith(".mjs") || file === "check-registry.mjs" || file === "validate-tools.mjs") continue;
-    const text = fs.readFileSync(path.join(scriptsDir, file), "utf8");
+  for (const file of fs.readdirSync(path.join(root, "scripts"))) {
+    if (!file.endsWith(".mjs") || file === "check-registry.mjs" || file === "validate-tools.mjs") {
+      continue;
+    }
+    const text = fs.readFileSync(path.join(root, "scripts", file), "utf8");
     for (const match of text.matchAll(/runWorker\(\s*["'`]([a-z0-9_]+)["'`]/g)) {
       commands.add(match[1]);
     }
@@ -36,50 +32,57 @@ function parseScriptCommands() {
   return [...commands].sort();
 }
 
-function parseManifestCommands() {
-  const manifestPath = path.join(root, "tools/manifest.json");
-  if (!fs.existsSync(manifestPath)) return [];
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  return (manifest.tools ?? []).map((t) => t.workerCommand).sort();
-}
-
-const registry = parseRegistryCommands();
-const workerTs = parseWorkerTsCommands();
-const scripts = parseScriptCommands();
-const manifest = parseManifestCommands();
-
+const registry = parseRegistryEntries();
+const catalog = new Map(
+  TOOL_SPECS.map((spec) => [spec.implementation.command, spec]),
+);
+const generated = new Set(WORKER_COMMANDS);
 const errors = [];
 
-const missingInRegistry = scripts.filter((c) => !registry.includes(c));
-if (missingInRegistry.length) {
-  errors.push(`Scripts reference commands missing from WorkerCommandRegistry: ${missingInRegistry.join(", ")}`);
+for (const entry of registry) {
+  const spec = catalog.get(entry.command);
+  if (!spec) {
+    errors.push(`WorkerCommandRegistry command missing from catalog: ${entry.command}`);
+    continue;
+  }
+  const expectedHandler = spec.implementation.csharpHandler.replace(/^Program\./, "");
+  if (entry.handler !== expectedHandler) {
+    errors.push(
+      `handler drift for ${entry.command}: catalog=${spec.implementation.csharpHandler}, registry=Program.${entry.handler}`,
+    );
+  }
 }
 
-const missingInWorkerTs = registry.filter((c) => !workerTs.includes(c));
-if (missingInWorkerTs.length) {
-  errors.push(`Registry commands missing from src/worker.ts union: ${missingInWorkerTs.join(", ")}`);
+for (const [command, spec] of catalog) {
+  if (!registry.some((entry) => entry.command === command)) {
+    errors.push(`catalog command missing from WorkerCommandRegistry: ${command}`);
+  }
+  if (!generated.has(command)) {
+    errors.push(`catalog command missing from generated WorkerCommand union: ${command}`);
+  }
+  if (spec.implementation.kind !== "worker") {
+    errors.push(`catalog command is not a worker implementation: ${command}`);
+  }
 }
 
-const extraInWorkerTs = workerTs.filter((c) => !registry.includes(c));
-if (extraInWorkerTs.length) {
-  errors.push(`src/worker.ts union has unknown commands: ${extraInWorkerTs.join(", ")}`);
+for (const command of generated) {
+  if (!catalog.has(command)) {
+    errors.push(`generated WorkerCommand has no catalog entry: ${command}`);
+  }
 }
 
-const manifestSet = new Set(manifest);
-const missingInManifest = registry.filter((c) => !manifestSet.has(c) && ![
-  "invoke",
-  "batch_invoke",
-  "status",
-  "urdf_readiness",
-  "add_urdf_frame",
-].includes(c));
-if (missingInManifest.length) {
-  errors.push(`Registry commands missing from tools/manifest.json: ${missingInManifest.join(", ")}`);
+const registrySet = new Set(registry.map(({ command }) => command));
+for (const command of parseScriptCommands()) {
+  if (!registrySet.has(command)) {
+    errors.push(`script references command missing from WorkerCommandRegistry: ${command}`);
+  }
 }
 
 if (errors.length) {
-  console.error("Registry drift detected:\n");
-  for (const err of errors) console.error(`- ${err}`);
+  console.error("Registry consistency check failed:\n");
+  for (const error of errors) {
+    console.error(`- ${error}`);
+  }
   process.exit(1);
 }
 
@@ -88,9 +91,9 @@ console.log(
     {
       ok: true,
       registryCount: registry.length,
-      workerTsCount: workerTs.length,
-      scriptCommandCount: scripts.length,
-      manifestCount: manifest.length,
+      catalogCount: catalog.size,
+      generatedCount: generated.size,
+      scriptCommandCount: parseScriptCommands().length,
     },
     null,
     2,

@@ -8,7 +8,7 @@ import { z } from "zod";
 import { registerApiCatalogResources } from "./api-catalog.js";
 import { readRecentAuditEntries } from "./audit-log.js";
 import { packageRoot } from "./config.js";
-import { registerAllTools } from "./tool-registry.js";
+import { registerSolidWorksTools } from "./tool-registry.js";
 import { registerDocsTools } from "./tools/docs-search.js";
 import { errorResult, jsonResult } from "./tools/common.js";
 import { registerSolidWorksInvokeTools } from "./tools/solidworks-invoke.js";
@@ -25,7 +25,7 @@ function mcpBuildInfo(): { mcpVersion: string; buildId: string } {
 export async function main(): Promise<void> {
   const server = new McpServer({ name: "solidworks", version: "0.4.0" });
 
-  registerAllTools(server);
+  registerSolidWorksTools(server);
   registerUrdfTools(server);
   registerApiCatalogResources(server);
   registerDocsTools(server);

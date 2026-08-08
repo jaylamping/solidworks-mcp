@@ -4,143 +4,8 @@ using SolidWorks.Interop.swconst;
 
 internal static partial class Program
 {
-    private enum SelectionFieldKind
-    {
-        ComponentName,
-        ComponentPath,
-        FeatureName,
-        PlaneName,
-        BodyName,
-        PersistReference,
-        RefName,
-    }
-
-    private sealed record SelectionBinding(string ArgName, SelectionFieldKind Field, int SelectionIndex = 1);
-
-    private static readonly Dictionary<string, SelectionBinding[]> SelectionCommandBindings = new(StringComparer.Ordinal)
-    {
-        ["get_component_box"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
-        ["get_component_transform"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
-        ["get_mass_properties"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
-        ["get_feature_box"] = [new("component_name", SelectionFieldKind.ComponentName, 1), new("feature_name", SelectionFieldKind.FeatureName, 1)],
-        ["get_part_feature_box"] =
-        [
-            new("part_path", SelectionFieldKind.ComponentPath, 1),
-            new("feature_name", SelectionFieldKind.FeatureName, 1),
-        ],
-        ["align_component_to_feature"] =
-        [
-            new("layout_component", SelectionFieldKind.ComponentName, 1),
-            new("layout_feature", SelectionFieldKind.FeatureName, 1),
-            new("target_component", SelectionFieldKind.ComponentName, 2),
-        ],
-        ["probe_feature_faces"] =
-        [
-            new("component_name", SelectionFieldKind.ComponentName, 1),
-            new("feature_name", SelectionFieldKind.FeatureName, 1),
-        ],
-        ["get_persist_reference"] =
-        [
-            new("component_name", SelectionFieldKind.ComponentName, 1),
-            new("ref", SelectionFieldKind.RefName, 1),
-        ],
-        ["get_planar_face_index"] =
-        [
-            new("component_name", SelectionFieldKind.ComponentName, 1),
-            new("feature_name", SelectionFieldKind.FeatureName, 1),
-        ],
-        ["create_sketch"] = [new("plane_name", SelectionFieldKind.PlaneName, 1)],
-        ["set_component_visible"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
-        ["set_component_fixed"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
-        ["rename_component"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
-        ["transform_component"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
-        ["set_component_transform"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
-        ["reset_component_transform"] = [new("component_name", SelectionFieldKind.ComponentName, 1)],
-        ["mate_planes"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-        ["mate_coincident"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-        ["mate_parallel"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-        ["mate_distance"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-        ["mate_perpendicular"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-        ["mate_width"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-        ["mate_try_coincident"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-        ["mate_try_parallel"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-        ["mate_try_distance"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-        ["mate_try_perpendicular"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-        ["mate_try_width"] =
-        [
-            new("component_1", SelectionFieldKind.ComponentName, 1),
-            new("ref_1", SelectionFieldKind.RefName, 1),
-            new("component_2", SelectionFieldKind.ComponentName, 2),
-            new("ref_2", SelectionFieldKind.RefName, 2),
-        ],
-    };
-
-    private static readonly string[] SelectionAwareCommands =
-        SelectionCommandBindings.Keys
-            .Concat(["resolve_selection", "get_selection", "diagnose_selection"])
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(static name => name, StringComparer.Ordinal)
-            .ToArray();
+    private static readonly IReadOnlyList<string> SelectionAwareCommands =
+        CommandPolicyCatalog.SelectionAwareCommands;
 
     private static JsonElement? ApplyUseSelection(string command, JsonElement? args)
     {
@@ -149,7 +14,7 @@ internal static partial class Program
             return args;
         }
 
-        if (command is "resolve_selection" or "get_selection" or "diagnose_selection")
+        if (CommandPolicyCatalog.IsSelectionContext(command))
         {
             return args;
         }
@@ -169,7 +34,9 @@ internal static partial class Program
                 ]);
         }
 
-        if (!SelectionCommandBindings.TryGetValue(command, out SelectionBinding[]? bindings))
+        if (!CommandPolicyCatalog.TryGetBindings(
+                command,
+                out IReadOnlyList<GeneratedSelectionBinding> bindings))
         {
             throw WorkerException.Validation(
                 "UNKNOWN_SELECTION_BINDING",
@@ -185,14 +52,14 @@ internal static partial class Program
         int selectionIndex = (int)DoubleArg(args, "selection_index", 1);
 
         var overrides = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        foreach (SelectionBinding binding in bindings)
+        foreach (GeneratedSelectionBinding binding in bindings)
         {
             int resolvedIndex = dualTarget ? binding.SelectionIndex : selectionIndex;
             ResolvedSelectionItem item = RequireSelectionItem(items, resolvedIndex);
-            string? value = GetSelectionFieldValue(item, binding.Field);
+            string? value = GetSelectionFieldValue(item, binding.Source);
             if (!string.IsNullOrWhiteSpace(value))
             {
-                overrides[binding.ArgName] = value;
+                overrides[binding.TargetArg] = value;
             }
         }
 
@@ -248,16 +115,16 @@ internal static partial class Program
         return item;
     }
 
-    private static string? GetSelectionFieldValue(ResolvedSelectionItem item, SelectionFieldKind field) =>
+    private static string? GetSelectionFieldValue(ResolvedSelectionItem item, SelectionSource field) =>
         field switch
         {
-            SelectionFieldKind.ComponentName => item.ComponentName,
-            SelectionFieldKind.ComponentPath => item.ComponentPath,
-            SelectionFieldKind.FeatureName => item.FeatureName,
-            SelectionFieldKind.PlaneName => item.PlaneName ?? item.FeatureName,
-            SelectionFieldKind.BodyName => item.BodyName,
-            SelectionFieldKind.PersistReference => item.PersistReference,
-            SelectionFieldKind.RefName => item.PlaneName ?? item.FeatureName ?? item.BodyName ?? item.ComponentName,
+            SelectionSource.SelectedComponentName => item.ComponentName,
+            SelectionSource.SelectedComponentPath => item.ComponentPath,
+            SelectionSource.SelectedFeatureName => item.FeatureName,
+            SelectionSource.SelectedPlaneName => item.PlaneName ?? item.FeatureName,
+            SelectionSource.SelectedBodyName => item.BodyName,
+            SelectionSource.SelectedPersistReference => item.PersistReference,
+            SelectionSource.SelectedRefName => item.PlaneName ?? item.FeatureName ?? item.BodyName ?? item.ComponentName,
             _ => null,
         };
 

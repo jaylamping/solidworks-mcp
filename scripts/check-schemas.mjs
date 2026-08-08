@@ -1,102 +1,65 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { TOOL_SPECS } from "../src/tool-spec/catalog.ts";
 
-import { SCHEMA_BY_COMMAND, SCHEMA_KEYS } from "./schema-by-command.mjs";
-
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-
-function parseRegistryCommands() {
-  const text = readFileSync(
-    path.join(root, "workers/SolidWorksComWorker/WorkerCommandRegistry.cs"),
-    "utf8",
-  );
-  return [...new Set([...text.matchAll(/\["([a-z0-9_]+)"\]\s*=/g)].map((m) => m[1]))].sort();
+function schemaKeys(schema) {
+  const definition = schema?._def;
+  const shape = typeof definition?.shape === "function" ? definition.shape() : definition?.shape;
+  return shape && typeof shape === "object" ? new Set(Object.keys(shape)) : null;
 }
 
-function parseDestructiveCommands() {
-  const text = readFileSync(path.join(root, "scripts/generate-manifest-from-registry.mjs"), "utf8");
-  const block = text.match(/const DESTRUCTIVE = new Set\(\[([\s\S]*?)\]\);/);
-  if (!block) {
-    throw new Error("Could not parse DESTRUCTIVE set from generate-manifest-from-registry.mjs");
-  }
-  return [...block[1].matchAll(/"([a-z0-9_]+)"/g)].map((m) => m[1]).sort();
-}
-
-function parseSchemaMapKeys() {
-  const text = readFileSync(path.join(root, "src/tool-registry.ts"), "utf8");
-  const block = text.match(/export const SCHEMA_MAP = \{([\s\S]*?)\} as const/);
-  if (!block) {
-    throw new Error("Could not parse SCHEMA_MAP from src/tool-registry.ts");
-  }
-  return [...block[1].matchAll(/^\s+([A-Za-z0-9_]+):/gm)].map((m) => m[1]).sort();
-}
-
-function parseManifestTools() {
-  const manifest = JSON.parse(readFileSync(path.join(root, "tools/manifest.json"), "utf8"));
-  return manifest.tools ?? [];
-}
-
-const HAND_REGISTERED = new Set([
-  "invoke",
-  "batch_invoke",
-  "status",
-  "urdf_readiness",
-  "add_urdf_frame",
-]);
-
-const registry = parseRegistryCommands();
-const destructive = new Set(parseDestructiveCommands());
-const schemaMapKeys = new Set(parseSchemaMapKeys());
-const manifestTools = parseManifestTools();
 const errors = [];
+const seenCommands = new Set();
+const seenNames = new Set();
+const schemaValues = new Map();
+const mcpSpecs = TOOL_SPECS.filter((spec) => spec.exposure.kind === "mcp");
 
-for (const schemaKey of SCHEMA_KEYS) {
-  if (!schemaMapKeys.has(schemaKey)) {
-    errors.push(`schema-by-command references unknown SCHEMA_MAP key: ${schemaKey}`);
+for (const spec of TOOL_SPECS) {
+  const command = spec.implementation.command;
+  if (seenCommands.has(command)) {
+    errors.push(`duplicate catalog command: ${command}`);
   }
-}
+  seenCommands.add(command);
 
-for (const [command, schemaKey] of Object.entries(SCHEMA_BY_COMMAND)) {
-  if (!registry.includes(command)) {
-    errors.push(`schema-by-command maps unknown registry command: ${command}`);
-  }
-  if (!schemaMapKeys.has(schemaKey)) {
-    errors.push(`schema-by-command ${command} -> ${schemaKey} missing from SCHEMA_MAP`);
-  }
-}
-
-const manifestCommands = manifestTools.map((tool) => tool.workerCommand);
-for (const command of registry) {
-  if (HAND_REGISTERED.has(command)) {
+  if (spec.exposure.kind !== "mcp") {
     continue;
   }
-  if (!manifestCommands.includes(command)) {
-    errors.push(`Registry command missing from manifest: ${command}`);
-  }
-  const expectedSchema = SCHEMA_BY_COMMAND[command] ?? "optionalPath";
-  const tool = manifestTools.find((entry) => entry.workerCommand === command);
-  if (tool && tool.schema !== expectedSchema) {
-    errors.push(`Manifest schema drift for ${command}: expected ${expectedSchema}, got ${tool.schema}`);
-  }
-  if (destructive.has(command) && expectedSchema === "optionalPath") {
-    errors.push(`Destructive command ${command} must not use optionalPath schema`);
-  }
-}
 
-for (const tool of manifestTools) {
-  if (tool.destructive && tool.schema === "optionalPath") {
-    errors.push(`Manifest marks destructive tool ${tool.workerCommand} with optionalPath schema`);
+  if (seenNames.has(spec.exposure.name)) {
+    errors.push(`duplicate MCP tool name: ${spec.exposure.name}`);
   }
-  if (tool.schema && !schemaMapKeys.has(tool.schema)) {
-    errors.push(`Manifest tool ${tool.name} references unknown schema key: ${tool.schema}`);
+  seenNames.add(spec.exposure.name);
+
+  const schema = spec.exposure.input;
+  if (!schema?.key || !schema?.value) {
+    errors.push(`MCP tool has no schemaRef: ${command}`);
+    continue;
+  }
+
+  const previous = schemaValues.get(schema.key);
+  if (previous && previous !== schema.value) {
+    errors.push(`schema key is paired with multiple Zod objects: ${schema.key}`);
+  }
+  schemaValues.set(schema.key, schema.value);
+
+  const keys = schemaKeys(schema.value);
+  if (keys && spec.selection.kind === "bindings") {
+    for (const binding of spec.selection.bindings) {
+      if (!keys.has(binding.targetArg)) {
+        errors.push(
+          `selection target ${binding.targetArg} is absent from ${schema.key}: ${command}`,
+        );
+      }
+    }
+  }
+
+  if (spec.safety.kind !== "read" && spec.safety.destructive && schema.key === "optionalPath") {
+    errors.push(`destructive command ${command} must not use optionalPath schema`);
   }
 }
 
 if (errors.length) {
   console.error("Schema coverage check failed:\n");
-  for (const err of errors) {
-    console.error(`- ${err}`);
+  for (const error of errors) {
+    console.error(`- ${error}`);
   }
   process.exit(1);
 }
@@ -105,10 +68,12 @@ console.log(
   JSON.stringify(
     {
       ok: true,
-      mappedCommands: Object.keys(SCHEMA_BY_COMMAND).length,
-      schemaKeys: SCHEMA_KEYS.length,
-      manifestTools: manifestTools.length,
-      destructiveMapped: [...destructive].filter((command) => SCHEMA_BY_COMMAND[command]).length,
+      catalogCommands: TOOL_SPECS.length,
+      mcpTools: mcpSpecs.length,
+      schemaKeys: schemaValues.size,
+      destructiveMapped: mcpSpecs.filter(
+        (spec) => spec.safety.kind !== "read" && spec.safety.destructive,
+      ).length,
     },
     null,
     2,

@@ -8,6 +8,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Activate document.",
       "descriptionSource": "derived",
       "tags": [
@@ -25,6 +26,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Add configuration copy.",
       "descriptionSource": "derived",
       "tags": [
@@ -42,6 +44,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Add standard views.",
       "descriptionSource": "derived",
       "tags": [
@@ -59,6 +62,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Align component to feature.",
       "descriptionSource": "derived",
       "tags": [
@@ -76,6 +80,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Summarize fixed, lightweight, suppressed, broken-reference, and mate state.",
       "descriptionSource": "authored",
       "tags": [
@@ -93,6 +98,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Save a recoverable checkpoint of the active or specified document.",
       "descriptionSource": "authored",
       "tags": [
@@ -110,6 +116,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Clone solid body part.",
       "descriptionSource": "derived",
       "tags": [
@@ -127,6 +134,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": false,
       "description": "Close all documents.",
       "descriptionSource": "derived",
       "tags": [
@@ -144,6 +152,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Close document.",
       "descriptionSource": "derived",
       "tags": [
@@ -161,6 +170,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Return mass, center of mass, and inertia for a component.",
       "descriptionSource": "authored",
       "tags": [
@@ -178,6 +188,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Worker command: confirm_and_save",
       "tags": [
         "confirm"
@@ -194,6 +205,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Copy with mates.",
       "descriptionSource": "derived",
       "tags": [
@@ -212,6 +224,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Create drawing from model.",
       "descriptionSource": "derived",
       "tags": [
@@ -229,6 +242,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Create sketch.",
       "descriptionSource": "derived",
       "tags": [
@@ -246,6 +260,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Create subassembly.",
       "descriptionSource": "derived",
       "tags": [
@@ -263,6 +278,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Debug mate entities.",
       "descriptionSource": "derived",
       "tags": [
@@ -281,6 +297,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Delete all mates from an assembly.",
       "descriptionSource": "authored",
       "tags": [
@@ -299,6 +316,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Delete feature.",
       "descriptionSource": "derived",
       "tags": [
@@ -316,6 +334,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Delete a named mate feature from an assembly.",
       "descriptionSource": "authored",
       "tags": [
@@ -334,6 +353,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Delete mates in range.",
       "descriptionSource": "derived",
       "tags": [
@@ -352,6 +372,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Diagnose SolidWorks COM attach, ROT, and worker mutex health.",
       "descriptionSource": "authored",
       "tags": [
@@ -369,6 +390,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Diagnose document.",
       "descriptionSource": "derived",
       "tags": [
@@ -386,6 +408,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Diagnose part save.",
       "descriptionSource": "derived",
       "tags": [
@@ -403,6 +426,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Diagnose selection.",
       "descriptionSource": "derived",
       "tags": [
@@ -420,6 +444,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Dissolve component.",
       "descriptionSource": "derived",
       "tags": [
@@ -437,6 +462,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Ensure offset plane.",
       "descriptionSource": "derived",
       "tags": [
@@ -454,6 +480,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Explain error.",
       "descriptionSource": "derived",
       "tags": [
@@ -471,6 +498,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Explode view.",
       "descriptionSource": "derived",
       "tags": [
@@ -488,6 +516,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Export a CAD document to STEP, STL, PDF, or PNG under an allowed CAD root.",
       "descriptionSource": "authored",
       "tags": [
@@ -505,6 +534,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Export link transforms.",
       "descriptionSource": "derived",
       "tags": [
@@ -522,6 +552,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Manage chamfer.",
       "descriptionSource": "derived",
       "tags": [
@@ -539,6 +570,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Manage circular pattern.",
       "descriptionSource": "derived",
       "tags": [
@@ -556,6 +588,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Manage extrude boss.",
       "descriptionSource": "derived",
       "tags": [
@@ -573,6 +606,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Manage extrude cut.",
       "descriptionSource": "derived",
       "tags": [
@@ -590,6 +624,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Manage fillet.",
       "descriptionSource": "derived",
       "tags": [
@@ -607,6 +642,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Manage linear pattern.",
       "descriptionSource": "derived",
       "tags": [
@@ -624,6 +660,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Manage mirror.",
       "descriptionSource": "derived",
       "tags": [
@@ -641,6 +678,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Get assembly degrees of freedom.",
       "descriptionSource": "derived",
       "tags": [
@@ -658,6 +696,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Get component box.",
       "descriptionSource": "derived",
       "tags": [
@@ -675,6 +714,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Get component references.",
       "descriptionSource": "derived",
       "tags": [
@@ -692,6 +732,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Return the 4x4 transform matrix for a named assembly component.",
       "descriptionSource": "authored",
       "tags": [
@@ -709,6 +750,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Get equations.",
       "descriptionSource": "derived",
       "tags": [
@@ -726,6 +768,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Return the assembly-space bounding box for a named component feature.",
       "descriptionSource": "authored",
       "tags": [
@@ -743,6 +786,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Get mass properties.",
       "descriptionSource": "derived",
       "tags": [
@@ -760,6 +804,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Return the material assigned to a part or component.",
       "descriptionSource": "authored",
       "tags": [
@@ -778,6 +823,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Get open documents.",
       "descriptionSource": "derived",
       "tags": [
@@ -795,6 +841,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Get part feature box.",
       "descriptionSource": "derived",
       "tags": [
@@ -812,6 +859,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Capture a base64 persist reference for a component reference.",
       "descriptionSource": "authored",
       "tags": [
@@ -829,6 +877,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Get planar face index.",
       "descriptionSource": "derived",
       "tags": [
@@ -846,6 +895,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Get selection.",
       "descriptionSource": "derived",
       "tags": [
@@ -863,6 +913,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Import step.",
       "descriptionSource": "derived",
       "tags": [
@@ -880,6 +931,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Insert a part into an assembly from an allowed path.",
       "descriptionSource": "authored",
       "tags": [
@@ -897,6 +949,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Insert coord sys.",
       "descriptionSource": "derived",
       "tags": [
@@ -914,6 +967,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Return document type, path, saved state, units, and custom properties.",
       "descriptionSource": "authored",
       "tags": [
@@ -931,6 +985,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "List bodies.",
       "descriptionSource": "derived",
       "tags": [
@@ -948,6 +1003,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Return a flat component list as a bill-of-materials precursor.",
       "descriptionSource": "authored",
       "tags": [
@@ -965,6 +1021,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "List broken references.",
       "descriptionSource": "derived",
       "tags": [
@@ -982,6 +1039,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Worker command: list_checkpoints",
       "tags": [
         "list"
@@ -998,6 +1056,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Return the assembly component tree with paths, quantities, and states.",
       "descriptionSource": "authored",
       "tags": [
@@ -1015,6 +1074,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "List configuration names for a part document.",
       "descriptionSource": "authored",
       "tags": [
@@ -1032,6 +1092,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "List driving dimensions in a part, optionally for one configuration.",
       "descriptionSource": "authored",
       "tags": [
@@ -1049,6 +1110,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "List display states.",
       "descriptionSource": "derived",
       "tags": [
@@ -1066,6 +1128,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "List top-level feature tree entries for a CAD document.",
       "descriptionSource": "authored",
       "tags": [
@@ -1083,6 +1146,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Run interference detection on an assembly.",
       "descriptionSource": "authored",
       "tags": [
@@ -1100,6 +1164,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Worker command: list_mate_entities",
       "tags": [
         "list"
@@ -1117,6 +1182,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Return mate feature names and types for an assembly.",
       "descriptionSource": "authored",
       "tags": [
@@ -1135,6 +1201,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "List named reference planes, axes, coordinate systems, and points.",
       "descriptionSource": "authored",
       "tags": [
@@ -1152,6 +1219,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "List sheet views.",
       "descriptionSource": "derived",
       "tags": [
@@ -1169,6 +1237,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "List sketches.",
       "descriptionSource": "derived",
       "tags": [
@@ -1186,6 +1255,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Make component independent.",
       "descriptionSource": "derived",
       "tags": [
@@ -1203,6 +1273,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Add a coincident mate between two component references or selected faces.",
       "descriptionSource": "authored",
       "tags": [
@@ -1221,6 +1292,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Create a component origin mate between assembly references.",
       "descriptionSource": "derived",
       "tags": [
@@ -1239,6 +1311,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Create a coord sys mate between assembly references.",
       "descriptionSource": "derived",
       "tags": [
@@ -1257,6 +1330,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Add a distance mate between two component references or selected faces.",
       "descriptionSource": "authored",
       "tags": [
@@ -1275,6 +1349,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Add a limit-angle mate with min/max rotation about an axis.",
       "descriptionSource": "authored",
       "tags": [
@@ -1293,6 +1368,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Add a parallel mate between two component references or selected faces.",
       "descriptionSource": "authored",
       "tags": [
@@ -1311,6 +1387,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Add a perpendicular mate between two component references or selected faces.",
       "descriptionSource": "authored",
       "tags": [
@@ -1329,6 +1406,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Add a coincident or parallel mate between named planes on two components.",
       "descriptionSource": "authored",
       "tags": [
@@ -1347,6 +1425,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Inspect candidate mate entities and report whether a mate is likely to succeed.",
       "descriptionSource": "authored",
       "tags": [
@@ -1365,6 +1444,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Create a record macro mate between assembly references.",
       "descriptionSource": "derived",
       "tags": [
@@ -1383,6 +1463,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Create a replay sequence mate between assembly references.",
       "descriptionSource": "derived",
       "tags": [
@@ -1401,6 +1482,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Worker command: mate_tangent",
       "tags": [
         "mate"
@@ -1418,6 +1500,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Dry-run a coincident mate without committing it.",
       "descriptionSource": "authored",
       "tags": [
@@ -1436,6 +1519,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Dry-run a distance mate without committing it.",
       "descriptionSource": "authored",
       "tags": [
@@ -1454,6 +1538,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Dry-run a parallel mate without committing it.",
       "descriptionSource": "authored",
       "tags": [
@@ -1472,6 +1557,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Dry-run a perpendicular mate without committing it.",
       "descriptionSource": "authored",
       "tags": [
@@ -1490,6 +1576,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Dry-run a width mate without committing it.",
       "descriptionSource": "authored",
       "tags": [
@@ -1508,6 +1595,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Add a width mate between two component references or selected faces.",
       "descriptionSource": "authored",
       "tags": [
@@ -1526,6 +1614,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Return bounding-box and mass-property metadata for a CAD document.",
       "descriptionSource": "authored",
       "tags": [
@@ -1543,6 +1632,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Measure distance.",
       "descriptionSource": "derived",
       "tags": [
@@ -1560,6 +1650,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Mirror component.",
       "descriptionSource": "derived",
       "tags": [
@@ -1577,6 +1668,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Mirror part file.",
       "descriptionSource": "derived",
       "tags": [
@@ -1594,6 +1686,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": false,
       "description": "Create document.",
       "descriptionSource": "derived",
       "tags": [
@@ -1611,6 +1704,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Open a SolidWorks or STEP document from an allowed CAD root.",
       "descriptionSource": "authored",
       "tags": [
@@ -1628,6 +1722,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Pack and go.",
       "descriptionSource": "derived",
       "tags": [
@@ -1645,6 +1740,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Probe angular travel of a component about an axis within optional limits.",
       "descriptionSource": "authored",
       "tags": [
@@ -1662,6 +1758,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "List face count, area, and planarity for a component feature.",
       "descriptionSource": "authored",
       "tags": [
@@ -1679,6 +1776,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Rebuild the active model.",
       "descriptionSource": "authored",
       "tags": [
@@ -1696,6 +1794,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Rename component.",
       "descriptionSource": "derived",
       "tags": [
@@ -1713,6 +1812,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Replace component path.",
       "descriptionSource": "derived",
       "tags": [
@@ -1730,6 +1830,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Replace components by path.",
       "descriptionSource": "derived",
       "tags": [
@@ -1747,6 +1848,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Reset component transform.",
       "descriptionSource": "derived",
       "tags": [
@@ -1764,6 +1866,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Resolve all lightweight components in an assembly.",
       "descriptionSource": "authored",
       "tags": [
@@ -1781,6 +1884,7 @@
       "readOnly": true,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Resolve selection.",
       "descriptionSource": "derived",
       "tags": [
@@ -1798,6 +1902,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": false,
       "description": "Worker command: restore_from_checkpoint",
       "tags": [
         "restore"
@@ -1814,6 +1919,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Round side arms from circle.",
       "descriptionSource": "derived",
       "tags": [
@@ -1831,6 +1937,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Save the active or specified SolidWorks document.",
       "descriptionSource": "authored",
       "tags": [
@@ -1848,6 +1955,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Select an entity using a base64 persist reference.",
       "descriptionSource": "authored",
       "tags": [
@@ -1865,6 +1973,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Select face by ray.",
       "descriptionSource": "derived",
       "tags": [
@@ -1882,6 +1991,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Set component configuration.",
       "descriptionSource": "derived",
       "tags": [
@@ -1899,6 +2009,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Set component fixed.",
       "descriptionSource": "derived",
       "tags": [
@@ -1916,6 +2027,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Apply a 4x4 transform matrix to an assembly component.",
       "descriptionSource": "authored",
       "tags": [
@@ -1933,6 +2045,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": false,
       "description": "Set component visible.",
       "descriptionSource": "derived",
       "tags": [
@@ -1950,6 +2063,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Set custom properties on a part or assembly and optionally save it.",
       "descriptionSource": "authored",
       "tags": [
@@ -1967,6 +2081,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Set a driving part dimension value in meters.",
       "descriptionSource": "authored",
       "tags": [
@@ -1984,6 +2099,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Set feature suppression.",
       "descriptionSource": "derived",
       "tags": [
@@ -2001,6 +2117,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Worker command: set_mate_limit_angle",
       "tags": [
         "set"
@@ -2018,6 +2135,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Suppress or unsuppress a named mate.",
       "descriptionSource": "authored",
       "tags": [
@@ -2036,6 +2154,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Assign a material to a part or component.",
       "descriptionSource": "authored",
       "tags": [
@@ -2054,6 +2173,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Create circle.",
       "descriptionSource": "derived",
       "tags": [
@@ -2071,6 +2191,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Create exit.",
       "descriptionSource": "derived",
       "tags": [
@@ -2088,6 +2209,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Create line.",
       "descriptionSource": "derived",
       "tags": [
@@ -2105,6 +2227,7 @@
       "readOnly": false,
       "destructive": true,
       "confirmRequired": true,
+      "autoCheckpoint": true,
       "description": "Create rectangle.",
       "descriptionSource": "derived",
       "tags": [
@@ -2122,6 +2245,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Transform component.",
       "descriptionSource": "derived",
       "tags": [
@@ -2139,6 +2263,7 @@
       "readOnly": false,
       "destructive": false,
       "confirmRequired": false,
+      "autoCheckpoint": true,
       "description": "Unfix all components.",
       "descriptionSource": "derived",
       "tags": [

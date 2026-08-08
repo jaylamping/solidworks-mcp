@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import { z } from "zod";
 
-import { SCHEMA_MAP, type SchemaKey } from "../src/tool-registry.ts";
+import { SCHEMAS, type SchemaRef } from "../src/tool-spec/catalog.js";
 
 type DescriptionSource = "authored" | "derived";
 type Tool = {
@@ -15,6 +15,7 @@ type Tool = {
   readOnly: boolean;
   destructive?: boolean;
   confirmRequired?: boolean;
+  autoCheckpoint?: boolean;
   description: string;
   descriptionSource?: DescriptionSource;
   tags?: string[];
@@ -102,10 +103,10 @@ function renderParameters(schema: JsonObject): string {
 }
 
 function resolveSchema(key: Tool["schema"]): z.ZodTypeAny {
-  if (!key || key === "custom") return SCHEMA_MAP.optionalPath;
-  const schema = SCHEMA_MAP[key];
+  if (!key || key === "custom") return SCHEMAS.optionalPath.value;
+  const schema = SCHEMAS[key as keyof typeof SCHEMAS] as SchemaRef | undefined;
   if (!schema) throw new Error(`Unknown schema key in manifest: ${key}`);
-  return schema;
+  return schema.value;
 }
 
 function renderToolDoc(tool: Tool): string {
@@ -137,7 +138,7 @@ ${(tool.domains ?? []).map((domain) => `- ${escapeCell(domain)}`).join("\n") || 
 
 function main(): void {
   if (!fs.existsSync(manifestPath)) {
-    throw new Error("tools/manifest.json missing — run the manifest generator first");
+    throw new Error("tools/manifest.json missing. Run npm run generate:tools first.");
   }
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as { tools?: Tool[] };
   const tools = manifest.tools ?? [];
