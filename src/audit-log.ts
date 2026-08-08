@@ -17,6 +17,7 @@ export function appendAuditEntry(entry: {
   ok: boolean;
   destructive?: boolean;
   path?: string;
+  checkpointPath?: string;
   error?: string;
 }): void {
   const line = JSON.stringify({

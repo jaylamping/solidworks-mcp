@@ -13,6 +13,9 @@ workers/**/obj/
 ~$*
 *.tmp
 
+# CAD rollback snapshots staged next to assemblies/parts.
+**/.checkpoints/
+
 # Scraped SolidWorks API reference corpus.
 docs/api-reference/
 docs/api-reference/crawl-state.json
@@ -22,6 +25,8 @@ scripts/.chm-import/
 scripts/.chm-*/
 scripts/.cab-test/
 
-# Local Cursor artifacts; keep shared MCP project config.
+# Local Cursor artifacts; keep shared MCP project config and SolidWorks agent rules.
 .cursor/*
 !.cursor/mcp.json
+!.cursor/rules/
+!.cursor/rules/**

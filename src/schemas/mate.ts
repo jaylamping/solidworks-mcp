@@ -30,12 +30,29 @@ export const mateLimitAngleSchema = mateRefsWithSelection
   .extend({
     min_angle_deg: z.number().optional().describe("Minimum allowed rotation in degrees."),
     max_angle_deg: z.number().optional().describe("Maximum allowed rotation in degrees."),
+    angle_deg: z.number().optional().describe("Current or initial angle in degrees."),
     axis_ref: z.string().min(1).optional().describe("Optional rotation axis reference."),
     axis_component: z.string().min(1).optional().describe("Component containing the rotation axis."),
   })
   .refine(mateRefsRefine, {
     message: "Provide component/ref names or set use_selection: true with two highlights.",
   }).describe("Create a limit-angle mate between two references.");
+
+export const setMateLimitAngleSchema = z.object({
+  path: z.string().min(1),
+  mate_name: z.string().min(1),
+  min_angle_deg: z.number().optional(),
+  max_angle_deg: z.number().optional(),
+  angle_deg: z.number().optional(),
+  flip_dimension: z.boolean().optional(),
+}).refine(
+  (data) =>
+    data.min_angle_deg != null
+    || data.max_angle_deg != null
+    || data.angle_deg != null
+    || data.flip_dimension != null,
+  { message: "Provide at least one of min_angle_deg, max_angle_deg, angle_deg, flip_dimension." },
+);
 
 export const probeAngleTravelSchema = z.object({
   path: z.string().min(1).describe("Assembly path under an allowed CAD root."),

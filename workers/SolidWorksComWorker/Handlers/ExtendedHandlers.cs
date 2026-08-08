@@ -355,7 +355,14 @@ internal static partial class Program
         }
 
         doc.ClearSelection2(true);
-        bool selected = SelectFeatureFaceByRay(doc, component, face, append, mark);
+        bool selected = SelectComponentFeatureFace(doc, component, featureName, faceIndex, append, mark);
+        int selectedCount = 0;
+        SelectionMgr? selectionMgr = Try(() => doc.SelectionManager) as SelectionMgr;
+        if (selectionMgr is not null)
+        {
+            selectedCount = Try(() => selectionMgr.GetSelectedObjectCount2(-1)) as int? ?? 0;
+        }
+
         return new
         {
             document = DescribeDocument(doc),
@@ -363,6 +370,7 @@ internal static partial class Program
             feature = featureName,
             faceIndex,
             selected,
+            selectedCount,
             mark,
         };
     }
@@ -518,14 +526,19 @@ internal static partial class Program
         int state = suppressed
             ? (int)swFeatureSuppressionAction_e.swSuppressFeature
             : (int)swFeatureSuppressionAction_e.swUnSuppressFeature;
-        bool ok = Try(() => mateFeature.SetSuppression2(state, 0, null)) as bool? ?? false;
+        bool ok = Try(() => mateFeature.SetSuppression2(
+            state,
+            (int)swInConfigurationOpts_e.swAllConfiguration,
+            null)) as bool? ?? false;
         doc.EditRebuild3();
+        bool? actuallySuppressed = Try(() => mateFeature.IsSuppressed()) as bool?;
 
         return new
         {
             document = DescribeDocument(doc),
             mateName,
             suppressed,
+            actuallySuppressed,
             ok,
         };
     }

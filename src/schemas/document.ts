@@ -28,6 +28,18 @@ export const confirmPathSchema = selectionFieldsSchema.extend({
 
 export const checkpointSchema = z.object({
   path: z.string().min(1),
+  force: z.boolean().optional(),
+});
+
+export const listCheckpointsSchema = z.object({
+  path: z.string().min(1),
+});
+
+export const restoreFromCheckpointSchema = z.object({
+  checkpoint_path: z.string().min(1),
+  path: z.string().min(1).optional(),
+  close_open_document: z.boolean().optional(),
+  confirm: z.literal(true),
 });
 
 export const diagnoseSchema = selectionFieldsSchema.extend({

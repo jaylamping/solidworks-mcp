@@ -28,6 +28,8 @@ internal static partial class Program
         Component2? second = FindComponent(assembly, null, component2)
             ?? throw new InvalidOperationException($"Component not found: {component2}");
 
+        int mateAlign = ParseMateAlign(args);
+
         doc.ClearSelection2(true);
         if (!SelectComponentReference(doc, first, ref1, append: false, mark: 1))
         {
@@ -47,7 +49,7 @@ internal static partial class Program
             ref1,
             ref2,
             (int)swMateType_e.swMateCOINCIDENT,
-            (int)swMateAlign_e.swMateAlignALIGNED);
+            mateAlign);
     }
 
     private static object CreateMateFromSelection(
@@ -366,7 +368,7 @@ internal static partial class Program
         return AddMateFromComponentRefs(
             args,
             (int)swMateType_e.swMateCOINCIDENT,
-            (int)swMateAlign_e.swMateAlignALIGNED,
+            ParseMateAlign(args),
             "mate_coincident");
     }
 
@@ -375,8 +377,17 @@ internal static partial class Program
         return AddMateFromComponentRefs(
             args,
             (int)swMateType_e.swMatePARALLEL,
-            (int)swMateAlign_e.swMateAlignALIGNED,
+            ParseMateAlign(args),
             "mate_parallel");
+    }
+
+    private static object MateTangent(JsonElement? args)
+    {
+        return AddMateFromComponentRefs(
+            args,
+            (int)swMateType_e.swMateTANGENT,
+            ParseMateAlign(args),
+            "mate_tangent");
     }
 
     private static object MateTryCoincident(JsonElement? args) =>
@@ -417,6 +428,12 @@ internal static partial class Program
         string? axisComponentName = StringArg(args, "axis_component");
         double minDeg = DoubleArg(args, "min_angle_deg", -90);
         double maxDeg = DoubleArg(args, "max_angle_deg", 90);
+        bool hasAngle = args is not null
+            && args.Value.ValueKind == JsonValueKind.Object
+            && args.Value.TryGetProperty("angle_deg", out _);
+        double nominalDeg = hasAngle
+            ? DoubleArg(args, "angle_deg", (minDeg + maxDeg) / 2.0)
+            : (minDeg + maxDeg) / 2.0;
         int face1 = (int)DoubleArg(args, "face_index_1", 0);
         int face2 = (int)DoubleArg(args, "face_index_2", 0);
 
@@ -424,6 +441,8 @@ internal static partial class Program
         {
             (minDeg, maxDeg) = (maxDeg, minDeg);
         }
+
+        nominalDeg = Math.Clamp(nominalDeg, Math.Min(minDeg, maxDeg), Math.Max(minDeg, maxDeg));
 
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
         ModelDoc2 doc = OpenDocument(app, inputPath);
@@ -573,7 +592,7 @@ internal static partial class Program
                 angleMate.ReferenceEntity = axisEntity;
             }
 
-            angleMate.Angle = (minDeg + maxDeg) / 2.0 * Math.PI / 180.0;
+            angleMate.Angle = nominalDeg * Math.PI / 180.0;
             if (advanced)
             {
                 angleMate.MinimumAngle = minDeg * Math.PI / 180.0;
@@ -644,7 +663,7 @@ internal static partial class Program
                     0,
                     0,
                     0,
-                    (minDeg + maxDeg) / 2.0 * Math.PI / 180.0,
+                    nominalDeg * Math.PI / 180.0,
                     maxDeg * Math.PI / 180.0,
                     minDeg * Math.PI / 180.0,
                     false,
@@ -689,7 +708,7 @@ internal static partial class Program
                 0,
                 0,
                 0,
-                (minDeg + maxDeg) / 2.0 * Math.PI / 180.0,
+                nominalDeg * Math.PI / 180.0,
                 maxDeg * Math.PI / 180.0,
                 minDeg * Math.PI / 180.0,
                 false,
@@ -734,6 +753,113 @@ internal static partial class Program
             mateMethod = method,
             attempts,
             mateCount = CountAssemblyMates(doc),
+        };
+    }
+
+    private static object SetMateLimitAngle(JsonElement? args)
+    {
+        string inputPath = RequiredStringArg(args, "path");
+        string mateName = RequiredStringArg(args, "mate_name");
+        bool hasMin = args is not null
+            && args.Value.ValueKind == JsonValueKind.Object
+            && args.Value.TryGetProperty("min_angle_deg", out _);
+        bool hasMax = args is not null
+            && args.Value.ValueKind == JsonValueKind.Object
+            && args.Value.TryGetProperty("max_angle_deg", out _);
+        bool hasAngle = args is not null
+            && args.Value.ValueKind == JsonValueKind.Object
+            && args.Value.TryGetProperty("angle_deg", out _);
+        bool hasFlip = args is not null
+            && args.Value.ValueKind == JsonValueKind.Object
+            && args.Value.TryGetProperty("flip_dimension", out _);
+
+        if (!hasMin && !hasMax && !hasAngle && !hasFlip)
+        {
+            throw new InvalidOperationException(
+                "set_mate_limit_angle requires at least one of min_angle_deg, max_angle_deg, angle_deg, flip_dimension.");
+        }
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("set_mate_limit_angle requires an assembly document.");
+        }
+
+        Feature mateFeature = FindFeatureByName(doc, mateName)
+            ?? throw new InvalidOperationException($"Mate feature not found: {mateName}");
+        if (Try(() => mateFeature.GetDefinition()) is not IAngleMateFeatureData editable)
+        {
+            throw new InvalidOperationException($"Mate '{mateName}' is not an angle/limit-angle mate.");
+        }
+
+        double beforeMinDeg = (Try(() => editable.MinimumAngle) as double? ?? 0) * 180.0 / Math.PI;
+        double beforeMaxDeg = (Try(() => editable.MaximumAngle) as double? ?? 0) * 180.0 / Math.PI;
+        double beforeAngleDeg = (Try(() => editable.Angle) as double? ?? 0) * 180.0 / Math.PI;
+        bool beforeFlip = Try(() => editable.FlipDimension) as bool? ?? false;
+        bool beforeAdvanced = Try(() => editable.IsAdvancedMate) as bool? ?? false;
+
+        double minDeg = hasMin ? DoubleArg(args, "min_angle_deg", beforeMinDeg) : beforeMinDeg;
+        double maxDeg = hasMax ? DoubleArg(args, "max_angle_deg", beforeMaxDeg) : beforeMaxDeg;
+        if (minDeg > maxDeg)
+        {
+            (minDeg, maxDeg) = (maxDeg, minDeg);
+        }
+
+        double angleDeg = hasAngle
+            ? DoubleArg(args, "angle_deg", beforeAngleDeg)
+            : Math.Clamp(beforeAngleDeg, minDeg, maxDeg);
+        bool flip = hasFlip ? BoolArg(args, "flip_dimension", beforeFlip) : beforeFlip;
+
+        editable.IsAdvancedMate = true;
+        editable.MinimumAngle = minDeg * Math.PI / 180.0;
+        editable.MaximumAngle = maxDeg * Math.PI / 180.0;
+        editable.Angle = angleDeg * Math.PI / 180.0;
+        editable.FlipDimension = flip;
+
+        bool modifyOk = Try(() => mateFeature.ModifyDefinition(editable, doc, null)) as bool? ?? false;
+        doc.EditRebuild3();
+
+        IAngleMateFeatureData? afterDef = Try(() => mateFeature.GetDefinition()) as IAngleMateFeatureData;
+        int? errorCode = null;
+        try
+        {
+            bool isWarning = false;
+            errorCode = mateFeature.GetErrorCode2(out isWarning);
+        }
+        catch
+        {
+            errorCode = Try(() => mateFeature.GetErrorCode()) as int?;
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            mateName = Try(() => mateFeature.Name),
+            modifyOk,
+            errorCode,
+            before = new
+            {
+                isAdvancedMate = beforeAdvanced,
+                minAngleDeg = beforeMinDeg,
+                maxAngleDeg = beforeMaxDeg,
+                angleDeg = beforeAngleDeg,
+                flipDimension = beforeFlip,
+            },
+            after = new
+            {
+                isAdvancedMate = Try(() => afterDef?.IsAdvancedMate) as bool?,
+                minAngleDeg = afterDef is null
+                    ? (double?)null
+                    : (Try(() => afterDef.MinimumAngle) as double? ?? 0) * 180.0 / Math.PI,
+                maxAngleDeg = afterDef is null
+                    ? (double?)null
+                    : (Try(() => afterDef.MaximumAngle) as double? ?? 0) * 180.0 / Math.PI,
+                angleDeg = afterDef is null
+                    ? (double?)null
+                    : (Try(() => afterDef.Angle) as double? ?? 0) * 180.0 / Math.PI,
+                flipDimension = Try(() => afterDef?.FlipDimension) as bool?,
+            },
         };
     }
 

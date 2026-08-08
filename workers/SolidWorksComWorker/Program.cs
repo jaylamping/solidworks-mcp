@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 
 internal sealed record WorkerRequest(string Command, JsonElement? Args);
@@ -72,9 +73,11 @@ internal static partial class Program
             }
 
             CommandSafety.RequireConfirmIfDestructive(command, request.Args);
+            object? preCheckpoint = TryAutoCheckpointBeforeMutation(command, request.Args);
             JsonElement? effectiveArgs = ApplyUseSelection(command, request.Args);
             object data = handler(effectiveArgs);
-            Console.WriteLine(JsonSerializer.Serialize(new { ok = true, data }, WriteJson));
+            object responseData = AttachPreCheckpoint(data, preCheckpoint);
+            Console.WriteLine(JsonSerializer.Serialize(new { ok = true, data = responseData }, WriteJson));
             return 0;
         }
         catch (WorkerException ex)
@@ -86,6 +89,27 @@ internal static partial class Program
             var context = new Dictionary<string, object?> { ["command"] = command };
             return WriteError(SwErrorDecoder.FromException(ex, "Program.RunWorker", context));
         }
+    }
+
+    private static object AttachPreCheckpoint(object data, object? preCheckpoint)
+    {
+        if (preCheckpoint is null)
+        {
+            return data;
+        }
+
+        JsonNode? node = JsonSerializer.SerializeToNode(data, WriteJson);
+        if (node is JsonObject obj)
+        {
+            obj["preCheckpoint"] = JsonSerializer.SerializeToNode(preCheckpoint, WriteJson);
+            return obj;
+        }
+
+        return new
+        {
+            value = data,
+            preCheckpoint,
+        };
     }
 
     private static int WriteError(WorkerError error)

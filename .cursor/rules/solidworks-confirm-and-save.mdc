@@ -1,0 +1,25 @@
+---
+description: SolidWorks MCP CAD edit/save confirmation workflow
+alwaysApply: true
+---
+
+# SolidWorks confirm-and-save workflow
+
+When editing assemblies/parts through SolidWorks MCP / the COM worker:
+
+1. Mutating CAD tools **auto-stage a pre-change checkpoint** under `<doc-dir>/.checkpoints/` before applying changes. Responses include `preCheckpoint` with `checkpointPath` when staging ran.
+2. If a change goes wrong, call `solidworks_list_checkpoints` then `solidworks_restore_from_checkpoint` with `confirm: true` (and `path` if needed) before continuing.
+3. After each meaningful CAD change cycle, capture a `export` PNG with `keep_view: true` (or describe the live viewport) and **ask the user**: "Does this look good?"
+4. Do **not** call `save_document` as the happy path after pose/mate work.
+5. Only after the user explicitly says yes, call `confirm_and_save` with:
+   - `looks_good: true`
+   - `confirm: true`
+   - optional `preview_path` for an audit screenshot
+6. If `confirm_and_save` returns `ok: false` or `poseStable: false`, report the jumped components / mate warnings, restore/heal, ask the user again, and retry. Do not declare success until `ok: true`.
+7. Yellow mate warnings (`errorCode != 0`) after a user-approved pose are blockers for “done” — heal or explain before another save attempt.
+
+## Checkpoint notes
+
+- Auto-checkpoint is on by default for mates/transforms/features/replacements/etc. Disable with `SOLIDWORKS_MCP_AUTO_CHECKPOINT=0`.
+- Debounce (default 45s) reuses the latest staged copy for rapid consecutive edits; force a fresh one with `solidworks_checkpoint_document` (`force: true`).
+- Prefer `save_as_copy` checkpoints when the doc is open (captures unsaved session state). `file_copy` is the on-disk fallback.

@@ -50,6 +50,7 @@ const DESTRUCTIVE = new Set([
   "explode_view",
   "copy_with_mates",
   "create_drawing_from_model",
+  "restore_from_checkpoint",
 ]);
 
 const READ_ONLY = new Set([
@@ -114,6 +115,7 @@ const CORE = new Set([
   "mate_parallel",
   "rebuild_document",
   "checkpoint_document",
+  "list_checkpoints",
   "diagnose_com",
 ]);
 

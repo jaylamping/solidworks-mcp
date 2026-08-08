@@ -358,11 +358,49 @@ internal static partial class Program
             int guard = 0;
             while (subFeature is not null && guard++ < 200)
             {
-                dynamic current = subFeature;
+                Feature current = (Feature)subFeature;
+                string? name = Try(() => current.Name) as string;
+                string? typeName = Try(() => current.GetTypeName2()) as string;
+                int? errorCode = null;
+                try
+                {
+                    bool isWarning = false;
+                    errorCode = current.GetErrorCode2(out isWarning);
+                }
+                catch
+                {
+                    errorCode = Try(() => current.GetErrorCode()) as int?;
+                }
+
+                bool? suppressed = Try(() => current.IsSuppressed()) as bool?;
+                bool? isAdvancedMate = null;
+                double? minAngleDeg = null;
+                double? maxAngleDeg = null;
+                double? angleDeg = null;
+                bool? flipDimension = null;
+                if (Try(() => current.GetDefinition()) is IAngleMateFeatureData angleMate)
+                {
+                    isAdvancedMate = Try(() => angleMate.IsAdvancedMate) as bool?;
+                    double? minRad = Try(() => angleMate.MinimumAngle) as double?;
+                    double? maxRad = Try(() => angleMate.MaximumAngle) as double?;
+                    double? angRad = Try(() => angleMate.Angle) as double?;
+                    flipDimension = Try(() => angleMate.FlipDimension) as bool?;
+                    if (minRad is double min) minAngleDeg = min * 180.0 / Math.PI;
+                    if (maxRad is double max) maxAngleDeg = max * 180.0 / Math.PI;
+                    if (angRad is double ang) angleDeg = ang * 180.0 / Math.PI;
+                }
+
                 mates.Add(new
                 {
-                    name = Try(() => current.Name),
-                    type = Try(() => current.GetTypeName2()),
+                    name,
+                    type = typeName,
+                    errorCode,
+                    suppressed,
+                    isAdvancedMate,
+                    minAngleDeg,
+                    maxAngleDeg,
+                    angleDeg,
+                    flipDimension,
                 });
                 subFeature = Try(() => current.GetNextSubFeature());
             }
@@ -373,6 +411,75 @@ internal static partial class Program
             document = DescribeDocument(doc),
             mates,
             mateCount = CountAssemblyMates(doc),
+        };
+    }
+
+    private static object ListMateEntities(JsonElement? args)
+    {
+        string? inputPath = StringArg(args, "path");
+        ISldWorks app = AttachSolidWorks(startIfMissing: !string.IsNullOrWhiteSpace(inputPath));
+        ModelDoc2? doc = string.IsNullOrWhiteSpace(inputPath) ? app.ActiveDoc as ModelDoc2 : OpenDocument(app, inputPath);
+        if (doc is null)
+        {
+            throw new InvalidOperationException("No active SolidWorks document.");
+        }
+
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("list_mate_entities requires an assembly document.");
+        }
+
+        var mates = new List<object>();
+        Feature? mateGroup = FindFeatureByName(doc, "Mates");
+        if (mateGroup is not null)
+        {
+            object? subFeature = Try(() => mateGroup.GetFirstSubFeature());
+            int guard = 0;
+            while (subFeature is not null && guard++ < 200)
+            {
+                Feature current = (Feature)subFeature;
+                string? name = Try(() => current.Name) as string;
+                string? typeName = Try(() => current.GetTypeName2()) as string;
+                var entities = new List<object>();
+                Mate2? mate = Try(() => current.GetSpecificFeature2()) as Mate2;
+                int entityCount = mate is null
+                    ? 0
+                    : Try(() => mate.GetMateEntityCount()) as int? ?? 0;
+                for (int i = 0; i < entityCount; i++)
+                {
+                    MateEntity2? entity = Try(() => mate!.MateEntity(i)) as MateEntity2;
+                    if (entity is null)
+                    {
+                        continue;
+                    }
+
+                    Component2? owner = Try(() => entity.ReferenceComponent) as Component2;
+                    entities.Add(new
+                    {
+                        index = i,
+                        entityType = Try(() => entity.ReferenceType2),
+                        component = Try(() => owner?.Name2),
+                        componentPath = Try(() => owner?.GetPathName()),
+                        entityParams = Normalize(Try(() => entity.EntityParams)),
+                    });
+                }
+
+                mates.Add(new
+                {
+                    name,
+                    type = typeName,
+                    entityCount,
+                    entities,
+                });
+                subFeature = Try(() => current.GetNextSubFeature());
+            }
+        }
+
+        return new
+        {
+            document = DescribeDocument(doc),
+            mates,
+            mateCount = mates.Count,
         };
     }
 

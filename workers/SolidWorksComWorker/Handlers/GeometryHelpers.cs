@@ -11,6 +11,14 @@ internal static partial class Program
         bool append,
         int mark)
     {
+        // When a face index is provided, select that face directly. Named-feature SelectByID2
+        // mis-handles Stock/ICE features (falls through to COORDSYS) and can over-select.
+        if (faceIndex >= 0
+            && SelectComponentFeatureFace(assemblyDoc, component, referenceName, faceIndex, append, mark))
+        {
+            return true;
+        }
+
         if (SelectComponentReference(assemblyDoc, component, referenceName, append, mark))
         {
             return true;
@@ -30,9 +38,18 @@ internal static partial class Program
         ModelDoc2? componentDoc = Try(() => component.GetModelDoc2()) as ModelDoc2;
         Feature? feature = componentDoc is null ? null : FindFeatureByName(componentDoc, featureName);
         Face2? face = feature is null ? null : GetFeatureFaceByIndex(feature, faceIndex);
-        if (face is null || face is not Entity entity)
+        if (face is null)
         {
             return false;
+        }
+
+        // Prefer the assembly-context entity; part-doc Face2 often won't select for mates.
+        Entity? assemblyEntity = Try(() => component.GetCorrespondingEntity(face)) as Entity;
+        SelectData? selectData = CreateSelectData(assemblyDoc, mark);
+        if (assemblyEntity is not null && selectData is not null
+            && (Try(() => assemblyEntity.Select4(append, selectData)) as bool? ?? false))
+        {
+            return true;
         }
 
         if (SelectFeatureFaceByRay(assemblyDoc, component, face, append, mark))
@@ -40,9 +57,15 @@ internal static partial class Program
             return true;
         }
 
-        assemblyDoc.ClearSelection2(append);
+        if (face is Entity entity && selectData is not null
+            && (Try(() => entity.Select4(append, selectData)) as bool? ?? false))
+        {
+            return true;
+        }
+
         TryVoid(() => component.Select4(append, null, false));
-        return Try(() => entity.Select2(append, mark)) as bool? ?? false;
+        return face is Entity fallback
+            && (Try(() => fallback.Select2(append, mark)) as bool? ?? false);
     }
 
     private static bool SelectFeatureFaceByRay(
@@ -74,20 +97,49 @@ internal static partial class Program
 
         double[] assemblyPoint = TransformPointManual(transform, partPoint[0], partPoint[1], partPoint[2]);
         double[] normal = Try(() => face.Normal) as double[] ?? [0, 0, 1];
-        double[] assemblyNormal = TransformPointManual(transform, normal[0], normal[1], normal[2]);
+        if (normal.Length < 3)
+        {
+            normal = [0, 0, 1];
+        }
 
-        return assemblyDoc.Extension.SelectByRay(
-            assemblyPoint[0],
-            assemblyPoint[1],
-            assemblyPoint[2],
-            assemblyNormal[0],
-            assemblyNormal[1],
-            assemblyNormal[2],
-            0.001,
-            mark,
-            append,
-            0,
-            0);
+        double[] assemblyNormal = TransformDirectionManual(transform, normal[0], normal[1], normal[2]);
+        double norm = Math.Sqrt(
+            (assemblyNormal[0] * assemblyNormal[0])
+            + (assemblyNormal[1] * assemblyNormal[1])
+            + (assemblyNormal[2] * assemblyNormal[2]));
+        if (norm < 1e-12)
+        {
+            return false;
+        }
+
+        assemblyNormal =
+        [
+            assemblyNormal[0] / norm,
+            assemblyNormal[1] / norm,
+            assemblyNormal[2] / norm,
+        ];
+
+        foreach (double sign in new[] { 1.0, -1.0 })
+        {
+            // SelectByRay(..., radius, TypeHit, Append, HitRadius, SelectionMark)
+            if (assemblyDoc.Extension.SelectByRay(
+                    assemblyPoint[0] - (assemblyNormal[0] * 0.002 * sign),
+                    assemblyPoint[1] - (assemblyNormal[1] * 0.002 * sign),
+                    assemblyPoint[2] - (assemblyNormal[2] * 0.002 * sign),
+                    assemblyNormal[0] * sign,
+                    assemblyNormal[1] * sign,
+                    assemblyNormal[2] * sign,
+                    0.002,
+                    (int)swSelectType_e.swSelFACES,
+                    append,
+                    0,
+                    mark))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static Face2? GetFeatureFaceByIndex(Feature feature, int faceIndex)
@@ -201,17 +253,57 @@ internal static partial class Program
             return summaries;
         }
 
+        MathTransform? transform = Try(() => component.Transform2) as MathTransform;
+
         for (int i = 0; i < faces.Length; i++)
         {
-            if (faces[i] is Face2 face)
+            if (faces[i] is not Face2 face)
             {
-                summaries.Add(new
-                {
-                    index = i,
-                    area = Try(() => face.GetArea()),
-                    isPlanar = Try(() => (face.GetSurface() as Surface)?.IsPlane()),
-                });
+                continue;
             }
+
+            double[]? partBox = Try(() => face.GetBox()) as double[];
+            double[]? partCenter = partBox is { Length: >= 6 }
+                ?
+                [
+                    (partBox[0] + partBox[3]) / 2.0,
+                    (partBox[1] + partBox[4]) / 2.0,
+                    (partBox[2] + partBox[5]) / 2.0,
+                ]
+                : null;
+            double[]? assemblyCenter = partCenter is null || transform is null
+                ? null
+                : TransformPointManual(transform, partCenter[0], partCenter[1], partCenter[2]);
+
+            double[] partNormal = Try(() => face.Normal) as double[] ?? [];
+            double[]? assemblyNormal = null;
+            if (partNormal.Length >= 3 && transform is not null)
+            {
+                assemblyNormal = TransformDirectionManual(transform, partNormal[0], partNormal[1], partNormal[2]);
+                double n = Math.Sqrt(
+                    (assemblyNormal[0] * assemblyNormal[0])
+                    + (assemblyNormal[1] * assemblyNormal[1])
+                    + (assemblyNormal[2] * assemblyNormal[2]));
+                if (n > 1e-12)
+                {
+                    assemblyNormal =
+                    [
+                        assemblyNormal[0] / n,
+                        assemblyNormal[1] / n,
+                        assemblyNormal[2] / n,
+                    ];
+                }
+            }
+
+            summaries.Add(new
+            {
+                index = i,
+                area = Try(() => face.GetArea()),
+                isPlanar = Try(() => (face.GetSurface() as Surface)?.IsPlane()),
+                centerM = assemblyCenter,
+                normal = assemblyNormal,
+                partBox,
+            });
         }
 
         return summaries;

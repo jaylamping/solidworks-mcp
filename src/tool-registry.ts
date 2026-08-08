@@ -22,6 +22,8 @@ export const SCHEMA_MAP = {
   diagnose: documentSchemas.diagnoseSchema,
   explainError: documentSchemas.explainErrorSchema,
   checkpoint: documentSchemas.checkpointSchema,
+  listCheckpoints: documentSchemas.listCheckpointsSchema,
+  restoreFromCheckpoint: documentSchemas.restoreFromCheckpointSchema,
   confirmPath: documentSchemas.confirmPathSchema,
   closeDocument: documentSchemas.closeDocumentSchema,
   closeAllDocuments: documentSchemas.closeAllDocumentsSchema,
@@ -62,6 +64,7 @@ export const SCHEMA_MAP = {
   getAssemblyDegreesOfFreedom: assemblySchemas.getAssemblyDegreesOfFreedomSchema,
   mateRefs: mateSchemas.mateRefsSchema,
   mateLimitAngle: mateSchemas.mateLimitAngleSchema,
+  setMateLimitAngle: mateSchemas.setMateLimitAngleSchema,
   probeAngleTravel: mateSchemas.probeAngleTravelSchema,
   mateTry: mateSchemas.mateTrySchema,
   createSketch: partSchemas.createSketchSchema,
@@ -205,12 +208,20 @@ export function registerAllTools(server: McpServer): void {
           const workerArgs = prepareArgs(entry, record);
           const data = await runWorker({ command: entry.workerCommand, args: workerArgs });
           if (!entry.readOnly) {
+            const preCheckpoint =
+              data && typeof data === "object" && "preCheckpoint" in data
+                ? (data as { preCheckpoint?: { checkpointPath?: string } }).preCheckpoint
+                : undefined;
             appendAuditEntry({
               tool: entry.name,
               command: entry.workerCommand,
               ok: true,
               destructive: entry.destructive,
               path: typeof workerArgs.path === "string" ? workerArgs.path : undefined,
+              checkpointPath:
+                typeof preCheckpoint?.checkpointPath === "string"
+                  ? preCheckpoint.checkpointPath
+                  : undefined,
             });
           }
           return jsonResult(data);

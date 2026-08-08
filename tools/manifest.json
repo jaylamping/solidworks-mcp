@@ -960,6 +960,22 @@
       "schema": "optionalPath"
     },
     {
+      "name": "solidworks_list_checkpoints",
+      "workerCommand": "list_checkpoints",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: list_checkpoints",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "listCheckpoints"
+    },
+    {
       "name": "solidworks_list_components",
       "workerCommand": "list_components",
       "tier": "core",
@@ -1346,6 +1362,23 @@
       "schema": "optionalPath"
     },
     {
+      "name": "solidworks_mate_tangent",
+      "workerCommand": "mate_tangent",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: mate_tangent",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
       "name": "solidworks_mate_try_coincident",
       "workerCommand": "mate_try_coincident",
       "tier": "debug",
@@ -1726,6 +1759,22 @@
       "schema": "optionalPath"
     },
     {
+      "name": "solidworks_restore_from_checkpoint",
+      "workerCommand": "restore_from_checkpoint",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Worker command: restore_from_checkpoint",
+      "tags": [
+        "restore"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "restoreFromCheckpoint"
+    },
+    {
       "name": "solidworks_round_side_arms_from_circle",
       "workerCommand": "round_side_arms_from_circle",
       "tier": "extended",
@@ -1911,6 +1960,23 @@
         "document"
       ],
       "schema": "setFeatureSuppression"
+    },
+    {
+      "name": "solidworks_set_mate_limit_angle",
+      "workerCommand": "set_mate_limit_angle",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: set_mate_limit_angle",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "setMateLimitAngle"
     },
     {
       "name": "solidworks_set_mate_suppression",

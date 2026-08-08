@@ -976,7 +976,9 @@ internal static partial class Program
         string inputPath = RequiredStringArg(args, "path");
         string componentName = RequiredStringArg(args, "component_name");
         double[] matrix = DoubleArrayArg(args, "matrix");
-        bool fix = BoolArg(args, "fix", defaultValue: true);
+        // Default false: mate-driven assemblies must stay float after posing.
+        // Callers that want a temporary grounded pose can pass fix: true explicitly.
+        bool fix = BoolArg(args, "fix", defaultValue: false);
 
         if (matrix.Length != 16)
         {
