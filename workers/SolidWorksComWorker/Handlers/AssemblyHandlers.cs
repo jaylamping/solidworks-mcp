@@ -745,11 +745,10 @@ internal static partial class Program
 
     private static object ListDimensions(JsonElement? args)
     {
-        string inputPath = RequiredStringArg(args, "path");
         string? configuration = StringArg(args, "configuration");
 
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = OpenDocument(app, inputPath);
+        ModelDoc2 doc = ResolveDocument(app, args);
         if (!string.IsNullOrWhiteSpace(configuration))
         {
             doc.ShowConfiguration2(configuration);
@@ -789,6 +788,49 @@ internal static partial class Program
                     else
                     {
                         break;
+                    }
+                }
+
+                Sketch? sketch = Try(() => feature.GetSpecificFeature2()) as Sketch;
+                if ((string.Equals(featureType, "ProfileFeature", StringComparison.OrdinalIgnoreCase) || sketch is not null)
+                    && sketch is not null
+                    && featureName is not null)
+                {
+                    object? sketchSegmentsObj = Try(() => sketch.GetSketchSegments());
+                    if (sketchSegmentsObj is object[] sketchSegments)
+                    {
+                        int circleIndex = 0;
+                        foreach (object sketchSegmentEntry in sketchSegments)
+                        {
+                            SketchSegment? sketchSegment = sketchSegmentEntry as SketchSegment
+                                ?? Try(() => (SketchSegment)sketchSegmentEntry) as SketchSegment;
+                            if (sketchSegment is null
+                                || (Try(() => sketchSegment.ConstructionGeometry) as bool? ?? false))
+                            {
+                                continue;
+                            }
+
+                            SketchArc? arc = sketchSegment as SketchArc
+                                ?? Try(() => (SketchArc)(object)sketchSegment) as SketchArc;
+                            double? radiusM = arc is null
+                                ? null
+                                : Try(() => arc.GetRadius()) as double?;
+                            if (radiusM is null || radiusM.Value <= 0)
+                            {
+                                continue;
+                            }
+
+                            dimensions.Add(new
+                            {
+                                feature = featureName,
+                                featureType,
+                                name = $"circle@{featureName}#{circleIndex}",
+                                shortName = $"circle{circleIndex}",
+                                systemValue = radiusM.Value * 2.0,
+                                kind = "sketch_circle_diameter",
+                            });
+                            circleIndex++;
+                        }
                     }
                 }
             }
