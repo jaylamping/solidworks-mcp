@@ -95,17 +95,7 @@ After you save the config, reload MCP / restart Cursor so it picks up the server
 
 Once SolidWorks is open and the MCP server is connected (or after `npm run build`), you can build a known good part two ways. Same geometry either way: a **40 mm** cube with **Ø18 mm** cylinders cut through Front, Top, and Right.
 
-<!-- GIF autoplays in the README; click it (or the MP4 link) for GitHub’s native video player. -->
 [![Demo: ask Cursor to extrude a cube with through-cylinders, then watch SolidWorks](docs/assets/demo-build-part.gif)](https://github.com/jaylamping/solidworks-mcp/blob/main/docs/assets/demo-build-part.mp4)
-
-Both formats live under [`docs/assets/`](docs/assets/):
-
-| File | Best for |
-|------|----------|
-| [`demo-build-part.gif`](docs/assets/demo-build-part.gif) | Autoplay preview in the README |
-| [`demo-build-part.mp4`](https://github.com/jaylamping/solidworks-mcp/blob/main/docs/assets/demo-build-part.mp4) | Sharper playback in GitHub’s video player |
-
-Re-record locally (SolidWorks open, Edge installed): `npm run demo:record-video`.
 
 ### From Cursor chat (MCP)
 
