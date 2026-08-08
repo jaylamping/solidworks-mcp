@@ -9,12 +9,12 @@ You do not need to write macros or learn the SolidWorks API. If you can describe
 > **Needs:** Windows · a licensed SolidWorks install · [Cursor](https://cursor.com) (or another MCP client) · Node.js 20+ · .NET 8 SDK  
 > SolidWorks should be open (or able to launch) on the same desktop as the assistant.
 
-## What it feels like day to day
+## Workflow
 
-1. You open SolidWorks and the part or assembly you care about.
-2. You open Cursor chat and ask for something concrete, the way you would ask a coworker.
-3. The assistant calls SolidWorks tools through this server, one step at a time.
-4. You look at the model (or a preview image) and say whether it looks good before anything is locked in.
+1. Open your part or assembly in SolidWorks.
+2. In Cursor, ask for the change you want.
+3. The assistant drives SolidWorks through this server.
+4. Check the model, then confirm before it saves.
 
 Examples you can ask:
 
