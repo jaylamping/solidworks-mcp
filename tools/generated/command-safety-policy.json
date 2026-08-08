@@ -1644,6 +1644,19 @@
       "exposure": "mcp"
     },
     {
+      "command": "demo_build_part",
+      "csharpHandler": "Program.DemoBuildPart",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
       "command": "close_document",
       "csharpHandler": "Program.CloseDocument",
       "safety": {

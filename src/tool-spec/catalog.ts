@@ -135,6 +135,7 @@ export const SCHEMAS = {
   createSubassembly: schemaRef("createSubassembly", partSchemas.createSubassemblySchema),
   deleteAllMates: schemaRef("deleteAllMates", assemblySchemas.deleteAllMatesSchema),
   deleteFeature: schemaRef("deleteFeature", partSchemas.deleteFeatureSchema),
+  demoBuildPart: schemaRef("demoBuildPart", partSchemas.demoBuildPartSchema),
   deleteMate: schemaRef("deleteMate", assemblySchemas.deleteMateSchema),
   deleteMatesInRange: schemaRef("deleteMatesInRange", assemblySchemas.deleteMatesInRangeSchema),
   diagnose: schemaRef("diagnose", documentSchemas.diagnoseSchema),
@@ -1561,6 +1562,21 @@ export const TOOL_SPECS = [
       domains: ["document"],
     }),
     safety: nonModelSideEffect({ destructive: true, rationale: "The current worker safety policy does not auto-checkpoint this command." }),
+    selection: noSelection,
+  }),
+  tool({
+    implementation: worker("demo_build_part", "Program.DemoBuildPart"),
+    exposure: mcp({
+      name: "solidworks_demo_build_part",
+      tier: "core",
+      description:
+        "Build the deterministic demo part: 40 mm cube with Ø18 mm through-cylinders on Front, Top, and Right (confirm: true). Prefer output_path under the clone's .demo/DemoCube.SLDPRT when allowed. CLI equivalent: npm run demo:build-part.",
+      descriptionSource: "authored",
+      input: SCHEMAS["demoBuildPart"],
+      tags: ["demo", "part", "modeling"],
+      domains: ["document"],
+    }),
+    safety: modelMutation({ destructive: true }),
     selection: noSelection,
   }),
   tool({

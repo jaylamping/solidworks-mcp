@@ -16,6 +16,9 @@ workers/**/obj/
 # CAD rollback snapshots staged next to assemblies/parts.
 **/.checkpoints/
 
+# Local demo part output from `npm run demo:build-part`.
+.demo/
+
 # Scraped SolidWorks API reference corpus.
 docs/api-reference/
 docs/api-reference/crawl-state.json

@@ -105,6 +105,7 @@ internal static partial class Program
             ["measure_distance"] = MeasureDistance,
             ["get_component_references"] = GetComponentReferences,
             ["list_broken_references"] = ListBrokenReferences,
+            ["demo_build_part"] = DemoBuildPart,
             ["new_document"] = NewDocument,
             ["close_document"] = CloseDocument,
             ["activate_document"] = ActivateDocument,

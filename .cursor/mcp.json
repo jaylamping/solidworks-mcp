@@ -7,7 +7,9 @@
         "C:/code/solidworks-mcp/src/index.ts"
       ],
       "env": {
-        "SOLIDWORKS_MCP_TOOL_TIER": "extended"
+        "SOLIDWORKS_MCP_TOOL_TIER": "extended",
+        "SOLIDWORKS_MCP_ALLOWED_ROOTS": "C:/code/solidworks-mcp/.demo",
+        "SOLIDWORKS_MCP_PERSISTENT_WORKER": "1"
       }
     }
   }

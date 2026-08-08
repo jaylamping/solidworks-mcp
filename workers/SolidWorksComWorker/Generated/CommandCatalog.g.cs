@@ -138,6 +138,7 @@ internal static class CommandPolicyCatalog
             ["get_component_references"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["list_broken_references"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["new_document"] = new CommandPolicy(true, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
+            ["demo_build_part"] = new CommandPolicy(true, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["close_document"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["activate_document"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["create_sketch"] = new CommandPolicy(true, true, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("plane_name", SelectionSource.SelectedPlaneName, 1)]),

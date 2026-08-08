@@ -23,6 +23,7 @@ export const WORKER_COMMANDS = [
   "delete_feature",
   "delete_mate",
   "delete_mates_in_range",
+  "demo_build_part",
   "diagnose_com",
   "diagnose_document",
   "diagnose_part_save",

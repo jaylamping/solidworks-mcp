@@ -366,6 +366,26 @@
       "schema": "deleteMatesInRange"
     },
     {
+      "name": "solidworks_demo_build_part",
+      "workerCommand": "demo_build_part",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "autoCheckpoint": true,
+      "description": "Build the deterministic demo part: 40 mm cube with Ø18 mm through-cylinders on Front, Top, and Right (confirm: true). Prefer output_path under the clone's .demo/DemoCube.SLDPRT when allowed. CLI equivalent: npm run demo:build-part.",
+      "descriptionSource": "authored",
+      "tags": [
+        "demo",
+        "part",
+        "modeling"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "demoBuildPart"
+    },
+    {
       "name": "solidworks_diagnose_com",
       "workerCommand": "diagnose_com",
       "tier": "core",

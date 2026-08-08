@@ -104,6 +104,17 @@ export const newDocumentSchema = z.object({
   ...confirmField,
 });
 
+export const demoBuildPartSchema = z.object({
+  size_mm: z.number().positive().default(40).describe("Cube edge length in millimeters."),
+  hole_diameter_mm: z
+    .number()
+    .positive()
+    .default(18)
+    .describe("Diameter of the through-cylinders cut on each axis. Must be smaller than size_mm."),
+  output_path: z.string().min(1).optional(),
+  ...confirmField,
+});
+
 export const createSubassemblySchema = z.object({
   output_path: z.string().min(1),
   component_path: z.string().min(1).optional(),
