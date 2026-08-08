@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { assertAllowedPath } from "./config.js";
+import { assertAllowedPath, prepareDocumentPath } from "./config.js";
 import { appendAuditEntry } from "./audit-log.js";
 import { formatErrorForMcp } from "./errors.js";
 import {
@@ -14,19 +14,24 @@ import {
 import { runWorker } from "./worker.js";
 
 const TIER_ORDER: ToolTier[] = ["core", "extended", "advanced", "debug"];
-const PATH_FIELDS = [
+/** Existing-doc lookups — worker trusts open docs; disk opens still PathGuard'd. */
+const DOCUMENT_PATH_FIELDS = new Set([
   "path",
   "part_path",
-  "output_path",
-  "output_part_path",
   "source_part_path",
   "assembly_path",
   "from_part_path",
   "to_part_path",
   "model_path",
   "component_path",
+]);
+/** New file / export destinations — must stay inside ALLOWED_ROOTS. */
+const OUTPUT_PATH_FIELDS = new Set([
+  "output_path",
+  "output_part_path",
   "output_dir",
-];
+  "preview_path",
+]);
 
 type McpToolSpec = ToolSpec & { readonly exposure: McpExposure };
 
@@ -101,7 +106,13 @@ function prepareArgs(
   args: Record<string, unknown>,
 ): Record<string, unknown> {
   const prepared = { ...args };
-  for (const key of PATH_FIELDS) {
+  for (const key of DOCUMENT_PATH_FIELDS) {
+    const value = prepared[key];
+    if (typeof value === "string") {
+      prepared[key] = prepareDocumentPath(value);
+    }
+  }
+  for (const key of OUTPUT_PATH_FIELDS) {
     const value = prepared[key];
     if (typeof value === "string") {
       prepared[key] = assertAllowedPath(value);

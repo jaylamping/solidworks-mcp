@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { assertAllowedPath } from "../config.js";
+import { assertAllowedPath, prepareDocumentPath } from "../config.js";
 import { addUrdfFrameSchema, urdfReadinessSchema } from "../schemas/urdf.js";
 import { runWorker } from "../worker.js";
 import { errorResult, jsonResult } from "./common.js";
@@ -18,7 +18,7 @@ export function registerUrdfTools(server: McpServer): void {
     },
     async (args: z.infer<typeof urdfReadinessSchema>) => {
       try {
-        const filePath = args.path ? assertAllowedPath(args.path) : undefined;
+        const filePath = args.path ? prepareDocumentPath(args.path) : undefined;
         return jsonResult(
           await runWorker({
             command: "urdf_readiness",

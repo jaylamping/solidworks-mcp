@@ -10,21 +10,39 @@ const workerDll = path.join(
   "workers/SolidWorksComWorker/bin/Debug/net8.0-windows/SolidWorksComWorker.dll",
 );
 
+/** Preserve UNC / WSL paths ? path.resolve("\\wsl$\\...") becomes C:\\wsl$\\... */
+export function normalizeCadPath(inputPath) {
+  const trimmed = String(inputPath).trim();
+  if (!trimmed) return trimmed;
+  const unified = trimmed.replace(/\//g, "\\");
+  if (unified.startsWith("\\\\")) {
+    return path.win32.normalize(unified);
+  }
+  if (/^[a-zA-Z]:[\\/]/.test(trimmed)) {
+    return path.win32.normalize(unified);
+  }
+  return path.resolve(trimmed);
+}
+
+function pathUnderRoot(candidate, root) {
+  const normalized = normalizeCadPath(candidate).toLowerCase();
+  const normalizedRoot = normalizeCadPath(root).toLowerCase();
+  if (normalized === normalizedRoot) return true;
+  const prefix = normalizedRoot.endsWith("\\") ? normalizedRoot : `${normalizedRoot}\\`;
+  return normalized.startsWith(prefix);
+}
+
 function allowedRoots() {
   const raw = process.env.SOLIDWORKS_MCP_ALLOWED_ROOTS;
   const roots = raw
     ? raw.split(";").map((entry) => entry.trim()).filter(Boolean)
     : [];
-  return roots.map((root) => path.resolve(root));
+  return roots.map((root) => normalizeCadPath(root));
 }
 
 export function assertAllowedPath(inputPath) {
-  const resolved = path.resolve(inputPath);
-  const normalized = resolved.toLowerCase();
-  const allowed = allowedRoots().some((root) => {
-    const normalizedRoot = path.resolve(root).toLowerCase();
-    return normalized === normalizedRoot || normalized.startsWith(`${normalizedRoot}${path.sep}`);
-  });
+  const resolved = normalizeCadPath(inputPath);
+  const allowed = allowedRoots().some((root) => pathUnderRoot(resolved, root));
   if (!allowed) {
     throw new Error(
       `Path is outside allowed CAD roots: ${resolved}. Set SOLIDWORKS_MCP_ALLOWED_ROOTS to allow it.`,
@@ -33,22 +51,38 @@ export function assertAllowedPath(inputPath) {
   return resolved;
 }
 
+/** Existing-doc lookups ? worker trusts open docs; disk opens still PathGuard'd. */
+export function prepareDocumentPath(inputPath) {
+  return normalizeCadPath(inputPath);
+}
+
+const DOCUMENT_PATH_FIELDS = new Set([
+  "path",
+  "part_path",
+  "source_part_path",
+  "assembly_path",
+  "from_part_path",
+  "to_part_path",
+  "model_path",
+  "component_path",
+]);
+
+const OUTPUT_PATH_FIELDS = new Set([
+  "output_path",
+  "output_part_path",
+  "output_dir",
+  "preview_path",
+]);
+
 function validateArgsPaths(args) {
   if (!args || typeof args !== "object") return args;
   const validated = { ...args };
-  for (const key of [
-    "path",
-    "part_path",
-    "output_path",
-    "output_part_path",
-    "source_part_path",
-    "assembly_path",
-    "from_part_path",
-    "to_part_path",
-    "model_path",
-    "component_path",
-    "output_dir",
-  ]) {
+  for (const key of DOCUMENT_PATH_FIELDS) {
+    if (typeof validated[key] === "string") {
+      validated[key] = prepareDocumentPath(validated[key]);
+    }
+  }
+  for (const key of OUTPUT_PATH_FIELDS) {
     if (typeof validated[key] === "string") {
       validated[key] = assertAllowedPath(validated[key]);
     }

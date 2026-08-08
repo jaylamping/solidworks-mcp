@@ -15,11 +15,39 @@ internal static class PathGuard
             : raw.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         _allowedRoots = roots
-            .Select(root => Path.GetFullPath(root))
+            .Select(NormalizeCadPath)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
         return _allowedRoots;
+    }
+
+    /// <summary>
+    /// Normalize without turning UNC/WSL paths into drive-relative junk.
+    /// </summary>
+    public static string NormalizeCadPath(string path)
+    {
+        string trimmed = path.Trim();
+        if (trimmed.Length == 0)
+        {
+            return trimmed;
+        }
+
+        string unified = trimmed.Replace('/', '\\');
+        if (unified.StartsWith(@"\\", StringComparison.Ordinal))
+        {
+            return Path.GetFullPath(unified);
+        }
+
+        if (unified.Length >= 3
+            && char.IsLetter(unified[0])
+            && unified[1] == ':'
+            && (unified[2] == '\\' || unified[2] == '/'))
+        {
+            return Path.GetFullPath(unified);
+        }
+
+        return Path.GetFullPath(trimmed);
     }
 
     public static string AssertAllowedPath(string path)
@@ -29,12 +57,12 @@ internal static class PathGuard
             throw WorkerException.Validation("PATH_REQUIRED", "A file path is required.", new Dictionary<string, object?>());
         }
 
-        string fullPath = Path.GetFullPath(path);
+        string fullPath = NormalizeCadPath(path);
         string normalized = fullPath.ToLowerInvariant();
 
         foreach (string root in AllowedRoots())
         {
-            string normalizedRoot = Path.GetFullPath(root).ToLowerInvariant();
+            string normalizedRoot = NormalizeCadPath(root).ToLowerInvariant();
             string prefix = normalizedRoot.EndsWith(Path.DirectorySeparatorChar)
                 ? normalizedRoot
                 : normalizedRoot + Path.DirectorySeparatorChar;

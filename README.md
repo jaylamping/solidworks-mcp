@@ -86,7 +86,7 @@ Point MCP at your clone (path placeholders → your real folder):
 
 | Variable | Meaning |
 |----------|---------|
-| `SOLIDWORKS_MCP_ALLOWED_ROOTS` | Semicolon-separated folders allowed for open/save. Open docs are trusted even if omitted. |
+| `SOLIDWORKS_MCP_ALLOWED_ROOTS` | Semicolon-separated folders allowed for open/save/export. Already-open docs are trusted for `path` even outside these roots; new opens and output paths still require a listed root. UNC/`\\wsl$` roots are supported. |
 | `SOLIDWORKS_MCP_TOOL_TIER` | `core` / `extended` / `advanced` / `debug` / `all`. `extended` is a good default. |
 | `SOLIDWORKS_MCP_PERSISTENT_WORKER` | `1` keeps a warm worker (faster). |
 

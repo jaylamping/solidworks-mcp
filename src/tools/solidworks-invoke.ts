@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { assertAllowedPath } from "../config.js";
+import { prepareDocumentPath } from "../config.js";
 import { runWorker } from "../worker.js";
 import { errorResult, jsonResult, optionalPathSchema } from "./common.js";
 
@@ -30,7 +30,7 @@ export function registerSolidWorksInvokeTools(server: McpServer): void {
     },
     async (args: z.infer<typeof invokeSchema>) => {
       try {
-        const filePath = args.path ? assertAllowedPath(args.path) : undefined;
+        const filePath = args.path ? prepareDocumentPath(args.path) : undefined;
         return jsonResult(
           await runWorker({
             command: "invoke",
@@ -64,7 +64,7 @@ export function registerSolidWorksInvokeTools(server: McpServer): void {
       try {
         const calls = args.calls.map((call) => ({
           ...call,
-          path: call.path ? assertAllowedPath(call.path) : undefined,
+          path: call.path ? prepareDocumentPath(call.path) : undefined;
         }));
         return jsonResult(await runWorker({ command: "batch_invoke", args: { calls } }));
       } catch (error) {

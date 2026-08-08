@@ -217,7 +217,7 @@ internal static partial class Program
         }
 
         // Already-open / active documents are trusted. Path roots only gate opens from disk.
-        string lookupPath = Path.GetFullPath(path);
+        string lookupPath = PathGuard.NormalizeCadPath(path);
         ModelDoc2? existing = FindOpenDocument(app, lookupPath);
         if (existing is not null)
         {
@@ -275,20 +275,42 @@ internal static partial class Program
 
         string fileName = Path.GetFileName(fullPath);
         ModelDoc2? byName = Try(() => app.GetOpenDocumentByName(fileName)) as ModelDoc2;
-        if (byName is null)
+        if (byName is not null)
+        {
+            // Already-open docs are trusted even when the caller path differs
+            // (e.g. WSL UNC vs a rooted alias). SolidWorks titles are unique
+            // among open documents, so filename match is enough.
+            return byName;
+        }
+
+        // Some builds only resolve via the full open path from GetDocuments().
+        object[]? docs = Try(() => app.GetDocuments()) as object[];
+        if (docs is null)
         {
             return null;
         }
 
-        string? openPath = Try(() => byName.GetPathName()) as string;
-        if (string.IsNullOrWhiteSpace(openPath))
+        foreach (object entry in docs)
         {
-            return null;
+            if (entry is not ModelDoc2 candidate)
+            {
+                continue;
+            }
+
+            string? openPath = Try(() => candidate.GetPathName()) as string;
+            if (string.IsNullOrWhiteSpace(openPath))
+            {
+                continue;
+            }
+
+            if (string.Equals(Path.GetFullPath(openPath), fullPath, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(Path.GetFileName(openPath), fileName, StringComparison.OrdinalIgnoreCase))
+            {
+                return candidate;
+            }
         }
 
-        return string.Equals(Path.GetFullPath(openPath), fullPath, StringComparison.OrdinalIgnoreCase)
-            ? byName
-            : null;
+        return null;
     }
 
     private static bool IsNeutralCad(string path)

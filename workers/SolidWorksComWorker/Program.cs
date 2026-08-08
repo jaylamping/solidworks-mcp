@@ -30,7 +30,18 @@ internal static partial class Program
         }
 
         using Mutex comLock = new(false, WorkerConstants.ComMutexName);
-        if (!comLock.WaitOne(ComLockTimeout))
+        bool acquired;
+        try
+        {
+            acquired = comLock.WaitOne(ComLockTimeout);
+        }
+        catch (AbandonedMutexException)
+        {
+            // Prior owner crashed; this thread still owns the mutex.
+            acquired = true;
+        }
+
+        if (!acquired)
         {
             return WriteError(new WorkerError(
                 "COM_LOCK_TIMEOUT",
