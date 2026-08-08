@@ -1,6 +1,17 @@
 # SolidWorks MCP
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](#)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![.NET](https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![MCP](https://img.shields.io/badge/MCP-server-black)](https://modelcontextprotocol.io/)
+[![Status](https://img.shields.io/badge/status-heavy%20WIP-orange)](#)
+
 MCP server that drives SolidWorks on Windows from Cursor (or another MCP client). Open documents, mates, measures, exports, modeling — without writing macros.
+
+> [!WARNING]
+> **Heavy WIP.** This project is under active development and is **not** complete, stable, or production-ready. APIs, tools, and behavior will change. Expect rough edges, missing coverage, and breaking updates. Use it to experiment — not as a finished product.
 
 > **Needs:** Windows · licensed SolidWorks · [Cursor](https://cursor.com) (or another MCP client) · Node.js 20+ · .NET 8 SDK  
 > SolidWorks should be open (or launchable) on the same machine.
