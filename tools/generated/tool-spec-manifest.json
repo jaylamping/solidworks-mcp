@@ -1,0 +1,2153 @@
+{
+  "version": "1",
+  "tools": [
+    {
+      "name": "solidworks_activate_document",
+      "workerCommand": "activate_document",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Activate document.",
+      "descriptionSource": "derived",
+      "tags": [
+        "activate"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "open"
+    },
+    {
+      "name": "solidworks_add_configuration_copy",
+      "workerCommand": "add_configuration_copy",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Add configuration copy.",
+      "descriptionSource": "derived",
+      "tags": [
+        "add"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "addConfigurationCopy"
+    },
+    {
+      "name": "solidworks_add_standard_views",
+      "workerCommand": "add_standard_views",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Add standard views.",
+      "descriptionSource": "derived",
+      "tags": [
+        "add"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "addStandardViews"
+    },
+    {
+      "name": "solidworks_align_component_to_feature",
+      "workerCommand": "align_component_to_feature",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Align component to feature.",
+      "descriptionSource": "derived",
+      "tags": [
+        "align"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "align"
+    },
+    {
+      "name": "solidworks_assembly_diagnostics",
+      "workerCommand": "assembly_diagnostics",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Summarize fixed, lightweight, suppressed, broken-reference, and mate state.",
+      "descriptionSource": "authored",
+      "tags": [
+        "assembly"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_checkpoint_document",
+      "workerCommand": "checkpoint_document",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Save a recoverable checkpoint of the active or specified document.",
+      "descriptionSource": "authored",
+      "tags": [
+        "checkpoint"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "checkpoint"
+    },
+    {
+      "name": "solidworks_clone_solid_body_part",
+      "workerCommand": "clone_solid_body_part",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Clone solid body part.",
+      "descriptionSource": "derived",
+      "tags": [
+        "clone"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "cloneSolidBodyPart"
+    },
+    {
+      "name": "solidworks_close_all_documents",
+      "workerCommand": "close_all_documents",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Close all documents.",
+      "descriptionSource": "derived",
+      "tags": [
+        "close"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "closeAllDocuments"
+    },
+    {
+      "name": "solidworks_close_document",
+      "workerCommand": "close_document",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Close document.",
+      "descriptionSource": "derived",
+      "tags": [
+        "close"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "closeDocument"
+    },
+    {
+      "name": "solidworks_component_mass_properties",
+      "workerCommand": "component_mass_properties",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Return mass, center of mass, and inertia for a component.",
+      "descriptionSource": "authored",
+      "tags": [
+        "component"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "componentName"
+    },
+    {
+      "name": "solidworks_confirm_and_save",
+      "workerCommand": "confirm_and_save",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Worker command: confirm_and_save",
+      "tags": [
+        "confirm"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "confirmAndSave"
+    },
+    {
+      "name": "solidworks_copy_with_mates",
+      "workerCommand": "copy_with_mates",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Copy with mates.",
+      "descriptionSource": "derived",
+      "tags": [
+        "copy"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "copyWithMates"
+    },
+    {
+      "name": "solidworks_create_drawing_from_model",
+      "workerCommand": "create_drawing_from_model",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Create drawing from model.",
+      "descriptionSource": "derived",
+      "tags": [
+        "create"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "createDrawingFromModel"
+    },
+    {
+      "name": "solidworks_create_sketch",
+      "workerCommand": "create_sketch",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Create sketch.",
+      "descriptionSource": "derived",
+      "tags": [
+        "create"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "createSketch"
+    },
+    {
+      "name": "solidworks_create_subassembly",
+      "workerCommand": "create_subassembly",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Create subassembly.",
+      "descriptionSource": "derived",
+      "tags": [
+        "create"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "createSubassembly"
+    },
+    {
+      "name": "solidworks_debug_mate_entities",
+      "workerCommand": "debug_mate_entities",
+      "tier": "debug",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Debug mate entities.",
+      "descriptionSource": "derived",
+      "tags": [
+        "debug"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_delete_all_mates",
+      "workerCommand": "delete_all_mates",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Delete all mates from an assembly.",
+      "descriptionSource": "authored",
+      "tags": [
+        "delete"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "deleteAllMates"
+    },
+    {
+      "name": "solidworks_delete_feature",
+      "workerCommand": "delete_feature",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Delete feature.",
+      "descriptionSource": "derived",
+      "tags": [
+        "delete"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "deleteFeature"
+    },
+    {
+      "name": "solidworks_delete_mate",
+      "workerCommand": "delete_mate",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Delete a named mate feature from an assembly.",
+      "descriptionSource": "authored",
+      "tags": [
+        "delete"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "deleteMate"
+    },
+    {
+      "name": "solidworks_delete_mates_in_range",
+      "workerCommand": "delete_mates_in_range",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Delete mates in range.",
+      "descriptionSource": "derived",
+      "tags": [
+        "delete"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "deleteMatesInRange"
+    },
+    {
+      "name": "solidworks_diagnose_com",
+      "workerCommand": "diagnose_com",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Diagnose SolidWorks COM attach, ROT, and worker mutex health.",
+      "descriptionSource": "authored",
+      "tags": [
+        "diagnose"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "diagnose"
+    },
+    {
+      "name": "solidworks_diagnose_document",
+      "workerCommand": "diagnose_document",
+      "tier": "debug",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Diagnose document.",
+      "descriptionSource": "derived",
+      "tags": [
+        "diagnose"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "diagnose"
+    },
+    {
+      "name": "solidworks_diagnose_part_save",
+      "workerCommand": "diagnose_part_save",
+      "tier": "debug",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Diagnose part save.",
+      "descriptionSource": "derived",
+      "tags": [
+        "diagnose"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "diagnosePartSave"
+    },
+    {
+      "name": "solidworks_diagnose_selection",
+      "workerCommand": "diagnose_selection",
+      "tier": "debug",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Diagnose selection.",
+      "descriptionSource": "derived",
+      "tags": [
+        "diagnose"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "diagnose"
+    },
+    {
+      "name": "solidworks_dissolve_component",
+      "workerCommand": "dissolve_component",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Dissolve component.",
+      "descriptionSource": "derived",
+      "tags": [
+        "dissolve"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "dissolveComponent"
+    },
+    {
+      "name": "solidworks_ensure_offset_plane",
+      "workerCommand": "ensure_offset_plane",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Ensure offset plane.",
+      "descriptionSource": "derived",
+      "tags": [
+        "ensure"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "ensureOffsetPlane"
+    },
+    {
+      "name": "solidworks_explain_error",
+      "workerCommand": "explain_error",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Explain error.",
+      "descriptionSource": "derived",
+      "tags": [
+        "explain"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "explainError"
+    },
+    {
+      "name": "solidworks_explode_view",
+      "workerCommand": "explode_view",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Explode view.",
+      "descriptionSource": "derived",
+      "tags": [
+        "explode"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "explodeView"
+    },
+    {
+      "name": "solidworks_export",
+      "workerCommand": "export",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Export a CAD document to STEP, STL, PDF, or PNG under an allowed CAD root.",
+      "descriptionSource": "authored",
+      "tags": [
+        "export"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "export"
+    },
+    {
+      "name": "solidworks_export_link_transforms",
+      "workerCommand": "export_link_transforms",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Export link transforms.",
+      "descriptionSource": "derived",
+      "tags": [
+        "export"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "exportLinkTransforms"
+    },
+    {
+      "name": "solidworks_feature_chamfer",
+      "workerCommand": "feature_chamfer",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Manage chamfer.",
+      "descriptionSource": "derived",
+      "tags": [
+        "feature"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureChamfer"
+    },
+    {
+      "name": "solidworks_feature_circular_pattern",
+      "workerCommand": "feature_circular_pattern",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Manage circular pattern.",
+      "descriptionSource": "derived",
+      "tags": [
+        "feature"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureCircularPattern"
+    },
+    {
+      "name": "solidworks_feature_extrude_boss",
+      "workerCommand": "feature_extrude_boss",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Manage extrude boss.",
+      "descriptionSource": "derived",
+      "tags": [
+        "feature"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureExtrudeBoss"
+    },
+    {
+      "name": "solidworks_feature_extrude_cut",
+      "workerCommand": "feature_extrude_cut",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Manage extrude cut.",
+      "descriptionSource": "derived",
+      "tags": [
+        "feature"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureExtrudeCut"
+    },
+    {
+      "name": "solidworks_feature_fillet",
+      "workerCommand": "feature_fillet",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Manage fillet.",
+      "descriptionSource": "derived",
+      "tags": [
+        "feature"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureFillet"
+    },
+    {
+      "name": "solidworks_feature_linear_pattern",
+      "workerCommand": "feature_linear_pattern",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Manage linear pattern.",
+      "descriptionSource": "derived",
+      "tags": [
+        "feature"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureLinearPattern"
+    },
+    {
+      "name": "solidworks_feature_mirror",
+      "workerCommand": "feature_mirror",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Manage mirror.",
+      "descriptionSource": "derived",
+      "tags": [
+        "feature"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureMirror"
+    },
+    {
+      "name": "solidworks_get_assembly_degrees_of_freedom",
+      "workerCommand": "get_assembly_degrees_of_freedom",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Get assembly degrees of freedom.",
+      "descriptionSource": "derived",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "getAssemblyDegreesOfFreedom"
+    },
+    {
+      "name": "solidworks_get_component_box",
+      "workerCommand": "get_component_box",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Get component box.",
+      "descriptionSource": "derived",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "componentName"
+    },
+    {
+      "name": "solidworks_get_component_references",
+      "workerCommand": "get_component_references",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Get component references.",
+      "descriptionSource": "derived",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_get_component_transform",
+      "workerCommand": "get_component_transform",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Return the 4x4 transform matrix for a named assembly component.",
+      "descriptionSource": "authored",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "componentName"
+    },
+    {
+      "name": "solidworks_get_equations",
+      "workerCommand": "get_equations",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Get equations.",
+      "descriptionSource": "derived",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_get_feature_box",
+      "workerCommand": "get_feature_box",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Return the assembly-space bounding box for a named component feature.",
+      "descriptionSource": "authored",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureProbe"
+    },
+    {
+      "name": "solidworks_get_mass_properties",
+      "workerCommand": "get_mass_properties",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Get mass properties.",
+      "descriptionSource": "derived",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "componentName"
+    },
+    {
+      "name": "solidworks_get_material",
+      "workerCommand": "get_material",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Return the material assigned to a part or component.",
+      "descriptionSource": "authored",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_get_open_documents",
+      "workerCommand": "get_open_documents",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Get open documents.",
+      "descriptionSource": "derived",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_get_part_feature_box",
+      "workerCommand": "get_part_feature_box",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Get part feature box.",
+      "descriptionSource": "derived",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "partFeatureProbe"
+    },
+    {
+      "name": "solidworks_get_persist_reference",
+      "workerCommand": "get_persist_reference",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Capture a base64 persist reference for a component reference.",
+      "descriptionSource": "authored",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "persistRef"
+    },
+    {
+      "name": "solidworks_get_planar_face_index",
+      "workerCommand": "get_planar_face_index",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Get planar face index.",
+      "descriptionSource": "derived",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureProbe"
+    },
+    {
+      "name": "solidworks_get_selection",
+      "workerCommand": "get_selection",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Get selection.",
+      "descriptionSource": "derived",
+      "tags": [
+        "get"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_import_step",
+      "workerCommand": "import_step",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Import step.",
+      "descriptionSource": "derived",
+      "tags": [
+        "import"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "importStep"
+    },
+    {
+      "name": "solidworks_insert_component",
+      "workerCommand": "insert_component",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Insert a part into an assembly from an allowed path.",
+      "descriptionSource": "authored",
+      "tags": [
+        "insert"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "insertComponent"
+    },
+    {
+      "name": "solidworks_insert_coord_sys",
+      "workerCommand": "insert_coord_sys",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Insert coord sys.",
+      "descriptionSource": "derived",
+      "tags": [
+        "insert"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_inspect_document",
+      "workerCommand": "inspect_document",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Return document type, path, saved state, units, and custom properties.",
+      "descriptionSource": "authored",
+      "tags": [
+        "inspect"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_bodies",
+      "workerCommand": "list_bodies",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "List bodies.",
+      "descriptionSource": "derived",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_bom",
+      "workerCommand": "list_bom",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Return a flat component list as a bill-of-materials precursor.",
+      "descriptionSource": "authored",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_broken_references",
+      "workerCommand": "list_broken_references",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "List broken references.",
+      "descriptionSource": "derived",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_checkpoints",
+      "workerCommand": "list_checkpoints",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: list_checkpoints",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "listCheckpoints"
+    },
+    {
+      "name": "solidworks_list_components",
+      "workerCommand": "list_components",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Return the assembly component tree with paths, quantities, and states.",
+      "descriptionSource": "authored",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_configurations",
+      "workerCommand": "list_configurations",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "List configuration names for a part document.",
+      "descriptionSource": "authored",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_dimensions",
+      "workerCommand": "list_dimensions",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "List driving dimensions in a part, optionally for one configuration.",
+      "descriptionSource": "authored",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_display_states",
+      "workerCommand": "list_display_states",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "List display states.",
+      "descriptionSource": "derived",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_features",
+      "workerCommand": "list_features",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "List top-level feature tree entries for a CAD document.",
+      "descriptionSource": "authored",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_interferences",
+      "workerCommand": "list_interferences",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Run interference detection on an assembly.",
+      "descriptionSource": "authored",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_mate_entities",
+      "workerCommand": "list_mate_entities",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: list_mate_entities",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_mates",
+      "workerCommand": "list_mates",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Return mate feature names and types for an assembly.",
+      "descriptionSource": "authored",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_reference_geometry",
+      "workerCommand": "list_reference_geometry",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "List named reference planes, axes, coordinate systems, and points.",
+      "descriptionSource": "authored",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_sheet_views",
+      "workerCommand": "list_sheet_views",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "List sheet views.",
+      "descriptionSource": "derived",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_list_sketches",
+      "workerCommand": "list_sketches",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "List sketches.",
+      "descriptionSource": "derived",
+      "tags": [
+        "list"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_make_component_independent",
+      "workerCommand": "make_component_independent",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Make component independent.",
+      "descriptionSource": "derived",
+      "tags": [
+        "make"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "makeComponentIndependent"
+    },
+    {
+      "name": "solidworks_mate_coincident",
+      "workerCommand": "mate_coincident",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Add a coincident mate between two component references or selected faces.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_component_origin",
+      "workerCommand": "mate_component_origin",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Create a component origin mate between assembly references.",
+      "descriptionSource": "derived",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_coord_sys",
+      "workerCommand": "mate_coord_sys",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Create a coord sys mate between assembly references.",
+      "descriptionSource": "derived",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_distance",
+      "workerCommand": "mate_distance",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Add a distance mate between two component references or selected faces.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_limit_angle",
+      "workerCommand": "mate_limit_angle",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Add a limit-angle mate with min/max rotation about an axis.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateLimitAngle"
+    },
+    {
+      "name": "solidworks_mate_parallel",
+      "workerCommand": "mate_parallel",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Add a parallel mate between two component references or selected faces.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_perpendicular",
+      "workerCommand": "mate_perpendicular",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Add a perpendicular mate between two component references or selected faces.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_planes",
+      "workerCommand": "mate_planes",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Add a coincident or parallel mate between named planes on two components.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_probe",
+      "workerCommand": "mate_probe",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Inspect candidate mate entities and report whether a mate is likely to succeed.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_mate_record_macro",
+      "workerCommand": "mate_record_macro",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Create a record macro mate between assembly references.",
+      "descriptionSource": "derived",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_mate_replay_sequence",
+      "workerCommand": "mate_replay_sequence",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Create a replay sequence mate between assembly references.",
+      "descriptionSource": "derived",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_mate_tangent",
+      "workerCommand": "mate_tangent",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: mate_tangent",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_try_coincident",
+      "workerCommand": "mate_try_coincident",
+      "tier": "debug",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Dry-run a coincident mate without committing it.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_try_distance",
+      "workerCommand": "mate_try_distance",
+      "tier": "debug",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Dry-run a distance mate without committing it.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateTry"
+    },
+    {
+      "name": "solidworks_mate_try_parallel",
+      "workerCommand": "mate_try_parallel",
+      "tier": "debug",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Dry-run a parallel mate without committing it.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_try_perpendicular",
+      "workerCommand": "mate_try_perpendicular",
+      "tier": "debug",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Dry-run a perpendicular mate without committing it.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_try_width",
+      "workerCommand": "mate_try_width",
+      "tier": "debug",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Dry-run a width mate without committing it.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_mate_width",
+      "workerCommand": "mate_width",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Add a width mate between two component references or selected faces.",
+      "descriptionSource": "authored",
+      "tags": [
+        "mate"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "mateRefs"
+    },
+    {
+      "name": "solidworks_measure",
+      "workerCommand": "measure",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Return bounding-box and mass-property metadata for a CAD document.",
+      "descriptionSource": "authored",
+      "tags": [
+        "measure"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_measure_distance",
+      "workerCommand": "measure_distance",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Measure distance.",
+      "descriptionSource": "derived",
+      "tags": [
+        "measure"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "measureDistance"
+    },
+    {
+      "name": "solidworks_mirror_component",
+      "workerCommand": "mirror_component",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Mirror component.",
+      "descriptionSource": "derived",
+      "tags": [
+        "mirror"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "mirrorComponent"
+    },
+    {
+      "name": "solidworks_mirror_part_file",
+      "workerCommand": "mirror_part_file",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Mirror part file.",
+      "descriptionSource": "derived",
+      "tags": [
+        "mirror"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "mirrorPartFile"
+    },
+    {
+      "name": "solidworks_new_document",
+      "workerCommand": "new_document",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Create document.",
+      "descriptionSource": "derived",
+      "tags": [
+        "new"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "newDocument"
+    },
+    {
+      "name": "solidworks_open",
+      "workerCommand": "open",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Open a SolidWorks or STEP document from an allowed CAD root.",
+      "descriptionSource": "authored",
+      "tags": [
+        "open"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "open"
+    },
+    {
+      "name": "solidworks_pack_and_go",
+      "workerCommand": "pack_and_go",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Pack and go.",
+      "descriptionSource": "derived",
+      "tags": [
+        "pack"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "packAndGo"
+    },
+    {
+      "name": "solidworks_probe_angle_travel",
+      "workerCommand": "probe_angle_travel",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Probe angular travel of a component about an axis within optional limits.",
+      "descriptionSource": "authored",
+      "tags": [
+        "probe"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "probeAngleTravel"
+    },
+    {
+      "name": "solidworks_probe_feature_faces",
+      "workerCommand": "probe_feature_faces",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "List face count, area, and planarity for a component feature.",
+      "descriptionSource": "authored",
+      "tags": [
+        "probe"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "featureProbe"
+    },
+    {
+      "name": "solidworks_rebuild_document",
+      "workerCommand": "rebuild_document",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Rebuild the active model.",
+      "descriptionSource": "authored",
+      "tags": [
+        "rebuild"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "rebuildDocument"
+    },
+    {
+      "name": "solidworks_rename_component",
+      "workerCommand": "rename_component",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Rename component.",
+      "descriptionSource": "derived",
+      "tags": [
+        "rename"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "componentName"
+    },
+    {
+      "name": "solidworks_replace_component_path",
+      "workerCommand": "replace_component_path",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Replace component path.",
+      "descriptionSource": "derived",
+      "tags": [
+        "replace"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "replaceComponentPath"
+    },
+    {
+      "name": "solidworks_replace_components_by_path",
+      "workerCommand": "replace_components_by_path",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Replace components by path.",
+      "descriptionSource": "derived",
+      "tags": [
+        "replace"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "replaceComponentsByPath"
+    },
+    {
+      "name": "solidworks_reset_component_transform",
+      "workerCommand": "reset_component_transform",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Reset component transform.",
+      "descriptionSource": "derived",
+      "tags": [
+        "reset"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "componentName"
+    },
+    {
+      "name": "solidworks_resolve_lightweight",
+      "workerCommand": "resolve_lightweight",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Resolve all lightweight components in an assembly.",
+      "descriptionSource": "authored",
+      "tags": [
+        "resolve"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "resolveLightweight"
+    },
+    {
+      "name": "solidworks_resolve_selection",
+      "workerCommand": "resolve_selection",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Resolve selection.",
+      "descriptionSource": "derived",
+      "tags": [
+        "resolve"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_restore_from_checkpoint",
+      "workerCommand": "restore_from_checkpoint",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Worker command: restore_from_checkpoint",
+      "tags": [
+        "restore"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "restoreFromCheckpoint"
+    },
+    {
+      "name": "solidworks_round_side_arms_from_circle",
+      "workerCommand": "round_side_arms_from_circle",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Round side arms from circle.",
+      "descriptionSource": "derived",
+      "tags": [
+        "round"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "roundSideArmsFromCircle"
+    },
+    {
+      "name": "solidworks_save_document",
+      "workerCommand": "save_document",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Save the active or specified SolidWorks document.",
+      "descriptionSource": "authored",
+      "tags": [
+        "save"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "saveDocument"
+    },
+    {
+      "name": "solidworks_select_by_persist_reference",
+      "workerCommand": "select_by_persist_reference",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Select an entity using a base64 persist reference.",
+      "descriptionSource": "authored",
+      "tags": [
+        "select"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "selectByPersistReference"
+    },
+    {
+      "name": "solidworks_select_face_by_ray",
+      "workerCommand": "select_face_by_ray",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Select face by ray.",
+      "descriptionSource": "derived",
+      "tags": [
+        "select"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_set_component_configuration",
+      "workerCommand": "set_component_configuration",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Set component configuration.",
+      "descriptionSource": "derived",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "setComponentConfiguration"
+    },
+    {
+      "name": "solidworks_set_component_fixed",
+      "workerCommand": "set_component_fixed",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Set component fixed.",
+      "descriptionSource": "derived",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "componentName"
+    },
+    {
+      "name": "solidworks_set_component_transform",
+      "workerCommand": "set_component_transform",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Apply a 4x4 transform matrix to an assembly component.",
+      "descriptionSource": "authored",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "setComponentTransform"
+    },
+    {
+      "name": "solidworks_set_component_visible",
+      "workerCommand": "set_component_visible",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Set component visible.",
+      "descriptionSource": "derived",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "componentName"
+    },
+    {
+      "name": "solidworks_set_custom_properties",
+      "workerCommand": "set_custom_properties",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Set custom properties on a part or assembly and optionally save it.",
+      "descriptionSource": "authored",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "setCustomProperties"
+    },
+    {
+      "name": "solidworks_set_dimension",
+      "workerCommand": "set_dimension",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Set a driving part dimension value in meters.",
+      "descriptionSource": "authored",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "setDimension"
+    },
+    {
+      "name": "solidworks_set_feature_suppression",
+      "workerCommand": "set_feature_suppression",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Set feature suppression.",
+      "descriptionSource": "derived",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "setFeatureSuppression"
+    },
+    {
+      "name": "solidworks_set_mate_limit_angle",
+      "workerCommand": "set_mate_limit_angle",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Worker command: set_mate_limit_angle",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "setMateLimitAngle"
+    },
+    {
+      "name": "solidworks_set_mate_suppression",
+      "workerCommand": "set_mate_suppression",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Suppress or unsuppress a named mate.",
+      "descriptionSource": "authored",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "setMateSuppression"
+    },
+    {
+      "name": "solidworks_set_material",
+      "workerCommand": "set_material",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Assign a material to a part or component.",
+      "descriptionSource": "authored",
+      "tags": [
+        "set"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "setMaterial"
+    },
+    {
+      "name": "solidworks_sketch_circle",
+      "workerCommand": "sketch_circle",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Create circle.",
+      "descriptionSource": "derived",
+      "tags": [
+        "sketch"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "sketchCircle"
+    },
+    {
+      "name": "solidworks_sketch_exit",
+      "workerCommand": "sketch_exit",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Create exit.",
+      "descriptionSource": "derived",
+      "tags": [
+        "sketch"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_sketch_line",
+      "workerCommand": "sketch_line",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Create line.",
+      "descriptionSource": "derived",
+      "tags": [
+        "sketch"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "sketchLine"
+    },
+    {
+      "name": "solidworks_sketch_rectangle",
+      "workerCommand": "sketch_rectangle",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": true,
+      "confirmRequired": true,
+      "description": "Create rectangle.",
+      "descriptionSource": "derived",
+      "tags": [
+        "sketch"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "sketchRectangle"
+    },
+    {
+      "name": "solidworks_transform_component",
+      "workerCommand": "transform_component",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Transform component.",
+      "descriptionSource": "derived",
+      "tags": [
+        "transform"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "transformComponent"
+    },
+    {
+      "name": "solidworks_unfix_all_components",
+      "workerCommand": "unfix_all_components",
+      "tier": "extended",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "description": "Unfix all components.",
+      "descriptionSource": "derived",
+      "tags": [
+        "unfix"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "unfixAllComponents"
+    }
+  ]
+}

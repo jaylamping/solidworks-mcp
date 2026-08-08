@@ -22,8 +22,13 @@ internal static partial class Program
     private static readonly Dictionary<string, Func<JsonElement?, object>> CommandRegistry = BuildCommandRegistry();
 
     [STAThread]
-    private static int Main()
+    private static int Main(string[] args)
     {
+        if (IsSessionMode(args))
+        {
+            return RunSessionHost();
+        }
+
         using Mutex comLock = new(false, WorkerConstants.ComMutexName);
         if (!comLock.WaitOne(ComLockTimeout))
         {
@@ -40,7 +45,7 @@ internal static partial class Program
 
         try
         {
-            return RunWorker();
+            return RunOneshotWorker();
         }
         finally
         {
@@ -48,7 +53,7 @@ internal static partial class Program
         }
     }
 
-    private static int RunWorker()
+    private static int RunOneshotWorker()
     {
         string? command = null;
         try
@@ -64,19 +69,7 @@ internal static partial class Program
             }
 
             command = request.Command;
-            if (!CommandRegistry.TryGetValue(command, out Func<JsonElement?, object>? handler))
-            {
-                throw WorkerException.Validation(
-                    "UNKNOWN_COMMAND",
-                    $"Unknown worker command: {command}",
-                    new Dictionary<string, object?> { ["command"] = command });
-            }
-
-            CommandSafety.RequireConfirmIfDestructive(command, request.Args);
-            object? preCheckpoint = TryAutoCheckpointBeforeMutation(command, request.Args);
-            JsonElement? effectiveArgs = ApplyUseSelection(command, request.Args);
-            object data = handler(effectiveArgs);
-            object responseData = AttachPreCheckpoint(data, preCheckpoint);
+            object responseData = DispatchCommand(command, request.Args);
             Console.WriteLine(JsonSerializer.Serialize(new { ok = true, data = responseData }, WriteJson));
             return 0;
         }
@@ -87,7 +80,7 @@ internal static partial class Program
         catch (Exception ex)
         {
             var context = new Dictionary<string, object?> { ["command"] = command };
-            return WriteError(SwErrorDecoder.FromException(ex, "Program.RunWorker", context));
+            return WriteError(SwErrorDecoder.FromException(ex, "Program.RunOneshotWorker", context));
         }
     }
 

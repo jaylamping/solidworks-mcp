@@ -34,6 +34,8 @@ internal static class CommandSafety
         "create_drawing_from_model",
         "restore_from_checkpoint",
         "confirm_and_save",
+        "resolve_lightweight",
+        "round_side_arms_from_circle",
     };
 
     /// <summary>

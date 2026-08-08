@@ -1,0 +1,2030 @@
+{
+  "version": "1",
+  "source": "src/tool-spec/catalog.ts",
+  "commands": [
+    {
+      "command": "status",
+      "csharpHandler": "Program.Status",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "workerOnly"
+    },
+    {
+      "command": "open",
+      "csharpHandler": "Program.Open",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "export",
+      "csharpHandler": "Program.Export",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "measure",
+      "csharpHandler": "Program.Measure",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_features",
+      "csharpHandler": "Program.ListFeatures",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "inspect_document",
+      "csharpHandler": "Program.InspectDocument",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_components",
+      "csharpHandler": "Program.ListComponents",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_reference_geometry",
+      "csharpHandler": "Program.ListReferenceGeometry",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "urdf_readiness",
+      "csharpHandler": "Program.UrdfReadiness",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "workerOnly"
+    },
+    {
+      "command": "add_urdf_frame",
+      "csharpHandler": "Program.AddUrdfFrame",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "workerOnly"
+    },
+    {
+      "command": "list_bom",
+      "csharpHandler": "Program.ListBom",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_mates",
+      "csharpHandler": "Program.ListMates",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_mate_entities",
+      "csharpHandler": "Program.ListMateEntities",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_component_visible",
+      "csharpHandler": "Program.SetComponentVisible",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_component_fixed",
+      "csharpHandler": "Program.SetComponentFixed",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "rename_component",
+      "csharpHandler": "Program.RenameComponent",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_coord_sys",
+      "csharpHandler": "Program.MateCoordSys",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "delete_all_mates",
+      "csharpHandler": "Program.DeleteAllMates",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "delete_mates_in_range",
+      "csharpHandler": "Program.DeleteMatesInRange",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "delete_mate",
+      "csharpHandler": "Program.DeleteMate",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "unfix_all_components",
+      "csharpHandler": "Program.UnfixAllComponents",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_component_configuration",
+      "csharpHandler": "Program.SetComponentConfiguration",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_component_origin",
+      "csharpHandler": "Program.MateComponentOrigin",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_configurations",
+      "csharpHandler": "Program.ListConfigurations",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_dimensions",
+      "csharpHandler": "Program.ListDimensions",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_feature_suppression",
+      "csharpHandler": "Program.SetFeatureSuppression",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "add_configuration_copy",
+      "csharpHandler": "Program.AddConfigurationCopy",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_component_box",
+      "csharpHandler": "Program.GetComponentBox",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "transform_component",
+      "csharpHandler": "Program.TransformComponent",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_component_transform",
+      "csharpHandler": "Program.SetComponentTransform",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_dimension",
+      "csharpHandler": "Program.SetDimension",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_planes",
+      "csharpHandler": "Program.MatePlanes",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_feature_box",
+      "csharpHandler": "Program.GetFeatureBox",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "feature_name",
+            "source": "selectedFeatureName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_coincident",
+      "csharpHandler": "Program.MateCoincident",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_parallel",
+      "csharpHandler": "Program.MateParallel",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_tangent",
+      "csharpHandler": "Program.MateTangent",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_try_coincident",
+      "csharpHandler": "Program.MateTryCoincident",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_try_parallel",
+      "csharpHandler": "Program.MateTryParallel",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_try_distance",
+      "csharpHandler": "Program.MateTryDistance",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_try_perpendicular",
+      "csharpHandler": "Program.MateTryPerpendicular",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_try_width",
+      "csharpHandler": "Program.MateTryWidth",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_distance",
+      "csharpHandler": "Program.MateDistance",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_perpendicular",
+      "csharpHandler": "Program.MatePerpendicular",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_width",
+      "csharpHandler": "Program.MateWidth",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_1",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref_1",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "component_2",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          },
+          {
+            "targetArg": "ref_2",
+            "source": "selectedRefName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_limit_angle",
+      "csharpHandler": "Program.MateLimitAngle",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_mate_limit_angle",
+      "csharpHandler": "Program.SetMateLimitAngle",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "probe_angle_travel",
+      "csharpHandler": "Program.ProbeAngleTravel",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_record_macro",
+      "csharpHandler": "Program.MateRecordMacro",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_replay_sequence",
+      "csharpHandler": "Program.MateReplaySequence",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mate_probe",
+      "csharpHandler": "Program.MateProbe",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "align_component_to_feature",
+      "csharpHandler": "Program.AlignComponentToFeature",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "layout_component",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "layout_feature",
+            "source": "selectedFeatureName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "target_component",
+            "source": "selectedComponentName",
+            "selectionIndex": 2
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "probe_feature_faces",
+      "csharpHandler": "Program.ProbeFeatureFaces",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "feature_name",
+            "source": "selectedFeatureName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_part_feature_box",
+      "csharpHandler": "Program.GetPartFeatureBox",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "part_path",
+            "source": "selectedComponentPath",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "feature_name",
+            "source": "selectedFeatureName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_planar_face_index",
+      "csharpHandler": "Program.GetPlanarFaceIndex",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "feature_name",
+            "source": "selectedFeatureName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "select_face_by_ray",
+      "csharpHandler": "Program.SelectFaceByRay",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_persist_reference",
+      "csharpHandler": "Program.GetPersistReference",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          },
+          {
+            "targetArg": "ref",
+            "source": "selectedRefName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "select_by_persist_reference",
+      "csharpHandler": "Program.SelectByPersistReference",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "rebuild_document",
+      "csharpHandler": "Program.RebuildDocument",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "ensure_offset_plane",
+      "csharpHandler": "Program.EnsureOffsetPlane",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "reset_component_transform",
+      "csharpHandler": "Program.ResetComponentTransform",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "insert_coord_sys",
+      "csharpHandler": "Program.InsertCoordSys",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_interferences",
+      "csharpHandler": "Program.ListInterferences",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_mate_suppression",
+      "csharpHandler": "Program.SetMateSuppression",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "save_document",
+      "csharpHandler": "Program.SaveDocument",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "confirm_and_save",
+      "csharpHandler": "Program.ConfirmAndSave",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "close_all_documents",
+      "csharpHandler": "Program.CloseAllDocuments",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": true,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "diagnose_part_save",
+      "csharpHandler": "Program.DiagnosePartSave",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "clone_solid_body_part",
+      "csharpHandler": "Program.CloneSolidBodyPart",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mirror_part_file",
+      "csharpHandler": "Program.MirrorPartFile",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "make_component_independent",
+      "csharpHandler": "Program.MakeComponentIndependent",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_custom_properties",
+      "csharpHandler": "Program.SetCustomProperties",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "replace_components_by_path",
+      "csharpHandler": "Program.ReplaceComponentsByPath",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "replace_component_path",
+      "csharpHandler": "Program.ReplaceComponentPath",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_component_transform",
+      "csharpHandler": "Program.GetComponentTransform",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "insert_component",
+      "csharpHandler": "Program.InsertComponent",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "debug_mate_entities",
+      "csharpHandler": "Program.DebugMateEntities",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "assembly_diagnostics",
+      "csharpHandler": "Program.AssemblyDiagnostics",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "component_mass_properties",
+      "csharpHandler": "Program.ComponentMassProperties",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "resolve_lightweight",
+      "csharpHandler": "Program.ResolveLightweight",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "invoke",
+      "csharpHandler": "Program.Invoke",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "workerOnly"
+    },
+    {
+      "command": "batch_invoke",
+      "csharpHandler": "Program.BatchInvoke",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "workerOnly"
+    },
+    {
+      "command": "checkpoint_document",
+      "csharpHandler": "Program.CheckpointDocument",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_checkpoints",
+      "csharpHandler": "Program.ListCheckpoints",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "restore_from_checkpoint",
+      "csharpHandler": "Program.RestoreFromCheckpoint",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": true,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "diagnose_com",
+      "csharpHandler": "Program.DiagnoseCom",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "diagnose_document",
+      "csharpHandler": "Program.DiagnoseDocument",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "diagnose_selection",
+      "csharpHandler": "Program.DiagnoseSelection",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "resolve_selection",
+      "csharpHandler": "Program.ResolveSelection",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "explain_error",
+      "csharpHandler": "Program.ExplainError",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_mass_properties",
+      "csharpHandler": "Program.GetMassProperties",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "component_name",
+            "source": "selectedComponentName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_material",
+      "csharpHandler": "Program.GetMaterial",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_bodies",
+      "csharpHandler": "Program.ListBodies",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_equations",
+      "csharpHandler": "Program.GetEquations",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_sketches",
+      "csharpHandler": "Program.ListSketches",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_selection",
+      "csharpHandler": "Program.GetSelection",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_display_states",
+      "csharpHandler": "Program.ListDisplayStates",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_open_documents",
+      "csharpHandler": "Program.GetOpenDocuments",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "measure_distance",
+      "csharpHandler": "Program.MeasureDistance",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_component_references",
+      "csharpHandler": "Program.GetComponentReferences",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_broken_references",
+      "csharpHandler": "Program.ListBrokenReferences",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "new_document",
+      "csharpHandler": "Program.NewDocument",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": true,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "close_document",
+      "csharpHandler": "Program.CloseDocument",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "activate_document",
+      "csharpHandler": "Program.ActivateDocument",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "create_sketch",
+      "csharpHandler": "Program.CreateSketch",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "plane_name",
+            "source": "selectedPlaneName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "sketch_rectangle",
+      "csharpHandler": "Program.SketchRectangle",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "feature_extrude_boss",
+      "csharpHandler": "Program.FeatureExtrudeBoss",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "delete_feature",
+      "csharpHandler": "Program.DeleteFeature",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "dissolve_component",
+      "csharpHandler": "Program.DissolveComponent",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mirror_component",
+      "csharpHandler": "Program.MirrorComponent",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "pack_and_go",
+      "csharpHandler": "Program.PackAndGo",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "sketch_line",
+      "csharpHandler": "Program.SketchLine",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "sketch_circle",
+      "csharpHandler": "Program.SketchCircle",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "sketch_exit",
+      "csharpHandler": "Program.SketchExit",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "feature_extrude_cut",
+      "csharpHandler": "Program.FeatureExtrudeCut",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "round_side_arms_from_circle",
+      "csharpHandler": "Program.RoundSideArmsFromCircle",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "feature_fillet",
+      "csharpHandler": "Program.FeatureFillet",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "feature_chamfer",
+      "csharpHandler": "Program.FeatureChamfer",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "feature_mirror",
+      "csharpHandler": "Program.FeatureMirror",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "feature_linear_pattern",
+      "csharpHandler": "Program.FeatureLinearPattern",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "feature_circular_pattern",
+      "csharpHandler": "Program.FeatureCircularPattern",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_material",
+      "csharpHandler": "Program.SetMaterial",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "create_subassembly",
+      "csharpHandler": "Program.CreateSubassembly",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "explode_view",
+      "csharpHandler": "Program.ExplodeView",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "copy_with_mates",
+      "csharpHandler": "Program.CopyWithMates",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "create_drawing_from_model",
+      "csharpHandler": "Program.CreateDrawingFromModel",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "add_standard_views",
+      "csharpHandler": "Program.AddStandardViews",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "list_sheet_views",
+      "csharpHandler": "Program.ListSheetViews",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "import_step",
+      "csharpHandler": "Program.ImportStep",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "get_assembly_degrees_of_freedom",
+      "csharpHandler": "Program.GetAssemblyDegreesOfFreedom",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "export_link_transforms",
+      "csharpHandler": "Program.ExportLinkTransforms",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    }
+  ]
+}

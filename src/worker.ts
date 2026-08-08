@@ -1,6 +1,7 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 
+import { sharedPersistentSession } from "./com-session.js";
 import { packageRoot, workerDllPath, workerProjectPath } from "./config.js";
 import { parseWorkerError, SolidWorksWorkerError, type WorkerError } from "./errors.js";
 
@@ -149,18 +150,20 @@ export type WorkerResponse<T = unknown> =
 /** Serialize COM calls — SolidWorks is STA; concurrent workers crash it. */
 let workerQueue: Promise<unknown> = Promise.resolve();
 
-let persistentChild: ChildProcess | null = null;
-
 /**
- * Optional persistent worker mode: set SOLIDWORKS_MCP_PERSISTENT_WORKER=1 to keep one
- * long-lived dotnet process (reduces spawn overhead). Default remains ephemeral per call.
+ * Optional persistent session worker. Set SOLIDWORKS_MCP_PERSISTENT_WORKER=1 or
+ * SOLIDWORKS_MCP_WORKER_MODE=session. Default remains ephemeral oneshot per call.
  */
-const usePersistentWorker = process.env.SOLIDWORKS_MCP_PERSISTENT_WORKER === "1";
+const usePersistentWorker =
+  process.env.SOLIDWORKS_MCP_PERSISTENT_WORKER === "1"
+  || process.env.SOLIDWORKS_MCP_WORKER_MODE === "session";
 
 export async function runWorker(request: WorkerRequest): Promise<unknown> {
-  const run = workerQueue.then(() =>
-    usePersistentWorker ? persistentWorkerOnce(request) : spawnWorkerOnce(request),
-  );
+  if (usePersistentWorker) {
+    return sharedPersistentSession().execute(request);
+  }
+
+  const run = workerQueue.then(() => spawnWorkerOnce(request));
   workerQueue = run.then(
     () => undefined,
     () => undefined,
@@ -182,24 +185,6 @@ async function spawnWorkerOnce(request: WorkerRequest): Promise<unknown> {
   );
 
   return collectWorkerResponse(child, request);
-}
-
-async function persistentWorkerOnce(request: WorkerRequest): Promise<unknown> {
-  if (!persistentChild || persistentChild.killed) {
-    const dll = workerDllPath();
-    const useDll = fs.existsSync(dll);
-    persistentChild = spawn(
-      "dotnet",
-      useDll ? ["exec", dll] : ["run", "--project", workerProjectPath(), "--no-launch-profile"],
-      {
-        cwd: packageRoot(),
-        stdio: ["pipe", "pipe", "pipe"],
-        windowsHide: true,
-      },
-    );
-  }
-
-  return collectWorkerResponse(persistentChild, request);
 }
 
 async function collectWorkerResponse(

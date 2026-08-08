@@ -100,7 +100,8 @@ MCP client ──stdio──► Node (TypeScript) ──queue──► SolidWork
 | `SOLIDWORKS_MCP_ALLOWED_ROOTS` | Semicolon-separated directories allowed for open/save/export paths |
 | `SOLIDWORKS_MCP_TOOL_TIER` | `core` / `extended` / `advanced` / `debug` / `all` |
 | `SOLIDWORKS_MCP_INVOKE_WRITE` | Allow write members through `solidworks_invoke` |
-| `SOLIDWORKS_MCP_PERSISTENT_WORKER` | `1` to keep a long-lived worker process |
+| `SOLIDWORKS_MCP_PERSISTENT_WORKER` | `1` to use the NDJSON session worker (warm COM process; checkpoint debounce survives across calls) |
+| `SOLIDWORKS_MCP_WORKER_MODE` | `session` for the same persistent path; omit or use oneshot ephemeral (default) |
 
 ## Development checks
 
