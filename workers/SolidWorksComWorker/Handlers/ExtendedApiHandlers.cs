@@ -397,16 +397,47 @@ internal static partial class Program
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
         ModelDoc2 doc = ResolveDocument(app, args);
         double depthM = DoubleArg(args, "depth_m", 0.01);
+        bool merge = BoolArg(args, "merge", defaultValue: true);
+        bool flip = BoolArg(args, "flip", defaultValue: false);
+        string? sketchName = StringArg(args, "sketch_name");
+        string? mergeBodyName = StringArg(args, "merge_body_name");
+
+        if (!string.IsNullOrWhiteSpace(sketchName))
+        {
+            doc.ClearSelection2(true);
+            if (!doc.Extension.SelectByID2(sketchName, "SKETCH", 0, 0, 0, false, 0, null, 0))
+            {
+                throw new InvalidOperationException($"Could not select sketch: {sketchName}");
+            }
+        }
+
+        // When merging into one body only, select that solid (append) so auto-select
+        // does not consume unrelated multi-body solids (e.g. the ring being cropped).
+        // Keep any active sketch selection; clearing it prevents the extrude.
+        if (merge && !string.IsNullOrWhiteSpace(mergeBodyName))
+        {
+            if (!SelectSolidBody(doc, mergeBodyName, append: true, mark: 0))
+            {
+                throw new InvalidOperationException($"Could not select merge body: {mergeBodyName}");
+            }
+        }
+
+        // When creating a separate body, feature-scope auto-select can prevent the extrude.
+        bool useFeatScope = BoolArg(args, "use_feat_scope", defaultValue: merge);
+        bool useAutoSelect = BoolArg(args, "use_auto_select", defaultValue: merge && string.IsNullOrWhiteSpace(mergeBodyName));
 
         Feature? extrude = Try(() => doc.FeatureManager.FeatureExtrusion2(
-            true, false, false, 0, 0, depthM, 0, false, false, false, false, 0, 0, false, false, false, false,
-            true, true, true, 0, 0, false)) as Feature;
+            true, false, flip, 0, 0, depthM, 0, false, false, false, false, 0, 0, false, false, false, false,
+            merge, useFeatScope, useAutoSelect, 0, 0, false)) as Feature;
 
         doc.EditRebuild3();
         return new
         {
             document = DescribeDocument(doc),
             depthM,
+            merge,
+            flip,
+            sketchName,
             featureName = Try(() => extrude?.Name),
             created = extrude is not null,
         };

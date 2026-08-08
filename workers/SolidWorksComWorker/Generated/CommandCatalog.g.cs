@@ -90,6 +90,7 @@ internal static class CommandPolicyCatalog
             ["align_component_to_feature"] = new CommandPolicy(false, true, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("layout_component", SelectionSource.SelectedComponentName, 1), new GeneratedSelectionBinding("layout_feature", SelectionSource.SelectedFeatureName, 1), new GeneratedSelectionBinding("target_component", SelectionSource.SelectedComponentName, 2)]),
             ["probe_feature_faces"] = new CommandPolicy(false, false, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("component_name", SelectionSource.SelectedComponentName, 1), new GeneratedSelectionBinding("feature_name", SelectionSource.SelectedFeatureName, 1)]),
             ["get_part_feature_box"] = new CommandPolicy(false, false, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("part_path", SelectionSource.SelectedComponentPath, 1), new GeneratedSelectionBinding("feature_name", SelectionSource.SelectedFeatureName, 1)]),
+            ["probe_part_feature_geometry"] = new CommandPolicy(false, false, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("feature_name", SelectionSource.SelectedFeatureName, 1)]),
             ["get_planar_face_index"] = new CommandPolicy(false, false, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("component_name", SelectionSource.SelectedComponentName, 1), new GeneratedSelectionBinding("feature_name", SelectionSource.SelectedFeatureName, 1)]),
             ["select_face_by_ray"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["get_persist_reference"] = new CommandPolicy(false, false, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("component_name", SelectionSource.SelectedComponentName, 1), new GeneratedSelectionBinding("ref", SelectionSource.SelectedRefName, 1)]),
@@ -150,8 +151,10 @@ internal static class CommandPolicyCatalog
             ["pack_and_go"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["sketch_line"] = new CommandPolicy(false, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["sketch_circle"] = new CommandPolicy(false, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
+            ["set_sketch_circle_diameter"] = new CommandPolicy(true, true, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("sketch_name", SelectionSource.SelectedFeatureName, 1)]),
             ["sketch_exit"] = new CommandPolicy(false, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["feature_extrude_cut"] = new CommandPolicy(true, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
+            ["combine_bodies"] = new CommandPolicy(true, true, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("body_name", SelectionSource.SelectedBodyName, 1)]),
             ["round_side_arms_from_circle"] = new CommandPolicy(true, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["feature_fillet"] = new CommandPolicy(true, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["feature_chamfer"] = new CommandPolicy(true, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
@@ -170,7 +173,7 @@ internal static class CommandPolicyCatalog
             ["export_link_transforms"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
         };
 
-    internal static readonly IReadOnlyList<string> SelectionAwareCommands = ["align_component_to_feature", "create_sketch", "diagnose_selection", "get_component_box", "get_component_transform", "get_feature_box", "get_mass_properties", "get_part_feature_box", "get_persist_reference", "get_planar_face_index", "get_selection", "mate_coincident", "mate_distance", "mate_parallel", "mate_perpendicular", "mate_planes", "mate_try_coincident", "mate_try_distance", "mate_try_parallel", "mate_try_perpendicular", "mate_try_width", "mate_width", "probe_feature_faces", "rename_component", "reset_component_transform", "resolve_selection", "set_component_fixed", "set_component_transform", "set_component_visible", "transform_component"];
+    internal static readonly IReadOnlyList<string> SelectionAwareCommands = ["align_component_to_feature", "combine_bodies", "create_sketch", "diagnose_selection", "get_component_box", "get_component_transform", "get_feature_box", "get_mass_properties", "get_part_feature_box", "get_persist_reference", "get_planar_face_index", "get_selection", "mate_coincident", "mate_distance", "mate_parallel", "mate_perpendicular", "mate_planes", "mate_try_coincident", "mate_try_distance", "mate_try_parallel", "mate_try_perpendicular", "mate_try_width", "mate_width", "probe_feature_faces", "probe_part_feature_geometry", "rename_component", "reset_component_transform", "resolve_selection", "set_component_fixed", "set_component_transform", "set_component_visible", "set_sketch_circle_diameter", "transform_component"];
 
     internal static bool TryGet(string command, out CommandPolicy policy) =>
         Policies.TryGetValue(command, out policy!);

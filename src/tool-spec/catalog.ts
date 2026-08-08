@@ -150,6 +150,7 @@ export const SCHEMAS = {
   featureCircularPattern: schemaRef("featureCircularPattern", partSchemas.featureCircularPatternSchema),
   featureExtrudeBoss: schemaRef("featureExtrudeBoss", partSchemas.featureExtrudeBossSchema),
   featureExtrudeCut: schemaRef("featureExtrudeCut", partSchemas.featureExtrudeCutSchema),
+  combineBodies: schemaRef("combineBodies", partSchemas.combineBodiesSchema),
   featureFillet: schemaRef("featureFillet", partSchemas.featureFilletSchema),
   featureLinearPattern: schemaRef("featureLinearPattern", partSchemas.featureLinearPatternSchema),
   featureMirror: schemaRef("featureMirror", partSchemas.featureMirrorSchema),
@@ -172,6 +173,7 @@ export const SCHEMAS = {
   partFeatureProbe: schemaRef("partFeatureProbe", assemblySchemas.partFeatureProbeSchema),
   persistRef: schemaRef("persistRef", assemblySchemas.persistRefSchema),
   probeAngleTravel: schemaRef("probeAngleTravel", mateSchemas.probeAngleTravelSchema),
+  probePartFeatureGeometry: schemaRef("probePartFeatureGeometry", partSchemas.probePartFeatureGeometrySchema),
   rebuildDocument: schemaRef("rebuildDocument", documentSchemas.rebuildDocumentSchema),
   replaceComponentPath: schemaRef("replaceComponentPath", assemblySchemas.replaceComponentPathSchema),
   replaceComponentsByPath: schemaRef("replaceComponentsByPath", assemblySchemas.replaceComponentsByPathSchema),
@@ -188,6 +190,7 @@ export const SCHEMAS = {
   setMateLimitAngle: schemaRef("setMateLimitAngle", mateSchemas.setMateLimitAngleSchema),
   setMaterial: schemaRef("setMaterial", partSchemas.setMaterialSchema),
   setMateSuppression: schemaRef("setMateSuppression", assemblySchemas.setMateSuppressionSchema),
+  setSketchCircleDiameter: schemaRef("setSketchCircleDiameter", partSchemas.setSketchCircleDiameterSchema),
   sketchCircle: schemaRef("sketchCircle", partSchemas.sketchCircleSchema),
   sketchLine: schemaRef("sketchLine", partSchemas.sketchLineSchema),
   sketchRectangle: schemaRef("sketchRectangle", partSchemas.sketchRectangleSchema),
@@ -910,6 +913,20 @@ export const TOOL_SPECS = [
     }),
     safety: readSafety(),
     selection: bindSelection([{ targetArg: "part_path", source: "selectedComponentPath", selectionIndex: 1 }, { targetArg: "feature_name", source: "selectedFeatureName", selectionIndex: 1 }]),
+  }),
+  tool({
+    implementation: worker("probe_part_feature_geometry", "Program.ProbePartFeatureGeometry"),
+    exposure: mcp({
+      name: "solidworks_probe_part_feature_geometry",
+      tier: "extended",
+      description: "Inspect a part feature's dimensions, faces, cylinders, and sketch geometry.",
+      descriptionSource: "authored",
+      input: SCHEMAS["probePartFeatureGeometry"],
+      tags: ["probe", "geometry"],
+      domains: ["document"],
+    }),
+    safety: readSafety(),
+    selection: bindSelection([{ targetArg: "feature_name", source: "selectedFeatureName", selectionIndex: 1 }]),
   }),
   tool({
     implementation: worker("get_planar_face_index", "Program.GetPlanarFaceIndex"),
@@ -1640,8 +1657,9 @@ export const TOOL_SPECS = [
     exposure: mcp({
       name: "solidworks_feature_extrude_boss",
       tier: "extended",
-      description: "Manage extrude boss.",
-      descriptionSource: "derived",
+      description:
+        "Extrude the active or named sketch as a boss. Use merge:false for a separate tool body. merge_body_name merges into one solid without auto-selecting unrelated multi-body solids. use_feat_scope/use_auto_select default from merge.",
+      descriptionSource: "authored",
       input: SCHEMAS["featureExtrudeBoss"],
       tags: ["feature"],
       domains: ["document"],
@@ -1734,6 +1752,20 @@ export const TOOL_SPECS = [
     selection: noSelection,
   }),
   tool({
+    implementation: worker("set_sketch_circle_diameter", "Program.SetSketchCircleDiameter"),
+    exposure: mcp({
+      name: "solidworks_set_sketch_circle_diameter",
+      tier: "extended",
+      description: "Set a sketch circle diameter or adjust it by a delta.",
+      descriptionSource: "authored",
+      input: SCHEMAS["setSketchCircleDiameter"],
+      tags: ["set", "sketch"],
+      domains: ["document"],
+    }),
+    safety: modelMutation({ destructive: true }),
+    selection: bindSelection([{ targetArg: "sketch_name", source: "selectedFeatureName", selectionIndex: 1 }]),
+  }),
+  tool({
     implementation: worker("sketch_exit", "Program.SketchExit"),
     exposure: mcp({
       name: "solidworks_sketch_exit",
@@ -1760,6 +1792,21 @@ export const TOOL_SPECS = [
     }),
     safety: modelMutation({ destructive: true }),
     selection: noSelection,
+  }),
+  tool({
+    implementation: worker("combine_bodies", "Program.CombineBodies"),
+    exposure: mcp({
+      name: "solidworks_combine_bodies",
+      tier: "extended",
+      description:
+        "Combine solid bodies (common/add/subtract). Common may be synthesized through subtract for exactly two bodies when InsertCombineFeature cannot create it. Use keep_body_names to copy a container body first so it survives while trimming another body to its volume. Prefer body_names over feature_names for early features (Loft/Shell): Feature.GetFaces can mis-attribute ownership in multi-body parts.",
+      descriptionSource: "authored",
+      input: SCHEMAS["combineBodies"],
+      tags: ["feature", "body", "boolean"],
+      domains: ["document"],
+    }),
+    safety: modelMutation({ destructive: true }),
+    selection: bindSelection([{ targetArg: "body_name", source: "selectedBodyName", selectionIndex: 1 }]),
   }),
   tool({
     implementation: worker("round_side_arms_from_circle", "Program.RoundSideArmsFromCircle"),

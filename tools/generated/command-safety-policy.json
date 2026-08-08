@@ -1011,6 +1011,25 @@
       "exposure": "mcp"
     },
     {
+      "command": "probe_part_feature_geometry",
+      "csharpHandler": "Program.ProbePartFeatureGeometry",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "feature_name",
+            "source": "selectedFeatureName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
       "command": "get_planar_face_index",
       "csharpHandler": "Program.GetPlanarFaceIndex",
       "safety": {
@@ -1811,6 +1830,27 @@
       "exposure": "mcp"
     },
     {
+      "command": "set_sketch_circle_diameter",
+      "csharpHandler": "Program.SetSketchCircleDiameter",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "sketch_name",
+            "source": "selectedFeatureName",
+            "selectionIndex": 1
+          }
+        ]
+      },
+      "exposure": "mcp"
+    },
+    {
       "command": "sketch_exit",
       "csharpHandler": "Program.SketchExit",
       "safety": {
@@ -1833,6 +1873,27 @@
       },
       "selection": {
         "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "combine_bodies",
+      "csharpHandler": "Program.CombineBodies",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": true,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "bindings",
+        "when": "use_selection",
+        "bindings": [
+          {
+            "targetArg": "body_name",
+            "source": "selectedBodyName",
+            "selectionIndex": 1
+          }
+        ]
       },
       "exposure": "mcp"
     },

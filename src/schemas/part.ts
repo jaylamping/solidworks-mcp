@@ -47,8 +47,89 @@ export const featureExtrudeCutSchema = optionalPathSchema.extend({
   ...confirmField,
 });
 
+export const combineBodiesSchema = optionalPathSchema
+  .extend({
+    operation: z
+      .enum(["common", "add", "subtract"])
+      .describe(
+        "SolidWorks Combine op. common keeps only the intersection and may be synthesized with subtract for exactly two bodies when InsertCombineFeature cannot create it, add is union, subtract is main minus tools.",
+      ),
+    body_name: z
+      .string()
+      .min(1)
+      .optional()
+      .describe("Primary body name. For subtract this is the main body. Filled from selection when use_selection is true."),
+    body_names: z
+      .array(z.string().min(1))
+      .min(1)
+      .optional()
+      .describe(
+        "Solid body names to combine. Prefer body_names over feature_names, especially for early Loft/Shell features. For subtract, the first body is the main body and the rest are tools.",
+      ),
+    feature_names: z
+      .array(z.string().min(1))
+      .min(1)
+      .optional()
+      .describe("Feature names resolved to owning solid bodies and appended to the body list. Use body_names when possible."),
+    keep_body_names: z
+      .array(z.string().min(1))
+      .optional()
+      .describe(
+        "Bodies to preserve by copying before combine. Use when common/subtract would otherwise consume a body you still need (e.g. keep Loft body while trimming another body to it).",
+      ),
+    keep_feature_names: z
+      .array(z.string().min(1))
+      .optional()
+      .describe("Features resolved to bodies and treated like keep_body_names."),
+    ...confirmField,
+  })
+  .superRefine((value, ctx) => {
+    const named =
+      (value.body_name ? 1 : 0) + (value.body_names?.length ?? 0) + (value.feature_names?.length ?? 0);
+    if (named < 1 && !value.use_selection) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Provide body_name/body_names/feature_names, or set use_selection: true.",
+      });
+    }
+  });
+
+export const probePartFeatureGeometrySchema = optionalPathSchema.extend({
+  feature_name: z.string().min(1),
+});
+
+export const setSketchCircleDiameterSchema = optionalPathSchema.extend({
+  sketch_name: z.string().min(1),
+  diameter_m: z.number().optional(),
+  diameter_mm: z.number().optional(),
+  delta_m: z.number().optional(),
+  delta_mm: z.number().optional(),
+  match_diameter_m: z.number().optional(),
+  match_diameter_mm: z.number().optional(),
+  prefer_inner: z.boolean().optional(),
+  ...confirmField,
+});
+
 export const featureExtrudeBossSchema = optionalPathSchema.extend({
   depth_m: z.number().optional(),
+  merge: z
+    .boolean()
+    .optional()
+    .describe("When false, create a separate solid body (tool bodies, envelopes). Default true."),
+  flip: z.boolean().optional(),
+  merge_body_name: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "When merge is true, append-select this solid so FeatureExtrusion does not auto-consume other multi-body solids.",
+    ),
+  use_feat_scope: z.boolean().optional(),
+  use_auto_select: z
+    .boolean()
+    .optional()
+    .describe("Defaults to merge && !merge_body_name. Set false with merge:false for reliable tool bodies."),
+  sketch_name: z.string().min(1).optional(),
   ...confirmField,
 });
 
