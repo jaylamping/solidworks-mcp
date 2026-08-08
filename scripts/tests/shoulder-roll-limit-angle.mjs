@@ -5,10 +5,10 @@
  * at the parked / nominal pose, the RS02 actuator bbox center must sit on the
  * clear side of the joint (negative assembly Y for this right-arm frame).
  *
- * Also asserts LimitAngle sense/stops, roll/RS02 stay float, and — critically —
- * that the assembly stays mate-healthy through save + force rebuild. Soft
- * list_mates checks alone are insufficient (SolidWorks can report errorCode 0
- * until a force rebuild / UI save surfaces What's Wrong).
+ * A SolidWorks planar LimitAngle is optional and discouraged for this DOF.
+ * Force-rebuild health is mandatory. Soft list_mates checks alone are
+ * insufficient because SolidWorks can report errorCode 0 until a force
+ * rebuild / UI save surfaces What's Wrong.
  *
  * Usage (PowerShell):
  *   $env:SOLIDWORKS_MCP_ALLOWED_ROOTS = "\\wsl$\Ubuntu\home\joey\code\marengo;C:\code\marengo"
@@ -55,7 +55,7 @@ function listMates() {
 }
 
 function badMates(mates) {
-  return mates.filter((m) => (m.errorCode ?? 0) !== 0);
+  return mates.filter((m) => m.suppressed !== true && (m.errorCode == null || m.errorCode !== 0));
 }
 
 function rs02YCenter() {
@@ -98,14 +98,23 @@ function assertAssemblyHealthy(label) {
     ),
   );
 
-  check(limit != null, `${label}: No LimitAngle* mate found`);
   check(bad.length === 0, `${label}: unsolved mates: ${bad.map((m) => `${m.name}:${m.errorCode}`).join(", ")}`);
   check(y <= CLEAR_SIDE_Y_MAX, `${label}: clear-side fail rs02Y=${y}`);
+
+  for (const mateName of ["Perpendicular2", "Coincident40", "Coincident87"]) {
+    const mate = mates.find((m) => m.name === mateName);
+    if (mate) {
+      check(
+        mate.suppressed === true,
+        `${label}: ${mateName} must stay suppressed (grounds RS02 / locks roll)`,
+      );
+    }
+  }
 
   if (!limit) return { mates, limit: null, y };
 
   check(limit.suppressed !== true, `${label}: ${limit.name} is suppressed`);
-  check((limit.errorCode ?? 0) === 0, `${label}: ${limit.name} errorCode=${limit.errorCode}`);
+  check(limit.errorCode === 0, `${label}: ${limit.name} errorCode=${limit.errorCode}`);
   check(limit.isAdvancedMate === true, `${label}: ${limit.name} isAdvancedMate=${limit.isAdvancedMate}`);
   check(
     limit.flipDimension === FLIP,
@@ -126,16 +135,6 @@ function assertAssemblyHealthy(label) {
       near(limit.maxAngleDeg, EXPECT_MAX, LIMIT_TOL_DEG, `${label} maxAngleDeg`);
     } catch (e) {
       failures.push(e.message);
-    }
-  }
-
-  for (const mateName of ["Perpendicular2", "Coincident40", "Coincident87"]) {
-    const mate = mates.find((m) => m.name === mateName);
-    if (mate) {
-      check(
-        mate.suppressed === true,
-        `${label}: ${mateName} must stay suppressed (grounds RS02 / locks roll)`,
-      );
     }
   }
 
