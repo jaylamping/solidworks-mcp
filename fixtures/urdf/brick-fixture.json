@@ -1,0 +1,28 @@
+{
+  "description": "Axis-aligned brick 0.10 x 0.05 x 0.02 m, mass 0.270 kg. Link frame origin at brick corner (-0.05,-0.025,-0.01) relative to geometric center.",
+  "mass_kg": 0.27,
+  "size_m": [0.1, 0.05, 0.02],
+  "com_in_source": [0, 0, 0],
+  "link_frame_in_source": {
+    "xyz": [-0.05, -0.025, -0.01],
+    "rpy": [0, 0, 0]
+  },
+  "expected": {
+    "com_in_link": [0.05, 0.025, 0.01],
+    "inertia_about_link": {
+      "ixx": 0.000261,
+      "ixy": -0.0003375,
+      "ixz": -0.000135,
+      "iyy": 0.000936,
+      "iyz": -0.0000675,
+      "izz": 0.001125
+    }
+  },
+  "joint": {
+    "parent_world": { "xyz": [0, 0, 0], "rpy": [0, 0, 0] },
+    "child_world": { "xyz": [0.1, 0, 0], "rpy": [0, 0, 1.5707963267948966] },
+    "axis_world": [0, 0, 1],
+    "expected_origin": { "xyz": [0.1, 0, 0], "rpy": [0, 0, 1.5707963267948966] },
+    "expected_axis_in_parent": [0, 0, 1]
+  }
+}

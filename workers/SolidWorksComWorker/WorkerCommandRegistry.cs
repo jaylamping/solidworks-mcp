@@ -50,6 +50,7 @@ internal static partial class Program
             ["mate_distance"] = MateDistance,
             ["mate_perpendicular"] = MatePerpendicular,
             ["mate_width"] = MateWidth,
+            ["get_mate_limit_angle"] = GetMateLimitAngle,
             ["mate_limit_angle"] = MateLimitAngle,
             ["set_mate_limit_angle"] = SetMateLimitAngle,
             ["probe_angle_travel"] = ProbeAngleTravel,
@@ -106,6 +107,7 @@ internal static partial class Program
             ["measure_distance"] = MeasureDistance,
             ["get_component_references"] = GetComponentReferences,
             ["list_broken_references"] = ListBrokenReferences,
+            ["list_feature_errors"] = ListFeatureErrors,
             ["demo_build_part"] = DemoBuildPart,
             ["new_document"] = NewDocument,
             ["close_document"] = CloseDocument,
@@ -141,5 +143,6 @@ internal static partial class Program
             ["import_step"] = ImportStep,
             ["get_assembly_degrees_of_freedom"] = GetAssemblyDegreesOfFreedom,
             ["export_link_transforms"] = ExportLinkTransforms,
+            ["export_urdf_package"] = ExportUrdfPackage,
         };
 }

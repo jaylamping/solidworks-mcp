@@ -8,7 +8,7 @@
       ],
       "env": {
         "SOLIDWORKS_MCP_TOOL_TIER": "extended",
-        "SOLIDWORKS_MCP_ALLOWED_ROOTS": "C:/code/solidworks-mcp/.demo",
+        "SOLIDWORKS_MCP_ALLOWED_ROOTS": "C:/code/solidworks-mcp/.demo;C:/code/solidworks-mcp/fixtures;\\\\wsl$\\Ubuntu\\home\\joey\\code\\marengo;C:/code/marengo",
         "SOLIDWORKS_MCP_PERSISTENT_WORKER": "1"
       }
     }

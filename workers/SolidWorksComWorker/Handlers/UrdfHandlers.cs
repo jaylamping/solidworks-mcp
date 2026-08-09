@@ -169,7 +169,7 @@ internal static partial class Program
         string xAxisRef = StringArg(args, "x_axis_ref") ?? "Front Plane";
         string yAxisRef = StringArg(args, "y_axis_ref") ?? "Top Plane";
         bool replaceExisting = BoolArg(args, "replace_existing", defaultValue: true);
-        bool save = BoolArg(args, "save", defaultValue: true);
+        bool save = BoolArg(args, "save", defaultValue: false);
 
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
         ModelDoc2 doc = OpenDocument(app, path);

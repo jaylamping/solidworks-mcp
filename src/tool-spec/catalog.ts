@@ -5,6 +5,7 @@ import * as assemblySchemas from "../schemas/assembly.js";
 import * as documentSchemas from "../schemas/document.js";
 import * as mateSchemas from "../schemas/mate.js";
 import * as partSchemas from "../schemas/part.js";
+import * as urdfSchemas from "../schemas/urdf.js";
 
 export type ToolTier = "core" | "extended" | "advanced" | "debug";
 
@@ -146,6 +147,7 @@ export const SCHEMAS = {
   explodeView: schemaRef("explodeView", assemblySchemas.explodeViewSchema),
   export: schemaRef("export", documentSchemas.exportSchema),
   exportLinkTransforms: schemaRef("exportLinkTransforms", assemblySchemas.exportLinkTransformsSchema),
+  exportUrdfPackage: schemaRef("exportUrdfPackage", urdfSchemas.exportUrdfPackageSchema),
   featureChamfer: schemaRef("featureChamfer", partSchemas.featureChamferSchema),
   featureCircularPattern: schemaRef("featureCircularPattern", partSchemas.featureCircularPatternSchema),
   featureExtrudeBoss: schemaRef("featureExtrudeBoss", partSchemas.featureExtrudeBossSchema),
@@ -156,6 +158,7 @@ export const SCHEMAS = {
   featureMirror: schemaRef("featureMirror", partSchemas.featureMirrorSchema),
   featureProbe: schemaRef("featureProbe", assemblySchemas.featureProbeSchema),
   getAssemblyDegreesOfFreedom: schemaRef("getAssemblyDegreesOfFreedom", assemblySchemas.getAssemblyDegreesOfFreedomSchema),
+  getMateLimitAngle: schemaRef("getMateLimitAngle", urdfSchemas.getMateLimitAngleSchema),
   importStep: schemaRef("importStep", documentSchemas.importStepSchema),
   insertComponent: schemaRef("insertComponent", assemblySchemas.insertComponentSchema),
   listCheckpoints: schemaRef("listCheckpoints", documentSchemas.listCheckpointsSchema),
@@ -309,6 +312,43 @@ export const TOOL_SPECS = [
     implementation: worker("urdf_readiness", "Program.UrdfReadiness"),
     exposure: workerOnly(),
     safety: readSafety(),
+    selection: noSelection,
+  }),
+  tool({
+    implementation: worker("list_feature_errors", "Program.ListFeatureErrors"),
+    exposure: workerOnly(),
+    safety: readSafety(),
+    selection: noSelection,
+  }),
+  tool({
+    implementation: worker("get_mate_limit_angle", "Program.GetMateLimitAngle"),
+    exposure: mcp({
+      name: "solidworks_get_mate_limit_angle",
+      tier: "extended",
+      description: "Read the minimum, maximum, and current angle of a named SolidWorks limit-angle mate.",
+      descriptionSource: "authored",
+      input: SCHEMAS["getMateLimitAngle"],
+      tags: ["get", "mate", "urdf"],
+      domains: ["assembly", "mate"],
+    }),
+    safety: readSafety(),
+    selection: noSelection,
+  }),
+  tool({
+    implementation: worker("export_urdf_package", "Program.ExportUrdfPackage"),
+    exposure: mcp({
+      name: "solidworks_export_urdf_package",
+      tier: "advanced",
+      description: "Export a validated CAD assembly and manifest into a versioned URDF package.",
+      descriptionSource: "authored",
+      input: SCHEMAS["exportUrdfPackage"],
+      tags: ["export", "urdf", "package"],
+      domains: ["assembly", "document"],
+    }),
+    safety: nonModelSideEffect({
+      destructive: false,
+      rationale: "The command reads CAD state and writes a separate package directory.",
+    }),
     selection: noSelection,
   }),
   tool({

@@ -18,6 +18,15 @@ workers/**/obj/
 
 # Local demo part output from `npm run demo:build-part`.
 .demo/
+!.demo/
+!.demo/urdf/
+!.demo/urdf/*.json
+
+# Product-specific local regression scripts (not scanned by check-no-marengo).
+.local-product-tests/
+
+# Generated CAD→URDF package outputs (meshes can be large).
+fixtures/urdf-packages/
 
 # Scraped SolidWorks API reference corpus.
 docs/api-reference/

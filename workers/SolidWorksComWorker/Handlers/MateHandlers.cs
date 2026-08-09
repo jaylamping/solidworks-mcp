@@ -414,6 +414,51 @@ internal static partial class Program
     private static object MateWidth(JsonElement? args) =>
         AddMateFromComponentRefs(args, (int)swMateType_e.swMateWIDTH, ParseMateAlign(args), "mate_width");
 
+    private static object GetMateLimitAngle(JsonElement? args)
+    {
+        string inputPath = PathGuard.AssertAllowedPath(RequiredStringArg(args, "path"));
+        string mateName = RequiredStringArg(args, "mate_name");
+
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = OpenDocument(app, inputPath);
+        if (doc.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+        {
+            throw new InvalidOperationException("get_mate_limit_angle requires an assembly document.");
+        }
+
+        Feature mateFeature = FindFeatureByName(doc, mateName)
+            ?? throw new InvalidOperationException($"Mate feature not found: {mateName}");
+        if (Try(() => mateFeature.GetDefinition()) is not IAngleMateFeatureData angleMate)
+        {
+            throw new InvalidOperationException($"Mate '{mateName}' is not an angle/limit-angle mate.");
+        }
+
+        double minAngleRad = Try(() => angleMate.MinimumAngle) as double? ?? double.NaN;
+        double maxAngleRad = Try(() => angleMate.MaximumAngle) as double? ?? double.NaN;
+        double currentAngleRad = Try(() => angleMate.Angle) as double? ?? double.NaN;
+        if (!double.IsFinite(minAngleRad)
+            || !double.IsFinite(maxAngleRad)
+            || !double.IsFinite(currentAngleRad))
+        {
+            throw new InvalidOperationException($"Mate '{mateName}' returned a non-finite angle definition.");
+        }
+
+        const double DegreesPerRadian = 180.0 / Math.PI;
+        return new
+        {
+            document = DescribeDocument(doc),
+            mateName = Try(() => mateFeature.Name) as string ?? mateName,
+            minAngleDeg = minAngleRad * DegreesPerRadian,
+            maxAngleDeg = maxAngleRad * DegreesPerRadian,
+            currentAngleDeg = currentAngleRad * DegreesPerRadian,
+            minAngleRad,
+            maxAngleRad,
+            currentAngleRad,
+            isAdvancedMate = Try(() => angleMate.IsAdvancedMate) as bool?,
+            flipDimension = Try(() => angleMate.FlipDimension) as bool?,
+        };
+    }
+
     private static object MateLimitAngle(JsonElement? args)
     {
         // Angle mates require entities (marks 1/2) plus a reference axis (mark 67108864).
@@ -424,7 +469,7 @@ internal static partial class Program
         string ref1 = RequiredStringArg(args, "ref_1");
         string component2 = RequiredStringArg(args, "component_2");
         string ref2 = RequiredStringArg(args, "ref_2");
-        string axisRef = StringArg(args, "axis_ref") ?? "shoulder_roll_axis";
+        string axisRef = StringArg(args, "axis_ref") ?? "joint_axis";
         string? axisComponentName = StringArg(args, "axis_component");
         double minDeg = DoubleArg(args, "min_angle_deg", -90);
         double maxDeg = DoubleArg(args, "max_angle_deg", 90);

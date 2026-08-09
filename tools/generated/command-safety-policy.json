@@ -108,6 +108,42 @@
       "exposure": "workerOnly"
     },
     {
+      "command": "list_feature_errors",
+      "csharpHandler": "Program.ListFeatureErrors",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "workerOnly"
+    },
+    {
+      "command": "get_mate_limit_angle",
+      "csharpHandler": "Program.GetMateLimitAngle",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "export_urdf_package",
+      "csharpHandler": "Program.ExportUrdfPackage",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "The command reads CAD state and writes a separate package directory."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
       "command": "add_urdf_frame",
       "csharpHandler": "Program.AddUrdfFrame",
       "safety": {

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "robotName": "demo_arm",
+  "assemblyPath": "REPLACE_WITH_ASSEMBLY.SLDASM",
+  "packageRoot": "REPLACE_WITH_PACKAGE_DIR",
+  "urdfOutputPath": "REPLACE_WITH_OUTPUT.urdf",
+  "zeroConfiguration": "export_pose",
+  "limitPrecedence": "cad_mate",
+  "links": [
+    {
+      "linkName": "base_link",
+      "bodies": ["base_bracket-1"],
+      "frameRef": "urdf_link_frame",
+      "frameBody": "base_bracket-1"
+    },
+    {
+      "linkName": "link_a",
+      "bodies": ["arm_link-1", "actuator_a-1"],
+      "frameRef": "urdf_link_frame",
+      "frameBody": "arm_link-1"
+    }
+  ],
+  "joints": [
+    {
+      "jointName": "joint_1",
+      "type": "revolute",
+      "parent": "base_link",
+      "child": "link_a",
+      "axisRef": "joint_axis",
+      "axisBody": "arm_link-1",
+      "limitMate": "LimitAngle1",
+      "effort": 17,
+      "velocity": 2
+    }
+  ]
+}

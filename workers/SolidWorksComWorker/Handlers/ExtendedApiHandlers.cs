@@ -277,17 +277,102 @@ internal static partial class Program
         return new { document = DescribeDocument(doc), references };
     }
 
+    private sealed record FeatureErrorEntry(
+        string? Name,
+        string? Type,
+        int ErrorCode,
+        bool Warning,
+        bool? Suppressed,
+        string? Parent);
+
     private static object ListBrokenReferences(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
         ModelDoc2 doc = ResolveDocument(app, args);
+        var errors = CollectFeatureErrors(doc);
         return new
         {
             document = DescribeDocument(doc),
-            brokenReferences = Array.Empty<string>(),
-            count = 0,
-            note = "Broken reference enumeration requires FeatureManager traversal — stub returns empty list.",
+            brokenReferences = errors
+                .Select(entry => $"{entry.Name} ({entry.Type}) errorCode={entry.ErrorCode}")
+                .ToArray(),
+            count = errors.Count,
+            features = errors,
         };
+    }
+
+    private static object ListFeatureErrors(JsonElement? args)
+    {
+        ISldWorks app = AttachSolidWorks(startIfMissing: true);
+        ModelDoc2 doc = ResolveDocument(app, args);
+        var errors = CollectFeatureErrors(doc);
+        return new
+        {
+            document = DescribeDocument(doc),
+            count = errors.Count,
+            features = errors,
+        };
+    }
+
+    private static List<FeatureErrorEntry> CollectFeatureErrors(ModelDoc2 doc)
+    {
+        var errors = new List<FeatureErrorEntry>();
+        object? featureObj = Try(() => doc.FirstFeature());
+        int guard = 0;
+        while (featureObj is not null && guard++ < 2000)
+        {
+            if (featureObj is Feature feature)
+            {
+                AppendFeatureError(errors, feature, parent: null);
+                object? sub = Try(() => feature.GetFirstSubFeature());
+                int subGuard = 0;
+                while (sub is not null && subGuard++ < 200)
+                {
+                    if (sub is Feature subFeature)
+                    {
+                        AppendFeatureError(errors, subFeature, parent: Try(() => feature.Name) as string);
+                        sub = Try(() => subFeature.GetNextSubFeature());
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            featureObj = featureObj is Feature current
+                ? Try(() => current.GetNextFeature())
+                : null;
+        }
+
+        return errors;
+    }
+
+    private static void AppendFeatureError(List<FeatureErrorEntry> errors, Feature feature, string? parent)
+    {
+        int? errorCode = null;
+        bool warning = false;
+        try
+        {
+            errorCode = feature.GetErrorCode2(out warning);
+        }
+        catch
+        {
+            errorCode = Try(() => feature.GetErrorCode()) as int?;
+        }
+
+        if (errorCode is null or 0)
+        {
+            return;
+        }
+
+        errors.Add(new FeatureErrorEntry(
+            Name: Try(() => feature.Name) as string,
+            Type: Try(() => feature.GetTypeName2()) as string,
+            ErrorCode: errorCode.Value,
+            Warning: warning,
+            Suppressed: Try(() => feature.IsSuppressed()) as bool?,
+            Parent: parent));
     }
 
     private static object NewDocument(JsonElement? args)

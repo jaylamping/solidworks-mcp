@@ -2,7 +2,12 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { assertAllowedPath, prepareDocumentPath } from "../config.js";
-import { addUrdfFrameSchema, urdfReadinessSchema } from "../schemas/urdf.js";
+import {
+  addUrdfFrameSchema,
+  generateUrdfSchema,
+  urdfReadinessSchema,
+} from "../schemas/urdf.js";
+import { writeUrdfFromPackage } from "../urdf/generate.js";
 import { runWorker } from "../worker.js";
 import { errorResult, jsonResult } from "./common.js";
 
@@ -41,7 +46,7 @@ export function registerUrdfTools(server: McpServer): void {
     {
       title: "Add URDF link frame",
       description:
-        "Create a named coordinate system on a part (default urdf_link_frame) from origin and axis plane references. Requires confirm: true.",
+        "Create a named coordinate system on a part (default urdf_link_frame) from origin and axis plane references. Prefer save:false during prep; requires confirm: true.",
       inputSchema: addUrdfFrameSchema,
       annotations: { readOnlyHint: false },
     },
@@ -60,11 +65,38 @@ export function registerUrdfTools(server: McpServer): void {
               x_axis_ref: args.x_axis_ref,
               y_axis_ref: args.y_axis_ref,
               replace_existing: args.replace_existing,
-              save: args.save,
+              save: args.save ?? false,
               confirm: true,
             },
           }),
         );
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    "solidworks_generate_urdf",
+    {
+      title: "Generate URDF",
+      description:
+        "Generate a URDF file from a CadUrdfPackage directory (package.json + meshes). Does not call SolidWorks.",
+      inputSchema: generateUrdfSchema,
+      annotations: { readOnlyHint: false },
+    },
+    async (args: z.infer<typeof generateUrdfSchema>) => {
+      try {
+        const packagePath = assertAllowedPath(args.package_path);
+        const urdfOutputPath = args.urdf_output_path
+          ? assertAllowedPath(args.urdf_output_path)
+          : undefined;
+        const result = writeUrdfFromPackage({
+          packagePath,
+          urdfOutputPath,
+          meshUriPrefix: args.mesh_uri_prefix,
+        });
+        return jsonResult(result);
       } catch (error) {
         return errorResult(error);
       }

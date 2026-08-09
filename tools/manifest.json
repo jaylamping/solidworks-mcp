@@ -586,6 +586,27 @@
       "schema": "exportLinkTransforms"
     },
     {
+      "name": "solidworks_export_urdf_package",
+      "workerCommand": "export_urdf_package",
+      "tier": "advanced",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "Export a validated CAD assembly and manifest into a versioned URDF package.",
+      "descriptionSource": "authored",
+      "tags": [
+        "export",
+        "urdf",
+        "package"
+      ],
+      "domains": [
+        "assembly",
+        "document"
+      ],
+      "schema": "exportUrdfPackage"
+    },
+    {
       "name": "solidworks_feature_chamfer",
       "workerCommand": "feature_chamfer",
       "tier": "extended",
@@ -836,6 +857,27 @@
         "document"
       ],
       "schema": "componentName"
+    },
+    {
+      "name": "solidworks_get_mate_limit_angle",
+      "workerCommand": "get_mate_limit_angle",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "Read the minimum, maximum, and current angle of a named SolidWorks limit-angle mate.",
+      "descriptionSource": "authored",
+      "tags": [
+        "get",
+        "mate",
+        "urdf"
+      ],
+      "domains": [
+        "assembly",
+        "mate"
+      ],
+      "schema": "getMateLimitAngle"
     },
     {
       "name": "solidworks_get_material",

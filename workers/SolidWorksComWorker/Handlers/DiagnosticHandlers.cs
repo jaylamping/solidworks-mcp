@@ -141,7 +141,7 @@ internal static partial class Program
             mass = Normalize(Try(() => massProperty.Mass)),
             centerOfMass = Normalize(Try(() => massProperty.CenterOfMass)),
             momentsOfInertia = Normalize(Try(() => massProperty.GetMomentOfInertia(0))),
-            urdfNote = "Verify inertia frame alignment before Brawner export.",
+            urdfNote = "Prefer export_urdf_package for inertia expressed about urdf_link_frame.",
         };
     }
 

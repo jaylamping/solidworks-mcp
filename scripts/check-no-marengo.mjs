@@ -57,6 +57,8 @@ for (const scanRoot of scanRoots) {
     const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
     lines.forEach((line, index) => {
       if (relativeFile === "package.json" && line.includes("check-no-marengo")) return;
+      // Allowed-root path lists are configuration, not product tooling leakage.
+      if (line.includes("SOLIDWORKS_MCP_ALLOWED_ROOTS")) return;
       if (denylist.some((pattern) => pattern.test(line))) {
         findings.push(`${relativeFile}:${index + 1}: ${line.trim()}`);
       }
