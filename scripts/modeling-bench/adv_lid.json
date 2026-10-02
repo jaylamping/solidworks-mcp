@@ -18,6 +18,8 @@
     { "tool": "solidworks_draft", "args": { "path": "$PART", "neutral": { "face": { "near": [0, 0, 0], "normal": [0, -1, 0] } }, "faces": [{ "face": { "near": [30, 10, 0], "normal": [1, 0, 0] } }, { "face": { "near": [-30, 10, 0], "normal": [-1, 0, 0] } }], "angle_deg": 1, "name": "SideDraft" }, "expect": { "bodies": 2 } },
     { "tool": "solidworks_reorder_feature", "args": { "path": "$PART", "feature": "Emboss", "before": "SideDraft" }, "expect": { "bodies": 2 } },
     { "tool": "solidworks_part_report", "args": { "path": "$PART" } },
-    { "tool": "solidworks_render_view", "args": { "path": "$PART", "output_path": "$OUT/adv_lid_iso.png", "view": "isometric" } }
+    { "tool": "solidworks_render_view", "args": { "path": "$PART", "output_path": "$OUT/adv_lid_iso.png", "view": "isometric" } },
+    { "tool": "solidworks_render_view", "args": { "path": "$PART", "output_path": "$OUT/adv_lid_section.png", "view": "isometric", "section": { "plane": "Front Plane" } }, "expect": { "fields": { "section.removed": true } } },
+    { "tool": "solidworks_render_view", "args": { "path": "$PART", "output_path": "$OUT/adv_lid_section_x.png", "view": "isometric", "section": { "plane": "Right Plane", "offset": 5, "reverse": true } }, "expect": { "fields": { "section.removed": true } } }
   ]
 }

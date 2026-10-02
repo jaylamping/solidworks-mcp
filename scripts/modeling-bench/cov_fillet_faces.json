@@ -1,0 +1,25 @@
+{
+  "name": "cov_fillet_faces",
+  "description": "Full-round and face fillets on a 40x40x5 plate with a 4 mm rib (x 18..22, 15 mm tall): full round on the rib tip removes (4*2 - pi*2^2/2)*40 = 68.67 mm^3; a 3 mm face fillet between the rib side and the plate adds (9 - 9*pi/4)*40 = 77.25 mm^3.",
+  "expect": { "bodies": 1, "volume_mm3": 10408.58 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "PlateSk", "entities": [{ "type": "rectangle", "corner1": [0, 0], "corner2": [40, 40] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "PlateSk", "depth": 5, "name": "Plate" }, "expect": { "volume": 8000 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "RibSk", "entities": [{ "type": "rectangle", "corner1": [18, 0], "corner2": [22, 40] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "RibSk", "depth": 20, "name": "Rib" }, "expect": { "volume": 10400 } },
+    { "tool": "solidworks_fillet", "args": { "path": "$PART", "full_round": {
+        "side1": { "face": { "near": [18, 20, 12], "normal": [-1, 0, 0] } },
+        "center": { "face": { "near": [20, 20, 20], "normal": [0, 0, 1] } },
+        "side2": { "face": { "near": [22, 20, 12], "normal": [1, 0, 0] } } }, "name": "RibTip" },
+      "expect": { "volume": { "approx": 10331.33, "tol": 0.0005 }, "fields": { "outcome.part.boundingBox.max.2": { "approx": 20, "tol": 0.0001 } } } },
+    { "tool": "solidworks_fillet", "args": { "path": "$PART", "radius": 3,
+        "face_set1": { "face": { "near": [22, 20, 12], "normal": [1, 0, 0] } },
+        "face_set2": { "face": { "near": [30, 20, 5], "normal": [0, 0, 1] } }, "name": "RibRoot" },
+      "expect": { "volume": { "approx": 10408.58, "tol": 0.0005 } } },
+    { "tool": "solidworks_fillet", "args": { "path": "$PART", "full_round": {
+        "side1": { "edge": { "near": [18, 20, 5] } },
+        "center": { "face": { "near": [20, 20, 20] } },
+        "side2": { "face": { "near": [22, 20, 12] } } } },
+      "expect_error": "FACES_REQUIRED" }
+  ]
+}

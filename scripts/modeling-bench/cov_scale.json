@@ -1,0 +1,17 @@
+{
+  "name": "cov_scale",
+  "description": "Scale feature: a 20x10x10 box scaled uniformly by 1.5 about the origin (volume x3.375, max corner x1.5), then per-axis [1, 2, 0.5] about its centroid (volume unchanged, Y doubled), then a selected body only.",
+  "expect": { "bodies": 2 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "Sk", "entities": [{ "type": "rectangle", "corner1": [0, 0], "corner2": [20, 10] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Sk", "depth": 10, "name": "Box" }, "expect": { "volume": 2000 } },
+    { "tool": "solidworks_scale", "args": { "path": "$PART", "factor": 1.5, "about": "origin" },
+      "expect": { "volume": { "approx": 6750, "tol": 0.0001 }, "fields": { "part.boundingBox.max.0": { "approx": 30, "tol": 0.0001 }, "part.boundingBox.min.0": { "approx": 0, "tol": 0.0001 } } } },
+    { "tool": "solidworks_scale", "args": { "path": "$PART", "factor": [1, 2, 0.5] },
+      "expect": { "volume": { "approx": 6750, "tol": 0.0001 }, "fields": { "part.boundingBox.max.1": { "approx": 22.5, "tol": 0.0001 }, "part.boundingBox.min.1": { "approx": -7.5, "tol": 0.0001 } } } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "Sk2", "entities": [{ "type": "rectangle", "corner1": [50, 0], "corner2": [60, 10] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Sk2", "depth": 10, "merge": false, "name": "Cube" }, "expect": { "bodies": 2, "volume": { "approx": 7750, "tol": 0.0001 } } },
+    { "tool": "solidworks_scale", "args": { "path": "$PART", "factor": 2, "bodies": [{ "near": [55, 5, 5] }] },
+      "expect": { "volume": { "approx": 14750, "tol": 0.0001 } } }
+  ]
+}

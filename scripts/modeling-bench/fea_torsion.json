@@ -1,0 +1,27 @@
+{
+  "name": "fea_torsion",
+  "description": "Torsion of a 10 mm steel shaft, 100 mm long, 5 N*m: tau = 16T/(pi d^3) = 25.5 MPa (von Mises sqrt(3)*tau = 44.1 MPa), twist = TL/(GJ) = 0.00658 rad (surface displacement 0.0329 mm). A rigid remote moment on the end face reproduces theory; a torque load on the end face gives the same stress.",
+  "expect": { "bodies": 1 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Right Plane", "name": "Section", "entities": [{ "type": "circle", "center": [0, 0], "radius": 5 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Section", "depth": 100, "name": "Shaft" }, "expect": { "volume": { "approx": 7853.98, "tol": 0.001 } } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "STEEL",
+      "fixtures": [{ "faces": { "face": { "near": [0, 0, 0], "normal": [-1, 0, 0] } } }],
+      "loads": [{ "type": "remote", "faces": { "face": { "near": [100, 0, 0], "normal": [1, 0, 0] } }, "point": [100, 0, 0], "moment_nm": [5, 0, 0] }],
+      "probes": [{ "name": "surface", "faces": { "face": { "near": [50, 5, 0], "type": "cylinder" } } }]
+    }, "expect": { "fields": {
+      "results.maxDisplacementMm": { "approx": 0.0329, "tol": 0.04 },
+      "probes.0.meanVonMisesMPa": { "approx": 44.1, "tol": 0.04 }
+    } } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "STEEL",
+      "fixtures": [{ "faces": { "face": { "near": [0, 0, 0], "normal": [-1, 0, 0] } } }],
+      "loads": [{ "type": "torque", "faces": { "face": { "near": [100, 0, 0], "normal": [1, 0, 0] } }, "value_nm": 5, "axis": { "face": { "near": [50, 5, 0], "type": "cylinder" } } }],
+      "probes": [{ "name": "surface", "faces": { "face": { "near": [50, 5, 0], "type": "cylinder" } } }]
+    }, "expect": { "fields": {
+      "loads.0.appliedNm": 5,
+      "probes.0.meanVonMisesMPa": { "approx": 44.1, "tol": 0.06 }
+    } } }
+  ]
+}

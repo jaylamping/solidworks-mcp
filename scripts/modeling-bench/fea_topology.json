@@ -1,0 +1,29 @@
+{
+  "name": "fea_topology",
+  "description": "Topology optimization of a 100x50x10 PETG cantilever block (fixed end, 500 N down at the free end): stiffness goal with 60% mass reduction and 4 mm minimum members produces the classic truss (chords plus diagonals); images from two views. A min_mass goal without limits is rejected. Takes about 2-3 minutes.",
+  "expect": { "bodies": 1, "volume_mm3": 50000 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "Plate", "entities": [{ "type": "rectangle", "corner1": [0, 0], "corner2": [100, 50] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Plate", "depth": 10, "name": "Block" }, "expect": { "volume": 50000 } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "PETG", "analysis": "topology",
+      "fixtures": [{ "faces": { "face": { "near": [0, 25, 5], "normal": [-1, 0, 0] } } }],
+      "loads": [{ "faces": { "face": { "near": [100, 25, 5], "normal": [1, 0, 0] } }, "value_n": 500, "direction": [0, -1, 0] }],
+      "topology": { "goal": "stiffness", "mass_reduction_percent": 60, "min_member_thickness": 4 },
+      "plot": { "path": "$OUT/fea_topology.png", "views": ["front", "isometric"] }
+    }, "expect": { "fields": {
+      "setup.massReductionPercent": 60,
+      "setup.minMemberThicknessMm": 4,
+      "result.plot": "Material Mass1",
+      "result.images.0.ok": true,
+      "result.images.1.ok": true
+    } } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "PETG", "analysis": "topology",
+      "fixtures": [{ "faces": { "face": { "near": [0, 25, 5], "normal": [-1, 0, 0] } } }],
+      "loads": [{ "faces": { "face": { "near": [100, 25, 5], "normal": [1, 0, 0] } }, "value_n": 500, "direction": [0, -1, 0] }],
+      "topology": { "goal": "min_mass" }
+    }, "expect_error": "TOPOLOGY_LIMIT_REQUIRED" },
+    { "tool": "solidworks_part_report", "args": { "path": "$PART" }, "expect": { "bodies": 1, "volume": 50000 } }
+  ]
+}

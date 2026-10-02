@@ -2565,6 +2565,57 @@
       "exposure": "mcp"
     },
     {
+      "command": "sheet_metal_base_flange",
+      "csharpHandler": "Program.SheetMetalBaseFlange",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "flat_pattern",
+      "csharpHandler": "Program.FlatPattern",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "Temporarily unfolds the part to measure it and writes a DXF; the part is folded again."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "scale",
+      "csharpHandler": "Program.ScaleBody",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "measure_clearance",
+      "csharpHandler": "Program.MeasureClearance",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
       "command": "simulate_static",
       "csharpHandler": "Program.SimulateStatic",
       "safety": {

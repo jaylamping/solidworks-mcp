@@ -70,7 +70,27 @@ internal static partial class Program
                     feaArgs["path"] = path;
                     feaArgs["units"] = units;
                     JsonNode? feaResult = JsonSerializer.SerializeToNode(SimulateStatic(JsonSerializer.SerializeToElement(feaArgs)), WriteJson);
-                    fea = feaResult?["results"];
+                    // Compact per-variant summary: peaks, the singularity-free peak, probes, or the mode list.
+                    var summary = new JsonObject();
+                    foreach (string key in new[] { "results", "probes", "plot" })
+                    {
+                        if (feaResult?[key] is JsonNode node)
+                        {
+                            summary[key] = node.DeepClone();
+                        }
+                    }
+
+                    if (feaResult?["distribution"]?["awayFromFixtures"] is JsonNode away)
+                    {
+                        summary["awayFromFixtures"] = away.DeepClone();
+                    }
+
+                    if (feaResult?["modes"]?["modes"] is JsonNode modes)
+                    {
+                        summary["modes"] = modes.DeepClone();
+                    }
+
+                    fea = summary;
                 }
 
                 if (thickness)

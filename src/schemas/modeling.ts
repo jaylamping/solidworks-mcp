@@ -250,8 +250,16 @@ export const shellSchema = z.object({
 export const filletSchema = z.object({
   path: partPathField,
   units: unitsField,
-  radius: z.number().positive(),
-  edges: selectorList.describe("Edges to round. A face selector rounds all of that face's edges. Use {edges:{...filters}} to grab many at once."),
+  radius: z.number().positive().optional().describe("Radius (edge and face fillets; a full round sizes itself)."),
+  edges: selectorList
+    .optional()
+    .describe("Edges to round. A face selector rounds all of that face's edges. Use {edges:{...filters}} to grab many at once."),
+  full_round: z
+    .object({ side1: selectorList, center: selectorList, side2: selectorList })
+    .optional()
+    .describe("Full-round fillet: rounds a rib or wall tip completely. side1/side2 = the two opposite faces, center = the face between them."),
+  face_set1: selectorList.optional().describe("Face fillet: first face set (blends to face_set2; the faces need not share an edge)."),
+  face_set2: selectorList.optional().describe("Face fillet: second face set."),
   name: nameField,
   rollback_on_error: rollbackField,
 });
@@ -370,6 +378,14 @@ export const renderViewSchema = z.object({
   edges: z.boolean().optional().describe("Shaded with visible edges (default true)."),
   units: unitsField,
   bodies: bodyList.optional().describe("Show only these bodies in the image (others are hidden temporarily)."),
+  section: z
+    .object({
+      plane: selectorSchema.describe("Cutting plane: a plane name (\"Front Plane\") or a planar face selector."),
+      offset: z.number().optional().describe("Offset of the cut from the plane, in `units`."),
+      reverse: z.boolean().optional().describe("Keep the other side."),
+    })
+    .optional()
+    .describe("Cut-away view to inspect internal features (bores, wall thickness, pockets). Display only; removed afterwards."),
 });
 
 export const deleteBodySchema = z.object({
@@ -433,21 +449,78 @@ export const simulateStaticSchema = z.object({
   custom_material: z
     .object({ name: z.string().optional(), youngs_modulus_mpa: z.number().positive(), poisson: z.number().min(0).max(0.5).optional(), yield_mpa: z.number().positive(), density_kg_m3: z.number().positive().optional() })
     .optional(),
+  analysis: z
+    .enum(["static", "frequency", "topology"])
+    .optional()
+    .describe("static (default): stress/displacement under loads. frequency: natural frequencies and mode shapes (loads optional; no fixtures = free-free). topology: topology optimization — which material carries the loads and which can be removed (see `topology`)."),
+  topology: z
+    .object({
+      goal: z
+        .enum(["stiffness", "min_displacement", "min_mass"])
+        .optional()
+        .describe("stiffness (default): stiffest layout for mass_reduction_percent; min_mass: lightest layout meeting the limits below (needs at least one)."),
+      mass_reduction_percent: z.number().min(5).max(95).optional().describe("Target mass reduction for stiffness/displacement goals (default 50)."),
+      min_factor_of_safety: z.number().positive().optional().describe("Limit: factor of safety must stay above this (e.g. 2). Typical with goal min_mass."),
+      max_stress_mpa: z.number().positive().optional().describe("Limit: von Mises stress below this (MPa)."),
+      max_displacement: z.number().positive().optional().describe("Limit: peak displacement below this (in `units`)."),
+      min_member_thickness: z.number().positive().optional().describe("Thinnest member allowed, in `units` (use >= 2-3 nozzle widths for FDM)."),
+      preserve: z
+        .array(z.object({ faces: selectorList, depth: z.number().positive().optional().describe("Keep material this deep under the faces, in `units`.") }))
+        .optional()
+        .describe("Regions to keep (bolt holes, bearing seats, mating faces). Loaded and fixed faces are kept automatically."),
+      symmetry: z.object({ planes: z.array(selectorSchema).min(1).max(3) }).optional().describe("Symmetric result about 1-3 planes."),
+    })
+    .optional()
+    .describe("Topology optimization settings (analysis = topology)."),
+  modes: z.number().int().min(1).max(50).optional().describe("Frequency analysis: number of modes (default 5)."),
   fixtures: z
     .array(z.object({ type: z.enum(["fixed", "immovable", "roller", "hinge"]).optional(), faces: selectorList }))
     .min(1)
-    .describe("Supports. fixed = all DOF; roller = slides in-plane; hinge = rotates about a cylindrical face's axis."),
+    .optional()
+    .describe("Supports (required for static). fixed = all DOF; roller = slides in-plane; hinge = rotates about a cylindrical face's axis."),
   loads: z
     .array(
       z.object({
-        type: z.enum(["force", "pressure"]).optional(),
-        faces: selectorList,
-        value_n: z.number().optional().describe("Force magnitude in newtons (total over the faces)."),
-        direction: z.array(z.number()).length(3).optional().describe("Model-space force direction; omit for a force normal to (into) the faces."),
-        value_mpa: z.number().optional().describe("Pressure in MPa (N/mm^2), normal to the faces."),
+        type: z.enum(["force", "pressure", "torque", "remote"]).optional(),
+        faces: selectorList.describe("Faces the load acts on (for remote loads: the faces it is transferred to)."),
+        value_n: z.number().optional().describe("force: magnitude in newtons (total over the faces)."),
+        direction: z.array(z.number()).length(3).optional().describe("force: model-space direction; omit for a force normal to (into) the faces."),
+        value_mpa: z.number().optional().describe("pressure: MPa (N/mm^2), normal to the faces."),
+        value_nm: z.number().optional().describe("torque: N*m about `axis` (right-hand rule)."),
+        axis: selectorSchema.optional().describe("torque: axis name, cylindrical face or circular edge (default: the first cylindrical load face)."),
+        point: z.array(z.number()).length(3).optional().describe("remote: model point where the load acts, in `units` (e.g. the end of a lever, an actuator's centre)."),
+        force_n: z.array(z.number()).length(3).optional().describe("remote: force components [Fx, Fy, Fz] in N."),
+        moment_nm: z.array(z.number()).length(3).optional().describe("remote: moment components [Mx, My, Mz] in N*m."),
+        connection: z.enum(["rigid", "distributed"]).optional().describe("remote: rigid (default; faces move as a rigid body) or distributed (faces may deform)."),
       }),
     )
-    .min(1),
+    .min(1)
+    .optional()
+    .describe("Loads (required for static)."),
+  probes: z
+    .array(z.object({ name: z.string().optional(), faces: selectorList }))
+    .optional()
+    .describe("Report von Mises stress on these faces (max, mean and where), e.g. a fillet you are sizing. Peaks at fixture edges and sharp corners are mesh singularities; probes on the region you care about are the reliable comparison."),
+  singularity_exclusion: z
+    .number()
+    .positive()
+    .optional()
+    .describe("distribution.awayFromFixtures ignores nodes within this distance of fixture faces (default 2 element sizes)."),
+  hotspots: z.boolean().optional().describe("Run SOLIDWORKS stress hot-spot diagnostics and list hot-spot locations (singular or genuinely concentrated)."),
+  plot: z
+    .object({
+      path: z.string().min(1).describe("PNG/JPG output path."),
+      result: z.enum(["von_mises", "displacement", "fos", "mode_shape"]).optional(),
+      mode: z.number().int().min(1).optional().describe("Frequency analysis: mode shape to show (default 1)."),
+      deformed: z.boolean().optional().describe("Show the deformed shape (default true)."),
+      view: z.enum(["isometric", "trimetric", "dimetric", "front", "back", "top", "bottom", "left", "right"]).optional(),
+      views: z
+        .array(z.enum(["isometric", "trimetric", "dimetric", "front", "back", "top", "bottom", "left", "right"]))
+        .optional()
+        .describe("Topology: save the material plot from several views (the first uses path, the rest add _<view> to the file name)."),
+    })
+    .optional()
+    .describe("Save a result plot image (stress contour by default)."),
   gravity: z.boolean().optional().describe("Add self-weight along -Y."),
   mesh_quality: z.enum(["draft", "high"]).optional(),
   element_size: z.number().positive().optional().describe("Global element size in `units` (default: SOLIDWORKS default)."),
@@ -458,6 +531,53 @@ export const simulateStaticSchema = z.object({
   study_name: z.string().optional(),
 });
 
+
+export const scaleSchema = z.object({
+  path: partPathField,
+  units: unitsField,
+  factor: z.union([z.number().positive(), z.array(z.number().positive()).length(3)]).describe("Uniform factor, or [fx, fy, fz] per model axis."),
+  about: z.enum(["centroid", "origin"]).optional().describe("Scale point (default centroid)."),
+  bodies: bodyList.optional().describe("Bodies to scale (default all)."),
+  name: nameField,
+  rollback_on_error: rollbackField,
+});
+
+export const sheetMetalBaseFlangeSchema = z.object({
+  path: partPathField,
+  units: unitsField,
+  sketch: z.string().min(1).describe("Profile sketch: open (bent bracket/channel, needs depth) or closed (flat tab)."),
+  thickness: z.number().positive().describe("Sheet thickness in `units`."),
+  bend_radius: z.number().positive().optional().describe("Inside bend radius (default = thickness)."),
+  depth: z.number().positive().optional().describe("Extrusion depth of an open profile."),
+  mid_plane: z.boolean().optional().describe("Extrude an open profile symmetrically about the sketch plane."),
+  reverse: z.boolean().optional().describe("Extrude an open profile the other way."),
+  reverse_thickness: z.boolean().optional().describe("Put the thickness on the other side of the profile line."),
+  k_factor: z.number().min(0).max(1).optional().describe("Bend K-factor (default from the part, typically 0.5)."),
+  name: nameField,
+  rollback_on_error: rollbackField,
+});
+
+export const flatPatternSchema = z.object({
+  path: partPathField,
+  units: unitsField,
+  output_path: z.string().min(1).optional().describe("DXF file to write (flat pattern geometry)."),
+  bend_lines: z.boolean().optional().describe("Include bend lines in the DXF (default true)."),
+});
+
+const clearanceSide = z
+  .object({
+    bodies: bodyList.optional().describe("Bodies (name or {near:[x,y,z]})."),
+    faces: selectorList.optional().describe("Faces (selectors)."),
+  })
+  .describe("One side of the check: bodies or faces.");
+
+export const measureClearanceSchema = z.object({
+  path: partPathField,
+  units: unitsField,
+  a: clearanceSide,
+  b: clearanceSide,
+  min_clearance: z.number().min(0).optional().describe("Required gap in `units`; the result reports pass/fail."),
+});
 
 export const rollbackSchema = z.object({
   path: partPathField,

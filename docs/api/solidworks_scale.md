@@ -1,10 +1,10 @@
-# solidworks_fillet
+# solidworks_scale
 
-Constant-radius fillet on edges chosen by selector (nearest-point, filters, or all edges of a face). No prior UI selection needed.
+Scale feature: uniform (factor) or per-axis ([fx, fy, fz]) scaling of all or selected bodies about their centroid or the part origin. Use for shrinkage compensation (e.g. 1.006 for ASA/ABS) or resizing a concept.
 
 | Field | Value |
 |-------|-------|
-| Worker command | `fillet` |
+| Worker command | `scale` |
 | Tier | core |
 | Read only | false |
 | Destructive | false |
@@ -17,19 +17,17 @@ Constant-radius fillet on edges chosen by selector (nearest-point, filters, or a
 |------|------|----------|---------|-------------|
 | `path` | string | yes | - | Part document to edit (.SLDPRT). Required so edits never land in whichever document happens to be active. (allowed root) |
 | `units` | `mm`, `cm`, `m`, `in` | no | - | Length units for every length and coordinate in this call. Default mm. |
-| `radius` | number | no | - | Radius (edge and face fillets; a full round sizes itself). |
-| `edges` | unknown | no | - | Edges to round. A face selector rounds all of that face's edges. Use {edges:{...filters}} to grab many at once. |
-| `full_round` | object | no | - | Full-round fillet: rounds a rib or wall tip completely. side1/side2 = the two opposite faces, center = the face between them. |
-| `face_set1` | unknown | no | - | Face fillet: first face set (blends to face_set2; the faces need not share an edge). |
-| `face_set2` | unknown | no | - | Face fillet: second face set. |
+| `factor` | unknown | yes | - | Uniform factor, or [fx, fy, fz] per model axis. |
+| `about` | `centroid`, `origin` | no | - | Scale point (default centroid). |
+| `bodies` | array | no | - | Bodies to scale (default all). |
 | `name` | string | no | - | Rename the created feature. |
 | `rollback_on_error` | boolean | no | - | Delete the feature again if it rebuilds with an error (default true), so the part stays clean. |
 
 ## Tags
 
-- feature
 - modeling
-- fillet
+- feature
+- body
 
 ## Domains
 

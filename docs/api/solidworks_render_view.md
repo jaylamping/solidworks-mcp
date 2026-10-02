@@ -23,6 +23,7 @@ Orient the part (isometric/front/top/… ), zoom to fit, and save a PNG/JPG imag
 | `edges` | boolean | no | - | Shaded with visible edges (default true). |
 | `units` | `mm`, `cm`, `m`, `in` | no | - | Length units for every length and coordinate in this call. Default mm. |
 | `bodies` | array | no | - | Show only these bodies in the image (others are hidden temporarily). |
+| `section` | object | no | - | Cut-away view to inspect internal features (bores, wall thickness, pockets). Display only; removed afterwards. |
 
 ## Tags
 

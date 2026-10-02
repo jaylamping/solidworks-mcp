@@ -97,8 +97,11 @@ internal static partial class Program
         CosmosWorks cw = AttachSimulation(app);
         CWModelDoc cwDoc = cw.ActiveDoc ?? throw WorkerException.Worker("SIMULATION_NO_DOC", "Simulation could not see the part (is it the active window?).", new Dictionary<string, object?>());
         CWStudyManager sm = cwDoc.StudyManager;
-        string studyName = StringArg(args, "study_name") ?? $"mcp_static_{Guid.NewGuid().ToString("N")[..6]}";
-        CWStudy study = sm.CreateNewStudy3(studyName, 0 /* static */, 0, out int err);
+        string analysis = (StringArg(args, "analysis") ?? "static").ToLowerInvariant();
+        bool frequency = analysis == "frequency";
+        bool topology = analysis == "topology";
+        string studyName = StringArg(args, "study_name") ?? $"mcp_{analysis}_{Guid.NewGuid().ToString("N")[..6]}";
+        CWStudy study = sm.CreateNewStudy3(studyName, frequency ? 1 : topology ? 13 : 0, 0, out int err);
         if (study is null || err != 0)
         {
             throw WorkerException.Worker("STUDY_CREATE_FAILED", $"CreateNewStudy3 failed (swsStudyError_e {err}).", new Dictionary<string, object?> { ["study"] = studyName });
@@ -110,9 +113,21 @@ internal static partial class Program
             FeaMaterial material = ApplyFeaMaterial(app, study, args);
             CWLoadsAndRestraintsManager lbc = study.LoadsAndRestraintsManager;
 
+            if (frequency)
+            {
+                CWFrequencyStudyOptions options = study.FrequencyStudyOptions;
+                options.NoOfFrequencies = IntArg(args, "modes", 5);
+            }
+
             var fixtureReport = new List<object>();
-            JsonElement fixtures = Prop(args, "fixtures") ?? throw new ArgumentException("fixtures is required");
-            foreach (JsonElement fx in fixtures.EnumerateArray())
+            var fixtureFaces = new List<ResolvedEntity>();
+            JsonElement? fixturesArg = Prop(args, "fixtures");
+            if (fixturesArg is null && !frequency)
+            {
+                throw WorkerException.Validation("FIXTURES_REQUIRED", "A static study needs fixtures (supports); without them the part floats freely.", new Dictionary<string, object?>());
+            }
+
+            foreach (JsonElement fx in fixturesArg is JsonElement fxs ? fxs.EnumerateArray().ToArray() : [])
             {
                 List<ResolvedEntity> faces = ResolveSelectors(doc, Prop(fx, "faces") ?? throw new ArgumentException("fixture.faces is required"), s, "fixtures.faces");
                 int type = (Str(fx, "type") ?? "fixed").ToLowerInvariant() switch
@@ -129,12 +144,18 @@ internal static partial class Program
                     throw WorkerException.Worker("FIXTURE_FAILED", $"AddRestraint failed (swsRestraintError_e {err}).", new Dictionary<string, object?> { ["faces"] = faces.Select(f => f.Info).ToArray() });
                 }
 
+                fixtureFaces.AddRange(faces);
                 fixtureReport.Add(new { type = Str(fx, "type") ?? "fixed", faces = faces.Count });
             }
 
             var loadReport = new List<object>();
-            JsonElement loads = Prop(args, "loads") ?? throw new ArgumentException("loads is required");
-            foreach (JsonElement ld in loads.EnumerateArray())
+            JsonElement? loadsArg = Prop(args, "loads");
+            if (loadsArg is null && !frequency)
+            {
+                throw WorkerException.Validation("LOADS_REQUIRED", "A static study needs at least one load.", new Dictionary<string, object?>());
+            }
+
+            foreach (JsonElement ld in loadsArg is JsonElement lds ? lds.EnumerateArray().ToArray() : [])
             {
                 loadReport.Add(ApplyFeaLoad(doc, lbc, ld, s));
             }
@@ -148,6 +169,8 @@ internal static partial class Program
                 loadReport.Add(new { type = "gravity", ok = gravity is not null && err == 0, error = err });
             }
 
+            object? topologySetup = topology ? SetupTopology(doc, study, args, s) : null;
+
             CWMesh mesh = study.Mesh;
             string quality = StringArg(args, "mesh_quality") ?? "high";
             mesh.Quality = quality == "draft" ? 0 : 1;
@@ -157,6 +180,12 @@ internal static partial class Program
             {
                 element = DoubleArg(args, "element_size") * s / 0.001;
                 tolerance = element * 0.05;
+            }
+            else if (topology)
+            {
+                // The optimizer re-solves the model every iteration; a coarser default keeps it to minutes.
+                element *= 1.5;
+                tolerance *= 1.5;
             }
 
             err = study.CreateMesh(0 /* mm */, element, tolerance);
@@ -169,18 +198,72 @@ internal static partial class Program
             err = study.RunAnalysis();
             if (err != 0)
             {
-                throw WorkerException.Worker("ANALYSIS_FAILED", $"RunAnalysis failed (swsRunAnalysisError_e {err}).", new Dictionary<string, object?> { ["code"] = err },
+                throw WorkerException.Worker("ANALYSIS_FAILED", $"RunAnalysis failed (swsRunAnalysisError_e {err}).", new Dictionary<string, object?> { ["code"] = err, ["topology"] = topologySetup },
                     ["30 = invalid loads/fixtures; 24 = solver failure (often an under-constrained part: add fixtures)."]);
             }
 
             CWResults results = study.Results;
-            object[] vm = (object[])results.GetMinMaxStress(9 /* VON */, 0, 1, null, 3 /* MPa */, out err);
+            object meshReport = new
+            {
+                quality,
+                elementSizeMm = Math.Round(element, 3),
+                nodes = Try(() => mesh.NodeCount),
+                elements = Try(() => mesh.ElementCount),
+            };
+            if (topology)
+            {
+                return new
+                {
+                    document = DescribeDocument(doc),
+                    study = keep ? studyName : null,
+                    analysis = "topology",
+                    material = new { material.Name, youngsModulusMPa = material.EPa / 1e6, densityKgM3 = material.DensityKgM3 },
+                    fixtures = fixtureReport,
+                    loads = loadReport,
+                    mesh = meshReport,
+                    setup = topologySetup,
+                    result = TopologyResults(app, doc, results, args),
+                    isolatedBodies,
+                    seconds = Math.Round(timer.Elapsed.TotalSeconds, 1),
+                };
+            }
+
+            if (frequency)
+            {
+                return new
+                {
+                    document = DescribeDocument(doc),
+                    study = keep ? studyName : null,
+                    analysis = "frequency",
+                    material = new { material.Name, youngsModulusMPa = material.EPa / 1e6, densityKgM3 = material.DensityKgM3 },
+                    fixtures = fixtureReport,
+                    loads = loadReport,
+                    mesh = meshReport,
+                    modes = FrequencyModes(results, fixtureReport.Count == 0),
+                    plot = Prop(args, "plot") is JsonElement fplot ? SavePlotImage(app, doc, results, fplot, frequency: true) : null,
+                    isolatedBodies,
+                    seconds = Math.Round(timer.Elapsed.TotalSeconds, 1),
+                    notes = new[]
+                    {
+                        "Natural frequencies of the fixed part. Keep the first mode well above motor/gait excitation (commonly 2-3x the highest drive frequency).",
+                        fixtureReport.Count == 0 ? "No fixtures: the first six modes are rigid-body modes (~0 Hz) and are flagged rigidBody." : "Modes depend strongly on how the part is held; fix the faces that are bolted down.",
+                    },
+                };
+            }
+
+            object[] vm =(object[])results.GetMinMaxStress(9 /* VON */, 0, 1, null, 3 /* MPa */, out err);
             object[] disp = (object[])results.GetMinMaxDisplacement(3 /* URES */, 1, null, 0 /* mm */, out int err2);
             double maxVm = Convert.ToDouble(vm[3]);
             double maxDisp = Convert.ToDouble(disp[3]);
             double[]? stressAt = NodeLocation(mesh, Convert.ToInt32(vm[2]), s);
             double[]? dispAt = NodeLocation(mesh, Convert.ToInt32(disp[2]), s);
             double fos = material.YieldPa / 1e6 / Math.Max(maxVm, 1e-9);
+            FeaNodes? fea = Try(() => ReadFeaNodes(results, mesh)) as FeaNodes;
+            double exclusionM = Prop(args, "singularity_exclusion") is not null ? DoubleArg(args, "singularity_exclusion") * s : 2 * element / 1000;
+            object? distribution = fea is null ? null : Try(() => StressDistribution(fea, results, fixtureFaces, exclusionM, s, material));
+            object? probes = fea is not null && Prop(args, "probes") is JsonElement probeArg ? StressProbes(doc, fea, results, probeArg, s, material) : null;
+            object? hotspots = fea is not null && BoolArg(args, "hotspots") ? Try(() => StressHotspots(fea, results, s)) : null;
+            object? plot = Prop(args, "plot") is JsonElement plotArg ? SavePlotImage(app, doc, results, plotArg, frequency: false) : null;
 
             return new
             {
@@ -196,13 +279,7 @@ internal static partial class Program
                 },
                 fixtures = fixtureReport,
                 loads = loadReport,
-                mesh = new
-                {
-                    quality,
-                    elementSizeMm = Math.Round(element, 3),
-                    nodes = Try(() => mesh.NodeCount),
-                    elements = Try(() => mesh.ElementCount),
-                },
+                mesh = meshReport,
                 results = new
                 {
                     maxVonMisesMPa = Math.Round(maxVm, 3),
@@ -212,6 +289,10 @@ internal static partial class Program
                     factorOfSafety = Math.Round(fos, 3),
                     units = UnitsLabel(args),
                 },
+                distribution,
+                probes,
+                hotspots,
+                plot,
                 isolatedBodies,
                 seconds = Math.Round(timer.Elapsed.TotalSeconds, 1),
                 notes = new[]
@@ -284,6 +365,7 @@ internal static partial class Program
                 mat.MaterialName = chosen!.Name;
                 mat.SetPropertyByName2("EX", chosen.EPa, false);
                 mat.SetPropertyByName2("NUXY", chosen.Nu, false);
+                mat.SetPropertyByName2("GXY", chosen.EPa / (2 * (1 + chosen.Nu)), false); // else a default shear modulus is kept (torsion 3x too soft)
                 mat.SetPropertyByName2("DENS", chosen.DensityKgM3, false);
                 mat.SetPropertyByName2("SIGYLD", chosen.YieldPa, false);
                 mat.SetPropertyByName2("SIGXT", chosen.YieldPa * 1.1, false);
@@ -366,8 +448,58 @@ internal static partial class Program
 
                 return new { type, valueMPa = mpa, faces = faces.Count, appliedPa = applied, unitCode = Try(() => p.Unit) };
             }
+            case "torque":
+            {
+                // Torque about an axis (axis name, cylindrical face, or circular edge); right-hand rule about
+                // the axis direction. Defaults to the first cylindrical face among the loaded faces.
+                double nm = Num(ld, "value_nm");
+                object axis = Prop(ld, "axis") is JsonElement axisEl
+                    ? ResolveSingle(doc, axisEl, s, "loads.axis").Com ?? throw new ArgumentException("loads.axis did not resolve to an entity")
+                    : faces.Select(f => f.Com).OfType<Face2>().FirstOrDefault(f => (Try(() => ((Surface)f.GetSurface()).IsCylinder()) as bool?) == true)
+                      ?? throw WorkerException.Validation("TORQUE_AXIS_REQUIRED", "A torque needs an axis: pass load.axis (axis name, cylindrical face or circular edge).", new Dictionary<string, object?>());
+                CWForce torque = lbc.AddForce3(2, 0, -1, 0, 0, 0, null, null, false, false, 0, 0, 0, nm,
+                    new double[] { 1, 1, 1, 1, 1, 1 }, false, false, entities, axis, false, out err);
+                if (torque is null || err != 0)
+                {
+                    throw WorkerException.Worker("LOAD_FAILED", $"AddForce3 (torque) failed (swsForceError_e {err}).", new Dictionary<string, object?>());
+                }
+
+                return new { type, valueNm = nm, appliedNm = Try(() => torque.NormalForceOrTorqueValue), unit = Try(() => torque.Unit), faces = faces.Count };
+            }
+            case "remote":
+            {
+                // A force and/or moment acting at a point away from the part (e.g. a load at the end of a
+                // lever or the far side of an actuator), transferred to the faces rigidly or distributed.
+                double[] at = Vec(Prop(ld, "point") ?? throw new ArgumentException("remote load needs point [x,y,z]"), 3);
+                double toMm = s * 1000;
+                double[] f = Prop(ld, "force_n") is JsonElement fe ? Vec(fe, 3) : [0, 0, 0];
+                double[] m = Prop(ld, "moment_nm") is JsonElement me ? Vec(me, 3) : [0, 0, 0];
+                bool rigid = !(Str(ld, "connection") ?? "rigid").Equals("distributed", StringComparison.OrdinalIgnoreCase);
+                CWRemoteLoad remote = lbc.AddRemoteLoad(rigid ? 1 : 0, entities, 0 /* mm */, at[0] * toMm, at[1] * toMm, at[2] * toMm, out err);
+                if (remote is null || err != 0)
+                {
+                    throw WorkerException.Worker("LOAD_FAILED", $"AddRemoteLoad failed (error {err}).", new Dictionary<string, object?>());
+                }
+
+                remote.RemoteLoadBeginEdit();
+                TryVoid(() => remote.ConnectionType = rigid ? 0 : 1);
+                TryVoid(() => remote.ForceUnit = 0);
+                TryVoid(() => remote.MomentUnit = 0);
+                bool hasForce = f.Any(v => v != 0);
+                bool hasMoment = m.Any(v => v != 0);
+                remote.SetForceOrTranslationValues2(hasForce, f[0] != 0, f[0], f[1] != 0, f[1], f[2] != 0, f[2]);
+                remote.SetMomentOrRotationValues2(hasMoment, m[0] != 0, m[0], m[1] != 0, m[1], m[2] != 0, m[2]);
+                int end = remote.RemoteLoadEndEdit();
+                if (end != 0)
+                {
+                    throw WorkerException.Worker("LOAD_FAILED", $"Remote load edit failed (swsRemoteLoadEndEditError_e {end}).", new Dictionary<string, object?>(),
+                        ["1 = select faces; 11 = give at least one non-zero force or moment component."]);
+                }
+
+                return new { type, point = at, forceN = f, momentNm = m, connection = rigid ? "rigid" : "distributed", faces = faces.Count };
+            }
             default:
-                throw WorkerException.Validation("BAD_LOAD", $"Unknown load type '{type}' (use force or pressure).", new Dictionary<string, object?>());
+                throw WorkerException.Validation("BAD_LOAD", $"Unknown load type '{type}' (use force, pressure, torque or remote).", new Dictionary<string, object?>());
         }
     }
 }

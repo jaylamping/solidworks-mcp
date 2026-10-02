@@ -361,6 +361,11 @@ internal static partial class Program
         double s = UnitScale(args);
         EnsureNoActiveSketch(doc);
         double radius = DoubleArg(args, "radius", 1) * s;
+        if (Prop(args, "full_round") is not null || Prop(args, "face_set1") is not null)
+        {
+            return FaceSetFillet(doc, args, s, radius);
+        }
+
         JsonElement edges = Prop(args, "edges") ?? throw new ArgumentException("edges is required");
         List<ResolvedEntity> targets = ResolveSelectors(doc, edges, s, "edges");
         doc.ClearSelection2(true);
@@ -396,6 +401,84 @@ internal static partial class Program
             ["targets"] = targets.Select(t => t.Info).ToArray(),
         })!;
         return FeatureOutcome(doc, feature, args, s, StringArg(args, "name"));
+    }
+
+    // Full-round fillet (side face set, centre face set, side face set: rounds a rib or wall tip
+    // completely) or face fillet (blends two face sets that need not share an edge).
+    private static object FaceSetFillet(ModelDoc2 doc, JsonElement? args, double s, double radius)
+    {
+        bool fullRound = Prop(args, "full_round") is not null;
+        var sets = new List<(int Which, List<ResolvedEntity> Faces, string Name)>();
+        if (fullRound)
+        {
+            JsonElement fr = Prop(args, "full_round")!.Value;
+            sets.Add(((int)swSimpleFilletWhichFaces_e.swFullRoundFilletSet1, ResolveSelectors(doc, Prop(fr, "side1") ?? throw new ArgumentException("full_round.side1 is required"), s, "full_round.side1"), "side1"));
+            sets.Add(((int)swSimpleFilletWhichFaces_e.swFullRoundFilletCenterSet, ResolveSelectors(doc, Prop(fr, "center") ?? throw new ArgumentException("full_round.center is required"), s, "full_round.center"), "center"));
+            sets.Add(((int)swSimpleFilletWhichFaces_e.swFullRoundFilletSet2, ResolveSelectors(doc, Prop(fr, "side2") ?? throw new ArgumentException("full_round.side2 is required"), s, "full_round.side2"), "side2"));
+        }
+        else
+        {
+            sets.Add(((int)swSimpleFilletWhichFaces_e.swFaceFilletSet1, ResolveSelectors(doc, Prop(args, "face_set1")!.Value, s, "face_set1"), "face_set1"));
+            sets.Add(((int)swSimpleFilletWhichFaces_e.swFaceFilletSet2, ResolveSelectors(doc, Prop(args, "face_set2") ?? throw new ArgumentException("face_set2 is required"), s, "face_set2"), "face_set2"));
+        }
+
+        if (sets.Any(set => set.Faces.Any(f => f.Com is not Face2)))
+        {
+            throw WorkerException.Validation("FACES_REQUIRED", "Full-round and face fillets take face selectors.", new Dictionary<string, object?>());
+        }
+
+        // Face lists go in through SetFaces; some builds only take them from the selection (marks
+        // 2 / 4 for the side sets, 512 for the full-round centre set). Try each way in turn.
+        string? via = null;
+        object? created = null;
+        foreach (string attempt in new[] { "set_faces", "set_faces_wrapped", "selection_marks" })
+        {
+            doc.ClearSelection2(true);
+            var data = (SimpleFilletFeatureData2)doc.FeatureManager.CreateDefinition((int)swFeatureNameID_e.swFmFillet);
+            data.Initialize(fullRound ? (int)swSimpleFilletType_e.swFullRoundFillet : (int)swSimpleFilletType_e.swFaceFillet);
+            if (!fullRound)
+            {
+                data.DefaultRadius = radius;
+            }
+
+            TryVoid(() => data.PropagateToTangentFaces = true);
+            foreach ((int which, List<ResolvedEntity> faces, string _) in sets)
+            {
+                if (attempt == "set_faces")
+                {
+                    TryVoid(() => data.SetFaces(which, faces.Select(f => f.Com).ToArray()));
+                }
+                else if (attempt == "set_faces_wrapped")
+                {
+                    TryVoid(() => data.SetFaces(which, Wrap(faces)));
+                }
+                else
+                {
+                    int mark = which switch
+                    {
+                        (int)swSimpleFilletWhichFaces_e.swFullRoundFilletCenterSet => 512,
+                        (int)swSimpleFilletWhichFaces_e.swFullRoundFilletSet2 or (int)swSimpleFilletWhichFaces_e.swFaceFilletSet2 => 4,
+                        _ => 2,
+                    };
+                    SelectResolved(doc, faces, mark, append: true, "faces");
+                }
+            }
+
+            created = doc.FeatureManager.CreateFeature(data);
+            if (created is not null)
+            {
+                via = attempt;
+                break;
+            }
+        }
+        Feature feature = CheckCreated(doc, created, fullRound ? "full-round fillet" : "face fillet", new Dictionary<string, object?>
+        {
+            ["faceSets"] = sets.ToDictionary(set => set.Name, set => (object?)set.Faces.Select(f => f.Info).ToArray()),
+            ["radius"] = fullRound ? null : radius / s,
+        }, fullRound
+            ? new[] { "side1 and side2 are the two opposite faces of the rib/wall; center is the face between them (its tip)." }
+            : new[] { "The radius must be large enough to reach both face sets." })!;
+        return new { outcome = FeatureOutcome(doc, feature, args, s, StringArg(args, "name")), via };
     }
 
     private static object Chamfer(JsonElement? args)

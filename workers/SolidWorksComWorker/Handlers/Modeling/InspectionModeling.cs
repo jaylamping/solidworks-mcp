@@ -136,6 +136,28 @@ internal static partial class Program
             }
         }
 
+        // Optional section (cut-away) view through a plane or planar face, removed again afterwards.
+        bool sectioned = false;
+        bool? sectionRemoved = null;
+        if (Prop(args, "section") is JsonElement section)
+        {
+            double sc = UnitScale(args);
+            object plane = ResolveSingle(doc, Prop(section, "plane") ?? throw new ArgumentException("section.plane is required"), sc, "section.plane").Com
+                ?? throw new ArgumentException("section.plane did not resolve to a plane or planar face");
+            ModelViewManager mvm = doc.ModelViewManager;
+            SectionViewData data = mvm.CreateSectionViewData();
+            data.FirstPlane = plane;
+            data.FirstOffset = OptNum(section, "offset") is double off ? off * sc : 0;
+            data.FirstReverseDirection = Flag(section, "reverse", false);
+            data.ShowSectionCap = true;
+            sectioned = mvm.CreateSectionView(data);
+            if (!sectioned)
+            {
+                throw WorkerException.Worker("SECTION_FAILED", "SOLIDWORKS could not create the section view.", new Dictionary<string, object?>(),
+                    ["Use a reference plane name or a planar face selector for section.plane."]);
+            }
+        }
+
         try
         {
             ok = WithReferenceGeometryHidden(app, doc, () =>
@@ -160,6 +182,17 @@ internal static partial class Program
         }
         finally
         {
+            if (sectioned)
+            {
+                sectionRemoved = Try(() => doc.ModelViewManager.RemoveSectionView()) as bool?;
+                if (sectionRemoved != true)
+                {
+                    // Toggle the Section View command off (swCommands_SectionView).
+                    sectionRemoved = Try(() => doc.Extension.RunCommand(124, "")) as bool?;
+                }
+                TryVoid(() => doc.GraphicsRedraw2());
+            }
+
             foreach (Body2 body in hidden)
             {
                 TryVoid(() => body.HideBody(false));
@@ -187,6 +220,7 @@ internal static partial class Program
             outputPath,
             view,
             bytes = new FileInfo(outputPath).Length,
+            section = sectioned ? new { removed = sectionRemoved } : null,
         };
     }
 }

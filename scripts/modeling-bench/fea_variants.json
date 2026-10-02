@@ -18,8 +18,8 @@
       ]
     }, "expect": { "fields": {
       "restored": true,
-      "variants.0.fea.maxDisplacementMm": { "approx": 1.1429, "tol": 0.06 },
-      "variants.1.fea.maxDisplacementMm": { "approx": 0.5852, "tol": 0.06 },
+      "variants.0.fea.results.maxDisplacementMm": { "approx": 1.1429, "tol": 0.06 },
+      "variants.1.fea.results.maxDisplacementMm": { "approx": 0.5852, "tol": 0.06 },
       "variants.1.volume": 8000,
       "variants.2.volume": { "approx": 9800, "tol": 0.01 }
     } } }

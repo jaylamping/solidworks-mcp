@@ -225,6 +225,10 @@ export const SCHEMAS = {
   modelPrintCheck: schemaRef("modelPrintCheck", modelingSchemas.printCheckSchema),
   modelSimulateStatic: schemaRef("modelSimulateStatic", modelingSchemas.simulateStaticSchema),
   modelTryVariants: schemaRef("modelTryVariants", modelingSchemas.tryVariantsSchema),
+  modelMeasureClearance: schemaRef("modelMeasureClearance", modelingSchemas.measureClearanceSchema),
+  modelScale: schemaRef("modelScale", modelingSchemas.scaleSchema),
+  modelSheetMetalBaseFlange: schemaRef("modelSheetMetalBaseFlange", modelingSchemas.sheetMetalBaseFlangeSchema),
+  modelFlatPattern: schemaRef("modelFlatPattern", modelingSchemas.flatPatternSchema),
   modelRollback: schemaRef("modelRollback", modelingSchemas.rollbackSchema),
   modelReorderFeature: schemaRef("modelReorderFeature", modelingSchemas.reorderFeatureSchema),
   modelEquations: schemaRef("modelEquations", modelingSchemas.equationsSchema),
@@ -2249,12 +2253,72 @@ export const TOOL_SPECS = [
     selection: noSelection,
   }),
   tool({
+    implementation: worker("sheet_metal_base_flange", "Program.SheetMetalBaseFlange"),
+    exposure: mcp({
+      name: "solidworks_sheet_metal_base_flange",
+      tier: "core",
+      description:
+        "Sheet-metal base flange from a sketch: an open profile (polyline/lines) becomes a bent bracket or channel with a bend at every corner, extruded by depth; a closed profile becomes a flat tab. Sets thickness, bend radius and K-factor. Add holes with solidworks_extrude cuts or solidworks_hole, then solidworks_flat_pattern for the DXF.",
+      descriptionSource: "authored",
+      input: SCHEMAS["modelSheetMetalBaseFlange"],
+      tags: ["modeling", "feature", "sheet-metal"],
+      domains: ["document"],
+    }),
+    safety: modelMutation({ destructive: false }),
+    selection: noSelection,
+  }),
+  tool({
+    implementation: worker("flat_pattern", "Program.FlatPattern"),
+    exposure: mcp({
+      name: "solidworks_flat_pattern",
+      tier: "core",
+      description:
+        "Sheet-metal flat pattern: unfolded blank size (length, width, thickness), bend count, and optional DXF export with bend lines for laser/waterjet cutting. The part is folded again afterwards.",
+      descriptionSource: "authored",
+      input: SCHEMAS["modelFlatPattern"],
+      tags: ["sheet-metal", "export", "analysis"],
+      domains: ["document"],
+    }),
+    safety: nonModelSideEffect({ destructive: false, rationale: "Temporarily unfolds the part to measure it and writes a DXF; the part is folded again." }),
+    selection: noSelection,
+  }),
+  tool({
+    implementation: worker("scale", "Program.ScaleBody"),
+    exposure: mcp({
+      name: "solidworks_scale",
+      tier: "core",
+      description:
+        "Scale feature: uniform (factor) or per-axis ([fx, fy, fz]) scaling of all or selected bodies about their centroid or the part origin. Use for shrinkage compensation (e.g. 1.006 for ASA/ABS) or resizing a concept.",
+      descriptionSource: "authored",
+      input: SCHEMAS["modelScale"],
+      tags: ["modeling", "feature", "body"],
+      domains: ["document"],
+    }),
+    safety: modelMutation({ destructive: false }),
+    selection: noSelection,
+  }),
+  tool({
+    implementation: worker("measure_clearance", "Program.MeasureClearance"),
+    exposure: mcp({
+      name: "solidworks_measure_clearance",
+      tier: "core",
+      description:
+        "Clearance between two sets of bodies or faces in a part: minimum distance with the closest points on each side, whether bodies overlap and the interference volume (computed on temporary copies; the part is not changed), and pass/fail against min_clearance. Use it to check a new bracket against an inserted actuator, a lid against its base, or moving parts against each other.",
+      descriptionSource: "authored",
+      input: SCHEMAS["modelMeasureClearance"],
+      tags: ["analysis", "measure", "interference", "clearance"],
+      domains: ["document"],
+    }),
+    safety: readSafety(),
+    selection: noSelection,
+  }),
+  tool({
     implementation: worker("simulate_static", "Program.SimulateStatic"),
     exposure: mcp({
       name: "solidworks_simulate_static",
       tier: "core",
       description:
-        "Linear static FEA (SOLIDWORKS Simulation) on a part: material (printed PLA/PETG/ABS/ASA/PC/CF-nylon, aluminum, steel, library or custom), fixtures and forces/pressures on selector-chosen faces, mesh, solve; returns max von Mises stress and where, max displacement and where, factor of safety, mesh size. The study is removed afterwards unless keep_study. Use it to check and compare design changes for strength and stiffness.",
+        "FEA (SOLIDWORKS Simulation) on a part. Static: material (printed PLA/PETG/ABS/ASA/PC/CF-nylon, aluminum, steel, library or custom), fixtures, and loads on selector-chosen faces (force, pressure, torque, remote force/moment acting at a point such as a lever end or actuator centre); returns peak von Mises stress and displacement with locations, factor of safety, stress percentiles, the peak away from fixture singularities, per-face probes, optional hot-spot diagnostics and a contour plot image. analysis=frequency: natural frequencies with mass participation and a mode-shape image. The study is removed afterwards unless keep_study. Use it to check and compare design changes for strength, stiffness and vibration.",
       descriptionSource: "authored",
       input: SCHEMAS["modelSimulateStatic"],
       tags: ["analysis", "fea", "simulation", "strength"],

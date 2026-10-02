@@ -893,6 +893,26 @@
       "schema": "modelFillet"
     },
     {
+      "name": "solidworks_flat_pattern",
+      "workerCommand": "flat_pattern",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "Sheet-metal flat pattern: unfolded blank size (length, width, thickness), bend count, and optional DXF export with bend lines for laser/waterjet cutting. The part is folded again afterwards.",
+      "descriptionSource": "authored",
+      "tags": [
+        "sheet-metal",
+        "export",
+        "analysis"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelFlatPattern"
+    },
+    {
       "name": "solidworks_get_assembly_degrees_of_freedom",
       "workerCommand": "get_assembly_degrees_of_freedom",
       "tier": "extended",
@@ -1970,6 +1990,27 @@
       "schema": "optionalPath"
     },
     {
+      "name": "solidworks_measure_clearance",
+      "workerCommand": "measure_clearance",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "Clearance between two sets of bodies or faces in a part: minimum distance with the closest points on each side, whether bodies overlap and the interference volume (computed on temporary copies; the part is not changed), and pass/fail against min_clearance. Use it to check a new bracket against an inserted actuator, a lid against its base, or moving parts against each other.",
+      "descriptionSource": "authored",
+      "tags": [
+        "analysis",
+        "measure",
+        "interference",
+        "clearance"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelMeasureClearance"
+    },
+    {
       "name": "solidworks_measure_distance",
       "workerCommand": "measure_distance",
       "tier": "extended",
@@ -2587,6 +2628,26 @@
       "schema": "saveDocument"
     },
     {
+      "name": "solidworks_scale",
+      "workerCommand": "scale",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Scale feature: uniform (factor) or per-axis ([fx, fy, fz]) scaling of all or selected bodies about their centroid or the part origin. Use for shrinkage compensation (e.g. 1.006 for ASA/ABS) or resizing a concept.",
+      "descriptionSource": "authored",
+      "tags": [
+        "modeling",
+        "feature",
+        "body"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelScale"
+    },
+    {
       "name": "solidworks_select_by_persist_reference",
       "workerCommand": "select_by_persist_reference",
       "tier": "extended",
@@ -2863,6 +2924,26 @@
       "schema": "setSketchCircleDiameter"
     },
     {
+      "name": "solidworks_sheet_metal_base_flange",
+      "workerCommand": "sheet_metal_base_flange",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Sheet-metal base flange from a sketch: an open profile (polyline/lines) becomes a bent bracket or channel with a bend at every corner, extruded by depth; a closed profile becomes a flat tab. Sets thickness, bend radius and K-factor. Add holes with solidworks_extrude cuts or solidworks_hole, then solidworks_flat_pattern for the DXF.",
+      "descriptionSource": "authored",
+      "tags": [
+        "modeling",
+        "feature",
+        "sheet-metal"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelSheetMetalBaseFlange"
+    },
+    {
       "name": "solidworks_shell",
       "workerCommand": "shell",
       "tier": "core",
@@ -2890,7 +2971,7 @@
       "destructive": false,
       "confirmRequired": false,
       "autoCheckpoint": false,
-      "description": "Linear static FEA (SOLIDWORKS Simulation) on a part: material (printed PLA/PETG/ABS/ASA/PC/CF-nylon, aluminum, steel, library or custom), fixtures and forces/pressures on selector-chosen faces, mesh, solve; returns max von Mises stress and where, max displacement and where, factor of safety, mesh size. The study is removed afterwards unless keep_study. Use it to check and compare design changes for strength and stiffness.",
+      "description": "FEA (SOLIDWORKS Simulation) on a part. Static: material (printed PLA/PETG/ABS/ASA/PC/CF-nylon, aluminum, steel, library or custom), fixtures, and loads on selector-chosen faces (force, pressure, torque, remote force/moment acting at a point such as a lever end or actuator centre); returns peak von Mises stress and displacement with locations, factor of safety, stress percentiles, the peak away from fixture singularities, per-face probes, optional hot-spot diagnostics and a contour plot image. analysis=frequency: natural frequencies with mass participation and a mode-shape image. The study is removed afterwards unless keep_study. Use it to check and compare design changes for strength, stiffness and vibration.",
       "descriptionSource": "authored",
       "tags": [
         "analysis",

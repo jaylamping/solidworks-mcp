@@ -22,10 +22,25 @@ with the SolidWorks error and "what's wrong" list, so the part stays clean and t
    such as `D1@Boss-Extrude1`), definitions (end conditions, depths, radii, pattern counts), parents, and each
    sketch's geometry and constrained status.
 2. Analyze:
-   - `solidworks_simulate_static` — FEA: fixtures + forces/pressures on faces, printed-filament or metal
-     materials; returns peak von Mises stress and where, peak displacement, factor of safety.
-     Validated against beam theory (cantilever deflection within 1%, root stress within 5%).
+   - `solidworks_simulate_static` — FEA: fixtures + loads on faces (force, pressure, torque, and `remote`
+     force/moment acting at a point — a load at the end of a lever, or an actuator's torque transmitted through a
+     stiff flange), printed-filament or metal materials. Returns peak von Mises stress and displacement with
+     locations, factor of safety, and `distribution.awayFromFixtures` — the peak excluding the singular stress at
+     fixture edges, which is the number to compare between variants. `probes` report stress on the faces you
+     are sizing (a fillet, a web); `plot` saves a contour image; `hotspots` runs SOLIDWORKS hot-spot diagnostics.
+     `analysis: "frequency"` gives natural frequencies, mass participation and a mode-shape image.
+     `analysis: "topology"` runs a topology optimization: `topology.goal` stiffness (stiffest layout for
+     `mass_reduction_percent`) or min_mass (lightest layout meeting `min_factor_of_safety` / `max_stress_mpa` /
+     `max_displacement`), with `min_member_thickness`, `preserve` regions (bolt bosses, bearing seats) and
+     `symmetry`. It saves the material plot (`plot.views`) — look at it, then redesign along the kept load paths
+     (ribs/webs/pockets) and verify with a static study. Expect 1–3 minutes per run.
+     Validated against theory: cantilever deflection within 1%, stress away from the root within 1%, offset
+     remote load within 0.2%, torsion twist and shear within 1%, first bending frequency within 0.3%.
    - `solidworks_thickness_check` — thinnest walls and where (ray casting).
+   - `solidworks_measure_clearance` — gap between two sets of bodies or faces (closest points), overlap and
+     interference volume, pass/fail against a required clearance. Pair it with `insert_part from_assembly` to check
+     a part against its real neighbours.
+   - `solidworks_render_view` with `section: {plane, offset}` — cut-away image to inspect bores, walls and pockets.
    - `solidworks_print_check` — overhangs, bridges, bed contact, bed fit, mass for each print orientation.
 3. Change it:
    - `solidworks_set_dimensions` — edit several dimensions in one rebuild; reverted if anything breaks.
@@ -108,12 +123,22 @@ Body names change as features are added, so prefer `{near: [...]}` for bodies.
 - **draft**: faces + neutral plane/face; propagates along tangent faces by default (filleted walls draft together).
 - **thickness_check / print_check** work on parts that were never displayed (model tessellation fallback) and,
   in multi-body parts, measure each wall within its own body.
+- **sheet metal**: `solidworks_sheet_metal_base_flange` turns an open sketch profile into a bent bracket (a bend at
+  every corner; the sketch is the inside of the bend) or a closed profile into a flat tab; `solidworks_flat_pattern`
+  reports the blank size and bend count and writes a DXF for laser cutting.
+- **fillet** also does full rounds (`full_round: {side1, center, side2}` — rounds a rib tip completely) and face
+  fillets (`face_set1`/`face_set2`, blends faces that need not share an edge, e.g. a rib into a wall).
+- **simulate_static loads**: `torque` applies tangential traction about `axis` and suits cylindrical faces
+  (a bore, a shaft surface); to twist through a flat face such as a bolted actuator flange use
+  `{type: "remote", point, moment_nm, connection: "rigid"}`, which matches torsion theory exactly.
 - **simulate_static** `bodies` isolates the part under study when the file also holds reference bodies (an
   imported actuator, fixtures); render_view takes the same `bodies` filter.
 - **pattern_linear**: pass `vector` (intended direction); edge directions have an arbitrary sign, so the tool
   checks where instances landed and flips if needed. Works for features and bodies.
 - **pattern_circular**: `axis` can be an axis name, a cylindrical face, or a circular edge.
 - **mirror**: features or bodies about a plane or planar face.
+- **scale**: uniform or per-axis about the centroid or origin, all or selected bodies (shrinkage compensation,
+  concept resizing).
 - **ref_plane / ref_axis**: offset / angled / three-point planes; axes from cylinders, edges, two planes, two points.
 - **insert_part + combine**: bring a vendor body (actuator, bearing) into a part and `subtract` it for an exact
   pocket, or design around it. With `from_assembly: {assembly, component}` the component is placed exactly where

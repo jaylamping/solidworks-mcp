@@ -1,0 +1,24 @@
+{
+  "name": "adv_clearance",
+  "description": "Clearance and interference: box A (0..20, 0..20, 0..10) and box B (23..33) are 3 mm apart; box C (15..25, 5..15) overlaps A by 5x10x10 = 500 mm^3 and B by 2x10x10 = 200 mm^3. Checks distance, witness points, pass/fail, face-to-face distance and that the part is unchanged.",
+  "expect": { "bodies": 3, "volume_mm3": 7000 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "SkA", "entities": [{ "type": "rectangle", "corner1": [0, 0], "corner2": [20, 20] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "SkA", "depth": 10, "name": "BoxA" }, "expect": { "volume": 4000 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "SkB", "entities": [{ "type": "rectangle", "corner1": [23, 0], "corner2": [33, 20] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "SkB", "depth": 10, "merge": false, "name": "BoxB" }, "expect": { "bodies": 2 } },
+    { "tool": "solidworks_measure_clearance", "args": { "path": "$PART", "a": { "bodies": [{ "near": [10, 10, 5] }] }, "b": { "bodies": [{ "near": [28, 10, 5] }] }, "min_clearance": 2 },
+      "expect": { "fields": { "minDistance": { "approx": 3, "tol": 0.001 }, "intersecting": false, "pass": true, "pointOnA.0": { "approx": 20, "tol": 0.001 }, "pointOnB.0": { "approx": 23, "tol": 0.001 } } } },
+    { "tool": "solidworks_measure_clearance", "args": { "path": "$PART", "a": { "bodies": [{ "near": [10, 10, 5] }] }, "b": { "bodies": [{ "near": [28, 10, 5] }] }, "min_clearance": 4 },
+      "expect": { "fields": { "pass": false } } },
+    { "tool": "solidworks_measure_clearance", "args": { "path": "$PART",
+      "a": { "faces": { "face": { "near": [20, 10, 5], "normal": [1, 0, 0] } } },
+      "b": { "faces": { "face": { "near": [23, 10, 5], "normal": [-1, 0, 0] } } } },
+      "expect": { "fields": { "minDistance": { "approx": 3, "tol": 0.001 } } } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "SkC", "entities": [{ "type": "rectangle", "corner1": [15, 5], "corner2": [25, 15] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "SkC", "depth": 10, "merge": false, "name": "BoxC" }, "expect": { "bodies": 3 } },
+    { "tool": "solidworks_measure_clearance", "args": { "path": "$PART", "a": { "bodies": [{ "near": [21, 10, 5] }] }, "b": { "bodies": [{ "near": [5, 10, 5] }, { "near": [30, 10, 5] }] }, "min_clearance": 0.5 },
+      "expect": { "fields": { "intersecting": true, "minDistance": 0, "interferenceVolume": { "approx": 700, "tol": 0.001 }, "overlaps.length": 2, "pass": false } } },
+    { "tool": "solidworks_part_report", "args": { "path": "$PART" }, "expect": { "bodies": 3, "volume": 7000 } }
+  ]
+}

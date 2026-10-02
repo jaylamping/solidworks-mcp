@@ -1,0 +1,48 @@
+{
+  "name": "fea_loads",
+  "description": "FEA load types and results against beam theory on a 100x10x10 mm steel cantilever (E 200 GPa, I 833.3 mm^4): remote force 50 mm past the tip (delta = PL^3/3EI + (P*0.05)L^2/2EI = 0.350 mm), stress away from the fixture (60 MPa * (1 - x/L) near x = 5 mm), face probe, plot image, and natural frequency (Euler-Bernoulli f1 = 812 Hz, two equal modes for a square section).",
+  "expect": { "volume_mm3": 10000, "bodies": 1 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Right Plane", "name": "Section", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 10, "height": 10 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Section", "depth": 100, "name": "Beam" }, "expect": { "volume": 10000 } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "STEEL",
+      "fixtures": [{ "faces": { "face": { "near": [0, 0, 0], "normal": [-1, 0, 0] } } }],
+      "loads": [{ "faces": { "face": { "near": [100, 0, 0], "normal": [1, 0, 0] } }, "value_n": 100, "direction": [0, -1, 0] }],
+      "probes": [{ "name": "top", "faces": { "face": { "near": [50, 5, 0], "normal": [0, 1, 0] } } }],
+      "hotspots": true,
+      "plot": { "path": "$OUT/fea_loads_vm.png" }
+    }, "expect": { "fields": {
+      "results.maxDisplacementMm": { "approx": 0.2, "tol": 0.03 },
+      "distribution.awayFromFixtures.maxVonMisesMPa": { "approx": 56.8, "tol": 0.06 },
+      "distribution.vonMisesPercentilesMPa.p50": { "min": 5, "max": 30 },
+      "probes.0.maxVonMisesMPa": { "min": 50, "max": 66 },
+      "probes.0.nodes": { "min": 100 },
+      "hotspots.found": false,
+      "plot.ok": true,
+      "plot.max": { "approx": 63.4, "tol": 0.15 }
+    } } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "STEEL",
+      "fixtures": [{ "faces": { "face": { "near": [0, 0, 0], "normal": [-1, 0, 0] } } }],
+      "loads": [{ "type": "remote", "faces": { "face": { "near": [100, 0, 0], "normal": [1, 0, 0] } }, "point": [150, 0, 0], "force_n": [0, -100, 0] }]
+    }, "expect": { "fields": { "results.maxDisplacementMm": { "approx": 0.35, "tol": 0.03 } } } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "STEEL", "analysis": "frequency", "modes": 4,
+      "fixtures": [{ "faces": { "face": { "near": [0, 0, 0], "normal": [-1, 0, 0] } } }],
+      "plot": { "path": "$OUT/fea_loads_mode1.png" }
+    }, "expect": { "fields": {
+      "modes.modes.0.hz": { "approx": 812, "tol": 0.03 },
+      "modes.modes.1.hz": { "approx": 812, "tol": 0.03 },
+      "modes.modes.0.rigidBody": false,
+      "plot.ok": true
+    } } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "STEEL", "analysis": "frequency", "modes": 8
+    }, "expect": { "fields": { "modes.modes.0.rigidBody": true, "modes.modes.6.rigidBody": false } } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "STEEL",
+      "loads": [{ "faces": { "face": { "near": [100, 0, 0], "normal": [1, 0, 0] } }, "value_n": 100 }]
+    }, "expect_error": "FIXTURES_REQUIRED" }
+  ]
+}

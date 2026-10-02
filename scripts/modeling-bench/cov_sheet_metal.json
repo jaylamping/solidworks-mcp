@@ -1,0 +1,13 @@
+{
+  "name": "cov_sheet_metal",
+  "description": "Sheet metal: an open L profile (30 + 40 mm legs) becomes a 2 mm bracket 25 mm deep with one bend (R2, K 0.5; the sketch is the inside of the bend, so flat length = (30-2) + (40-2) + pi/2*(2 + 0.5*2) = 70.712); flat pattern size, bend count and DXF export; the part is folded again afterwards.",
+  "expect": { "bodies": 1 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "Profile", "entities": [{ "type": "polyline", "points": [[0, 30], [0, 0], [40, 0]] }] } },
+    { "tool": "solidworks_sheet_metal_base_flange", "args": { "path": "$PART", "sketch": "Profile", "thickness": 2, "bend_radius": 2, "depth": 25, "k_factor": 0.5, "name": "Bracket" },
+      "expect": { "fields": { "bends": 1, "outcome.part.solidBodies": 1 } } },
+    { "tool": "solidworks_flat_pattern", "args": { "path": "$PART", "output_path": "$OUT/cov_sheet_metal.dxf" },
+      "expect": { "fields": { "bends": 1, "exported": true, "flatSize.thickness": { "approx": 2, "tol": 0.001 }, "flatSize.width": { "approx": 25, "tol": 0.001 }, "flatSize.length": { "approx": 70.712, "tol": 0.001 } } } },
+    { "tool": "solidworks_part_report", "args": { "path": "$PART" }, "expect": { "bodies": 1 } }
+  ]
+}
