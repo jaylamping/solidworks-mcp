@@ -59,13 +59,19 @@ internal static partial class Program
 
         int errors = 0;
         int warnings = 0;
+        bool ok;
         if (IsPreviewExport(outputPath))
         {
-            PreparePreview(app, doc);
+            ok = WithReferenceGeometryHidden(app, doc, () =>
+            {
+                PreparePreview(doc);
+                return doc.Extension.SaveAs(outputPath, 0, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref errors, ref warnings);
+            });
         }
-
-        ModelDocExtension extension = doc.Extension;
-        bool ok = extension.SaveAs(outputPath, 0, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref errors, ref warnings);
+        else
+        {
+            ok = doc.Extension.SaveAs(outputPath, 0, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref errors, ref warnings);
+        }
 
         return new
         {
@@ -83,14 +89,9 @@ internal static partial class Program
         return ext is ".png" or ".jpg" or ".jpeg";
     }
 
-    private static void PreparePreview(ISldWorks app, ModelDoc2 doc)
+    private static void PreparePreview(ModelDoc2 doc)
     {
-        HideReferenceGeometryForPreview(app);
         TryVoid(() => doc.ClearSelection2(true));
-        SelectReferenceFeatures(doc);
-        TryVoid(() => doc.BlankRefGeom());
-        TryVoid(() => doc.ClearSelection2(true));
-        TryVoid(() => doc.BlankSketch());
         TryVoid(() => doc.ShowNamedView2("*Isometric", (int)swStandardViews_e.swIsometricView));
         TryVoid(() => doc.ViewZoomtofit2());
 
@@ -104,41 +105,48 @@ internal static partial class Program
         TryVoid(() => doc.GraphicsRedraw2());
     }
 
-    private static void SelectReferenceFeatures(ModelDoc2 doc)
+    private static readonly swUserPreferenceToggle_e[] PreviewHiddenToggles =
+    [
+        swUserPreferenceToggle_e.swDisplayPlanes,
+        swUserPreferenceToggle_e.swDisplayAxes,
+        swUserPreferenceToggle_e.swDisplayTemporaryAxes,
+        swUserPreferenceToggle_e.swDisplayCoordSystems,
+        swUserPreferenceToggle_e.swDisplayOrigins,
+        swUserPreferenceToggle_e.swDisplaySketches,
+        swUserPreferenceToggle_e.swDisplaySketchPlanes,
+    ];
+
+    // Hide planes/axes/origins/sketches for an image capture, then put the user's
+    // application- and document-level display settings back exactly as they were.
+    private static T WithReferenceGeometryHidden<T>(ISldWorks app, ModelDoc2 doc, Func<T> capture)
     {
-        object? feature = Try(() => doc.FirstFeature());
-        bool append = false;
-        int guard = 0;
-        while (feature is not null && guard++ < 1000)
+        // Reference-geometry visibility is stored both in the app and per document.
+        const int noOption = (int)swUserPreferenceOption_e.swDetailingNoOptionSpecified;
+        var saved = PreviewHiddenToggles.ToDictionary(t => t, t => (Try(() => app.GetUserPreferenceToggle((int)t)) as bool?) ?? true);
+        var savedDoc = PreviewHiddenToggles.ToDictionary(t => t, t => (Try(() => doc.Extension.GetUserPreferenceToggle((int)t, noOption)) as bool?) ?? true);
+        try
         {
-            dynamic current = feature;
-            string? type = Try(() => current.GetTypeName2()) as string;
-            if (type is "RefPlane" or "RefAxis" or "RefPoint" or "CoordSys")
+            foreach (swUserPreferenceToggle_e t in PreviewHiddenToggles)
             {
-                bool selected = Try(() => current.Select2(append, 0)) as bool? ?? false;
-                append = append || selected;
+                TryVoid(() => app.SetUserPreferenceToggle((int)t, false));
+                TryVoid(() => doc.Extension.SetUserPreferenceToggle((int)t, noOption, false));
             }
 
-            feature = Try(() => current.GetNextFeature());
+            return capture();
         }
-    }
-
-    private static void HideReferenceGeometryForPreview(ISldWorks app)
-    {
-        swUserPreferenceToggle_e[] toggles =
-        [
-            swUserPreferenceToggle_e.swDisplayPlanes,
-            swUserPreferenceToggle_e.swDisplayAxes,
-            swUserPreferenceToggle_e.swDisplayTemporaryAxes,
-            swUserPreferenceToggle_e.swDisplayCoordSystems,
-            swUserPreferenceToggle_e.swDisplayOrigins,
-            swUserPreferenceToggle_e.swDisplaySketches,
-            swUserPreferenceToggle_e.swDisplaySketchPlanes,
-        ];
-
-        foreach (swUserPreferenceToggle_e toggle in toggles)
+        finally
         {
-            TryVoid(() => app.SetUserPreferenceToggle((int)toggle, false));
+            foreach ((swUserPreferenceToggle_e t, bool value) in saved)
+            {
+                TryVoid(() => app.SetUserPreferenceToggle((int)t, value));
+            }
+
+            foreach ((swUserPreferenceToggle_e t, bool value) in savedDoc)
+            {
+                TryVoid(() => doc.Extension.SetUserPreferenceToggle((int)t, noOption, value));
+            }
+
+            TryVoid(() => doc.GraphicsRedraw2());
         }
     }
 
