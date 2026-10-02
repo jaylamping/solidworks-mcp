@@ -55,8 +55,10 @@ internal static partial class Program
 
     private static void CollectComponentTree(IAssemblyDoc assembly, Component2? parent, List<object> output, int depth)
     {
+        // Top level only: GetComponents(false) already returns every nested component, and the
+        // recursion below adds the children again.
         object[]? roots = parent is null
-            ? Try(() => assembly.GetComponents(false)) as object[]
+            ? Try(() => assembly.GetComponents(true)) as object[]
             : Try(() => parent.GetChildren()) as object[];
 
         if (roots is null)

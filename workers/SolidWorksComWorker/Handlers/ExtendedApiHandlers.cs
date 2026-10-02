@@ -31,17 +31,41 @@ internal static partial class Program
             throw new InvalidOperationException("CreateMassProperty returned null.");
         }
 
+        // Mass of one component (or sub-assembly): computed in the component's own document (its
+        // material/overrides), then the centre of mass is transformed into assembly coordinates.
         if (!string.IsNullOrWhiteSpace(componentName) && doc.GetType() == (int)swDocumentTypes_e.swDocASSEMBLY)
         {
-            Component2? component = FindComponent((IAssemblyDoc)doc, null, componentName);
-            if (component is not null)
+            Component2 component = FindComponent((IAssemblyDoc)doc, null, componentName)
+                ?? throw WorkerException.Validation("COMPONENT_NOT_FOUND", $"Component not found: {componentName}", new Dictionary<string, object?>());
+            ModelDoc2 compDoc = Try(() => component.GetModelDoc2()) as ModelDoc2
+                ?? throw WorkerException.Worker("COMPONENT_NOT_LOADED", $"Component {componentName} is not loaded (lightweight or suppressed?).", new Dictionary<string, object?>(),
+                    ["Run solidworks_resolve_lightweight first."]);
+            MassProperty compMass = compDoc.Extension.CreateMassProperty();
+            double[] localCom = (double[])compMass.CenterOfMass;
+            double[]? assemblyCom = null;
+            if (Try(() => component.Transform2) is MathTransform xf)
             {
-                object? bodies = Try(() => component.GetBodies2((int)swBodyType_e.swSolidBody));
-                if (bodies is object[] bodyArray && bodyArray.Length > 0)
-                {
-                    TryVoid(() => massProperty.AddBodies(bodyArray));
-                }
+                var math = (MathUtility)app.GetMathUtility();
+                var point = (MathPoint)math.CreatePoint(localCom);
+                assemblyCom = (double[])((MathPoint)point.MultiplyTransform(xf)).ArrayData;
             }
+
+            string? material = Try(() => compDoc is PartDoc part ? part.GetMaterialPropertyName2("", out string _) : null) as string;
+            return new
+            {
+                document = DescribeDocument(doc),
+                componentName,
+                componentPath = Try(() => component.GetPathName()),
+                mass = Normalize(Try(() => compMass.Mass)),
+                volume = Normalize(Try(() => compMass.Volume)),
+                density = Normalize(Try(() => compMass.Density)),
+                material = string.IsNullOrEmpty(material) ? null : material,
+                centerOfMass = Normalize(assemblyCom ?? localCom),
+                centerOfMassFrame = assemblyCom is null ? "component" : "assembly",
+                momentsOfInertia = Normalize(Try(() => compMass.GetMomentOfInertia(0))),
+                momentsOfInertiaFrame = "component, about its centre of mass",
+                note = Math.Abs(((double?)Try(() => compMass.Density) ?? 0) - 1000) < 1 ? "Density is the SOLIDWORKS default (1000 kg/m^3): no material or mass override is set, so this mass is not real." : null,
+            };
         }
 
         return new
