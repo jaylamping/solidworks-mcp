@@ -1,6 +1,6 @@
 # solidworks_sketch_rectangle
 
-Create rectangle.
+Legacy: add a corner rectangle (meters) to the currently active sketch. Prefer solidworks_sketch.
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Create rectangle.
 | Read only | false |
 | Destructive | true |
 | Confirm required | true |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 

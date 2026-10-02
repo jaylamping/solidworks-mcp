@@ -50,7 +50,7 @@ internal static partial class Program
     private static object SketchLine(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "sketch_line");
         double x1 = DoubleArg(args, "x1_m", 0);
         double y1 = DoubleArg(args, "y1_m", 0);
         double x2 = DoubleArg(args, "x2_m", 0.01);
@@ -70,7 +70,7 @@ internal static partial class Program
     private static object SketchCircle(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "sketch_circle");
         double centerX = DoubleArg(args, "center_x_m", 0);
         double centerY = DoubleArg(args, "center_y_m", 0);
         double radiusM = DoubleArg(args, "radius_m", 0.005);
@@ -89,7 +89,7 @@ internal static partial class Program
     private static object SketchExit(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "sketch_exit");
         SketchManager sketchMgr = ActiveSketchManager(doc);
         TryVoid(() => sketchMgr.InsertSketch(true));
         return new { document = DescribeDocument(doc), sketchActive = false };
@@ -98,7 +98,7 @@ internal static partial class Program
     private static object FeatureExtrudeCut(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "feature_extrude_cut");
         double depthM = DoubleArg(args, "depth_m", 0.01);
         bool throughAll = BoolArg(args, "through_all", defaultValue: true);
 
@@ -153,7 +153,7 @@ internal static partial class Program
     private static object RoundSideArmsFromCircle(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "round_side_arms_from_circle");
         string planeName = StringArg(args, "plane_name") ?? "Front Plane";
         bool dryRun = BoolArg(args, "dry_run", defaultValue: false);
         bool save = BoolArg(args, "save", defaultValue: true);
@@ -313,7 +313,7 @@ internal static partial class Program
     private static object FeatureFillet(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "feature_fillet");
         double radiusM = DoubleArg(args, "radius_m", DoubleArg(args, "radius_mm", 1.0) / 1000.0);
 
         Feature? fillet = Try(() => doc.FeatureManager.FeatureFillet3(
@@ -346,7 +346,7 @@ internal static partial class Program
     private static object FeatureChamfer(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "feature_chamfer");
         double distanceM = DoubleArg(args, "distance_m", DoubleArg(args, "distance_mm", 1.0) / 1000.0);
 
         Feature? chamfer = Try(() => doc.FeatureManager.InsertFeatureChamfer(
@@ -373,7 +373,7 @@ internal static partial class Program
     private static object FeatureMirror(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "feature_mirror");
         string featureName = RequiredStringArg(args, "feature_name");
         string planeName = StringArg(args, "plane_name") ?? "Right Plane";
 
@@ -406,7 +406,7 @@ internal static partial class Program
     private static object FeatureLinearPattern(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "feature_linear_pattern");
         string featureName = RequiredStringArg(args, "feature_name");
         int count = IntArg(args, "count", 2);
         double spacingM = DoubleArg(args, "spacing_m", DoubleArg(args, "spacing_mm", 10.0) / 1000.0);
@@ -461,7 +461,7 @@ internal static partial class Program
     private static object FeatureCircularPattern(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "feature_circular_pattern");
         string featureName = RequiredStringArg(args, "feature_name");
         int count = IntArg(args, "count", 4);
         double angleDeg = DoubleArg(args, "angle_deg", 360.0);

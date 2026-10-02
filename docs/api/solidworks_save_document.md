@@ -18,6 +18,7 @@ Save the active or specified SolidWorks document.
 | `use_selection` | boolean | no | - | Use the current SolidWorks selection instead of named references. |
 | `selection_index` | integer | no | - | 1-based selection index when selecting a specific highlighted entity. |
 | `path` | string | no | - | Optional document path under an allowed CAD root. (allowed root) |
+| `skip_mate_validation` | boolean | no | - | Value for skip mate validation. |
 
 ## Tags
 

@@ -22,8 +22,26 @@ function mcpBuildInfo(): { mcpVersion: string; buildId: string } {
   return { mcpVersion: pkg.version ?? "0.0.0", buildId };
 }
 
+// Sent to clients at initialize so agents learn the modeling loop without reading docs first.
+const SERVER_INSTRUCTIONS = [
+  "Part modeling loop: solidworks_new_document (output_path) -> solidworks_sketch (plane or face + entities) -> feature tools",
+  "(solidworks_extrude / revolve / sweep / loft / shell / fillet / chamfer / hole / pattern_linear / pattern_circular / mirror / ref_plane / ref_axis)",
+  "-> verify with solidworks_part_report (volume, bounding box, rebuild errors) and solidworks_render_view (PNG) -> solidworks_save_document.",
+  "Always pass `path` to the .SLDPRT being edited. Lengths default to mm (`units`).",
+  "Faces/edges are chosen with geometric selectors, e.g. {face:{near:[x,y,z], normal:[0,0,1]}} or {edges:{direction:[0,0,1], box:[...]}};",
+  "solidworks_part_report with include_faces/include_edges lists candidates.",
+  "Default sketch frames: Front Plane x->+X y->+Y (normal +Z); Top Plane x->+X y->-Z (normal +Y); Right Plane x->-Z y->+Y (normal +X).",
+  "Use space:\"model\" in sketches on faces to give 3D model coordinates.",
+  "Features that rebuild with errors are rolled back automatically; read the error context and retry.",
+  "To review or improve an existing part: solidworks_feature_details (how it is built, dimension names) ->",
+  "solidworks_simulate_static (FEA), solidworks_thickness_check, solidworks_print_check -> change it with",
+  "solidworks_set_dimensions / solidworks_rollback (insert mid-tree) / solidworks_equations / new features -> re-analyze and compare.",
+  "Helix sweeps: put the profile at the helix startPoint reported by solidworks_helix.",
+  "See docs/part-modeling.md for the full guide.",
+].join(" ");
+
 export async function main(): Promise<void> {
-  const server = new McpServer({ name: "solidworks", version: "0.4.0" });
+  const server = new McpServer({ name: "solidworks", version: "0.4.0" }, { instructions: SERVER_INSTRUCTIONS });
 
   registerSolidWorksTools(server);
   registerUrdfTools(server);

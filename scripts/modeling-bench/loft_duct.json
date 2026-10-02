@@ -1,0 +1,106 @@
+{
+  "name": "loft_duct",
+  "description": "Square-to-round loft shelled open at both ends",
+  "expect": {
+    "volume_mm3": 7865.368,
+    "bodies": 1
+  },
+  "steps": [
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": "Top Plane",
+        "name": "LoftBase",
+        "entities": [
+          {
+            "type": "center_rectangle",
+            "center": [
+              0,
+              0
+            ],
+            "width": 40,
+            "height": 40,
+            "corner_radius": 4
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_ref_plane",
+      "args": {
+        "path": "$PART",
+        "from": "Top Plane",
+        "offset": 50,
+        "name": "LoftTopPlane"
+      }
+    },
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": "LoftTopPlane",
+        "name": "LoftTop",
+        "entities": [
+          {
+            "type": "circle",
+            "center": [
+              0,
+              0
+            ],
+            "diameter": 20
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_loft",
+      "args": {
+        "path": "$PART",
+        "profiles": [
+          "LoftBase",
+          "LoftTop"
+        ],
+        "name": "Duct"
+      }
+    },
+    {
+      "tool": "solidworks_shell",
+      "args": {
+        "path": "$PART",
+        "thickness": 1.5,
+        "remove_faces": [
+          {
+            "face": {
+              "near": [
+                0,
+                0,
+                0
+              ],
+              "normal": [
+                0,
+                -1,
+                0
+              ]
+            }
+          },
+          {
+            "face": {
+              "near": [
+                0,
+                50,
+                0
+              ],
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            }
+          }
+        ],
+        "name": "DuctShell"
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "adv_holes",
+  "description": "ISO Hole Wizard: two M3 tapped blind holes with cosmetic threads, M4 socket-head counterbore, M3 flat-head countersink, M5 clearance",
+  "expect": { "bodies": 1 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Top Plane", "name": "BlockSk", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 40, "height": 40 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "BlockSk", "depth": 15, "name": "Block" }, "expect": { "volume": 24000 } },
+    { "tool": "solidworks_hole_wizard", "args": { "path": "$PART", "type": "tapped", "size": "M3", "on": { "face": { "near": [0, 15, 5], "normal": [0, 1, 0] } }, "positions": [[-10, 15, -10], [10, 15, -10]], "depth": 8, "name": "TapM3" }, "expect": { "volume": { "min": 23880, "max": 23950 }, "fields": { "holes": 2, "outcome.featureType": "HoleWzd" } } },
+    { "tool": "solidworks_hole_wizard", "args": { "path": "$PART", "type": "counterbore", "size": "M4", "on": { "face": { "near": [0, 15, 5], "normal": [0, 1, 0] } }, "positions": [[-10, 15, 10]], "name": "CboreM4" }, "expect": { "fields": { "outcome.featureType": "HoleWzd" } } },
+    { "tool": "solidworks_hole_wizard", "args": { "path": "$PART", "type": "countersink", "size": "M3", "on": { "face": { "near": [0, 15, 5], "normal": [0, 1, 0] } }, "positions": [[10, 15, 10]], "name": "CskM3" }, "expect": { "fields": { "outcome.featureType": "HoleWzd" } } },
+    { "tool": "solidworks_hole_wizard", "args": { "path": "$PART", "type": "clearance", "size": "M5", "on": { "face": { "near": [0, 15, 5], "normal": [0, 1, 0] } }, "positions": [[0, 15, 0]], "name": "ClearM5" }, "expect": { "fields": { "outcome.featureType": "HoleWzd" }, "bodies": 1 } }
+  ]
+}

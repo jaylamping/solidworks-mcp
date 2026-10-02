@@ -1,6 +1,6 @@
 # solidworks_feature_linear_pattern
 
-Manage linear pattern.
+Legacy: linear pattern along an X/Y direction name. Prefer solidworks_pattern_linear (edge/axis/plane directions with vector check).
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Manage linear pattern.
 | Read only | false |
 | Destructive | true |
 | Confirm required | true |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 

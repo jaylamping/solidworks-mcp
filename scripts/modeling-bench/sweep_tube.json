@@ -1,0 +1,97 @@
+{
+  "name": "sweep_tube",
+  "description": "Swept tube along a filleted polyline path with a swept-cut bore",
+  "expect": {
+    "volume_mm3": 3417.32,
+    "bodies": 1
+  },
+  "steps": [
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": "Front Plane",
+        "name": "TubePath",
+        "entities": [
+          {
+            "type": "polyline",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                40
+              ],
+              [
+                30,
+                70
+              ],
+              [
+                60,
+                70
+              ]
+            ],
+            "corner_radius": 10
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": "Top Plane",
+        "name": "TubeOD",
+        "entities": [
+          {
+            "type": "circle",
+            "center": [
+              0,
+              0
+            ],
+            "diameter": 8
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_sweep",
+      "args": {
+        "path": "$PART",
+        "profile": "TubeOD",
+        "sweep_path": "TubePath",
+        "name": "Tube"
+      }
+    },
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": "Top Plane",
+        "name": "TubeID",
+        "entities": [
+          {
+            "type": "circle",
+            "center": [
+              0,
+              0
+            ],
+            "diameter": 5
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_sweep",
+      "args": {
+        "path": "$PART",
+        "profile": "TubeID",
+        "sweep_path": "TubePath",
+        "mode": "cut",
+        "name": "Bore"
+      }
+    }
+  ]
+}

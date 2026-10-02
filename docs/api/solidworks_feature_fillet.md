@@ -1,6 +1,6 @@
 # solidworks_feature_fillet
 
-Manage fillet.
+Legacy: fillet whatever edges are already selected in the UI. Prefer solidworks_fillet (selects edges by geometry).
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Manage fillet.
 | Read only | false |
 | Destructive | true |
 | Confirm required | true |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 

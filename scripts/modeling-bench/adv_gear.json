@@ -1,0 +1,363 @@
+{
+ "name": "adv_gear",
+ "description": "Involute spur gear m2 z20 PA20: spline flanks computed exactly, tooth-gap cut, 20x circular pattern about a 2-plane axis, keyed bore, hub",
+ "expect": {
+  "volume_mm3": 10098.47,
+  "bodies": 1
+ },
+ "steps": [
+  {
+   "tool": "solidworks_sketch",
+   "args": {
+    "path": "$PART",
+    "on": "Front Plane",
+    "name": "Blank",
+    "entities": [
+     {
+      "type": "circle",
+      "center": [
+       0,
+       0
+      ],
+      "radius": 22.0
+     }
+    ]
+   }
+  },
+  {
+   "tool": "solidworks_extrude",
+   "args": {
+    "path": "$PART",
+    "sketch": "Blank",
+    "depth": 8.0,
+    "name": "GearBlank"
+   },
+   "expect": {
+    "volume": 12164.25
+   }
+  },
+  {
+   "tool": "solidworks_sketch",
+   "args": {
+    "path": "$PART",
+    "on": "Front Plane",
+    "name": "GapProfile",
+    "entities": [
+     {
+      "type": "line",
+      "from": [
+       17.42365,
+       1.63289
+      ],
+      "to": [
+       18.71186,
+       1.75362
+      ]
+     },
+     {
+      "type": "spline",
+      "points": [
+       [
+        18.71186,
+        1.75362
+       ],
+       [
+        19.06504,
+        1.74093
+       ],
+       [
+        19.42155,
+        1.68932
+       ],
+       [
+        19.77989,
+        1.61104
+       ],
+       [
+        20.13936,
+        1.5102
+       ],
+       [
+        20.49941,
+        1.38902
+       ],
+       [
+        20.85957,
+        1.24897
+       ],
+       [
+        21.21941,
+        1.09102
+       ],
+       [
+        21.57852,
+        0.91595
+       ],
+       [
+        21.93651,
+        0.72431
+       ],
+       [
+        22.29299,
+        0.51657
+       ],
+       [
+        22.64759,
+        0.29312
+       ],
+       [
+        22.99994,
+        0.05427
+       ]
+      ]
+     },
+     {
+      "type": "arc",
+      "center": [
+       0,
+       0
+      ],
+      "start": [
+       22.99994,
+       0.05427
+      ],
+      "end": [
+       21.89101,
+       7.05576
+      ]
+     },
+     {
+      "type": "spline",
+      "points": [
+       [
+        21.89101,
+        7.05576
+       ],
+       [
+        21.62972,
+        6.71972
+       ],
+       [
+        21.36152,
+        6.39762
+       ],
+       [
+        21.08668,
+        6.0899
+       ],
+       [
+        20.80543,
+        5.79701
+       ],
+       [
+        20.518,
+        5.51953
+       ],
+       [
+        20.22458,
+        5.25812
+       ],
+       [
+        19.92533,
+        5.01362
+       ],
+       [
+        19.62034,
+        4.78712
+       ],
+       [
+        19.30963,
+        4.58013
+       ],
+       [
+        18.99302,
+        4.39495
+       ],
+       [
+        18.66991,
+        4.2357
+       ],
+       [
+        18.33794,
+        4.11449
+       ]
+      ]
+     },
+     {
+      "type": "line",
+      "from": [
+       18.33794,
+       4.11449
+      ],
+      "to": [
+       17.07547,
+       3.83123
+      ]
+     },
+     {
+      "type": "arc",
+      "center": [
+       0,
+       0
+      ],
+      "start": [
+       17.07547,
+       3.83123
+      ],
+      "end": [
+       17.42365,
+       1.63289
+      ],
+      "clockwise": true
+     }
+    ]
+   },
+   "expect": {
+    "regions": 1
+   }
+  },
+  {
+   "tool": "solidworks_extrude",
+   "args": {
+    "path": "$PART",
+    "sketch": "GapProfile",
+    "mode": "cut",
+    "end": "through_all",
+    "reverse": true,
+    "name": "ToothGap"
+   }
+  },
+  {
+   "tool": "solidworks_ref_axis",
+   "args": {
+    "path": "$PART",
+    "from": [
+     "Top Plane",
+     "Right Plane"
+    ],
+    "name": "GearAxis"
+   }
+  },
+  {
+   "tool": "solidworks_pattern_circular",
+   "args": {
+    "path": "$PART",
+    "features": [
+     "ToothGap"
+    ],
+    "axis": "GearAxis",
+    "count": 20,
+    "name": "Teeth"
+   },
+   "expect": {
+    "volume": {
+     "approx": 9808.85,
+     "tol": 0.01
+    }
+   }
+  },
+  {
+   "tool": "solidworks_sketch",
+   "args": {
+    "path": "$PART",
+    "on": "Front Plane",
+    "name": "HubSk",
+    "entities": [
+     {
+      "type": "circle",
+      "center": [
+       0,
+       0
+      ],
+      "radius": 8
+     }
+    ]
+   }
+  },
+  {
+   "tool": "solidworks_extrude",
+   "args": {
+    "path": "$PART",
+    "sketch": "HubSk",
+    "depth": 5,
+    "reverse": true,
+    "name": "Hub"
+   }
+  },
+  {
+   "tool": "solidworks_sketch",
+   "args": {
+    "path": "$PART",
+    "on": "Front Plane",
+    "name": "BoreSk",
+    "entities": [
+     {
+      "type": "polyline",
+      "points": [
+       [
+        1.5,
+        3.7081
+       ],
+       [
+        1.5,
+        5.5
+       ],
+       [
+        -1.5,
+        5.5
+       ],
+       [
+        -1.5,
+        3.7081
+       ]
+      ]
+     },
+     {
+      "type": "arc",
+      "center": [
+       0,
+       0
+      ],
+      "start": [
+       1.5,
+       3.7081
+      ],
+      "end": [
+       -1.5,
+       3.7081
+      ],
+      "clockwise": true
+     }
+    ]
+   }
+  },
+  {
+   "tool": "solidworks_extrude",
+   "args": {
+    "path": "$PART",
+    "sketch": "BoreSk",
+    "mode": "cut",
+    "end": "through_all",
+    "direction2": {
+     "end": "through_all"
+    },
+    "name": "KeyedBore"
+   },
+   "expect": {
+    "volume": {
+     "approx": 10098.47,
+     "tol": 0.012
+    },
+    "bodies": 1
+   }
+  },
+  {
+   "tool": "solidworks_render_view",
+   "args": {
+    "path": "$PART",
+    "output_path": "$OUT/adv_gear_front.png",
+    "view": "front"
+   }
+  }
+ ]
+}

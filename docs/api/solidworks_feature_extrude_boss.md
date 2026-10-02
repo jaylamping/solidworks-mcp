@@ -1,6 +1,6 @@
 # solidworks_feature_extrude_boss
 
-Extrude the active or named sketch as a boss. Use merge:false for a separate tool body. merge_body_name merges into one solid without auto-selecting unrelated multi-body solids. use_feat_scope/use_auto_select default from merge.
+Legacy (meters): prefer solidworks_extrude for new work. Extrude the active or named sketch as a boss. Use merge:false for a separate tool body. merge_body_name merges into one solid without auto-selecting unrelated multi-body solids. use_feat_scope/use_auto_select default from merge.
 
 | Field | Value |
 |-------|-------|

@@ -92,6 +92,26 @@
       "schema": "optionalPath"
     },
     {
+      "name": "solidworks_chamfer",
+      "workerCommand": "chamfer",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Chamfer edges chosen by selector: angle-distance (default 45°) or distance-distance.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "chamfer"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelChamfer"
+    },
+    {
       "name": "solidworks_checkpoint_document",
       "workerCommand": "checkpoint_document",
       "tier": "core",
@@ -162,6 +182,26 @@
         "document"
       ],
       "schema": "closeDocument"
+    },
+    {
+      "name": "solidworks_combine",
+      "workerCommand": "combine",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Boolean bodies: add (union), subtract, or common (intersection). Bodies by name or {near:[x,y,z]}.",
+      "descriptionSource": "authored",
+      "tags": [
+        "body",
+        "modeling",
+        "boolean"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelCombine"
     },
     {
       "name": "solidworks_combine_bodies",
@@ -263,8 +303,8 @@
       "destructive": true,
       "confirmRequired": true,
       "autoCheckpoint": true,
-      "description": "Create sketch.",
-      "descriptionSource": "derived",
+      "description": "Legacy: open a sketch on a named plane and leave it active for the sketch_line/circle/rectangle tools. Prefer solidworks_sketch (one call, faces too, closes the sketch).",
+      "descriptionSource": "authored",
       "tags": [
         "create"
       ],
@@ -328,6 +368,25 @@
         "mate"
       ],
       "schema": "deleteAllMates"
+    },
+    {
+      "name": "solidworks_delete_body",
+      "workerCommand": "delete_body",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Delete solid bodies by name (adds a Delete/Keep Body feature).",
+      "descriptionSource": "authored",
+      "tags": [
+        "body",
+        "modeling"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelDeleteBody"
     },
     {
       "name": "solidworks_delete_feature",
@@ -496,6 +555,26 @@
       "schema": "dissolveComponent"
     },
     {
+      "name": "solidworks_draft",
+      "workerCommand": "draft",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Draft (taper) faces relative to a neutral plane/face, for molded or easier-to-release parts.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "draft"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelDraft"
+    },
+    {
       "name": "solidworks_ensure_offset_plane",
       "workerCommand": "ensure_offset_plane",
       "tier": "extended",
@@ -512,6 +591,26 @@
         "document"
       ],
       "schema": "ensureOffsetPlane"
+    },
+    {
+      "name": "solidworks_equations",
+      "workerCommand": "equations",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Create/update global variables and equations that drive dimensions (parametric designs: one wall-thickness variable driving many features); lists all equations with values.",
+      "descriptionSource": "authored",
+      "tags": [
+        "edit",
+        "modeling",
+        "parametric"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelEquations"
     },
     {
       "name": "solidworks_explain_error",
@@ -607,6 +706,27 @@
       "schema": "exportUrdfPackage"
     },
     {
+      "name": "solidworks_extrude",
+      "workerCommand": "extrude",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Extrude a sketch as a boss (add) or cut (remove): blind, through_all, up_to_next, up_to_face, offset_from_face, or mid_plane; optional second direction, draft, thin wall, start offset, separate body. Returns the new feature plus updated volume/bounding box; rolls back if it rebuilds with an error.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "extrude",
+        "cut"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelExtrude"
+    },
+    {
       "name": "solidworks_feature_chamfer",
       "workerCommand": "feature_chamfer",
       "tier": "extended",
@@ -614,8 +734,8 @@
       "destructive": true,
       "confirmRequired": true,
       "autoCheckpoint": true,
-      "description": "Manage chamfer.",
-      "descriptionSource": "derived",
+      "description": "Legacy: chamfer whatever edges are already selected in the UI. Prefer solidworks_chamfer.",
+      "descriptionSource": "authored",
       "tags": [
         "feature"
       ],
@@ -632,8 +752,8 @@
       "destructive": true,
       "confirmRequired": true,
       "autoCheckpoint": true,
-      "description": "Manage circular pattern.",
-      "descriptionSource": "derived",
+      "description": "Legacy: circular pattern about a named axis. Prefer solidworks_pattern_circular (axis, cylindrical face, or circular edge).",
+      "descriptionSource": "authored",
       "tags": [
         "feature"
       ],
@@ -643,6 +763,26 @@
       "schema": "featureCircularPattern"
     },
     {
+      "name": "solidworks_feature_details",
+      "workerCommand": "feature_details",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "Explain how an existing part is built: every feature with its driving dimensions (full names usable with solidworks_set_dimensions), definition parameters (end conditions, depths, radii, pattern counts), parent features, and each sketch's geometry, relations and constrained status. Start here when asked to review or improve a design.",
+      "descriptionSource": "authored",
+      "tags": [
+        "inspect",
+        "modeling",
+        "design"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelFeatureDetails"
+    },
+    {
       "name": "solidworks_feature_extrude_boss",
       "workerCommand": "feature_extrude_boss",
       "tier": "extended",
@@ -650,7 +790,7 @@
       "destructive": true,
       "confirmRequired": true,
       "autoCheckpoint": true,
-      "description": "Extrude the active or named sketch as a boss. Use merge:false for a separate tool body. merge_body_name merges into one solid without auto-selecting unrelated multi-body solids. use_feat_scope/use_auto_select default from merge.",
+      "description": "Legacy (meters): prefer solidworks_extrude for new work. Extrude the active or named sketch as a boss. Use merge:false for a separate tool body. merge_body_name merges into one solid without auto-selecting unrelated multi-body solids. use_feat_scope/use_auto_select default from merge.",
       "descriptionSource": "authored",
       "tags": [
         "feature"
@@ -668,8 +808,8 @@
       "destructive": true,
       "confirmRequired": true,
       "autoCheckpoint": true,
-      "description": "Manage extrude cut.",
-      "descriptionSource": "derived",
+      "description": "Legacy: cut from the active sketch (meters). Prefer solidworks_extrude with mode:\"cut\".",
+      "descriptionSource": "authored",
       "tags": [
         "feature"
       ],
@@ -686,8 +826,8 @@
       "destructive": true,
       "confirmRequired": true,
       "autoCheckpoint": true,
-      "description": "Manage fillet.",
-      "descriptionSource": "derived",
+      "description": "Legacy: fillet whatever edges are already selected in the UI. Prefer solidworks_fillet (selects edges by geometry).",
+      "descriptionSource": "authored",
       "tags": [
         "feature"
       ],
@@ -704,8 +844,8 @@
       "destructive": true,
       "confirmRequired": true,
       "autoCheckpoint": true,
-      "description": "Manage linear pattern.",
-      "descriptionSource": "derived",
+      "description": "Legacy: linear pattern along an X/Y direction name. Prefer solidworks_pattern_linear (edge/axis/plane directions with vector check).",
+      "descriptionSource": "authored",
       "tags": [
         "feature"
       ],
@@ -722,8 +862,8 @@
       "destructive": true,
       "confirmRequired": true,
       "autoCheckpoint": true,
-      "description": "Manage mirror.",
-      "descriptionSource": "derived",
+      "description": "Legacy: mirror one feature about a named plane. Prefer solidworks_mirror (features or bodies, faces as planes).",
+      "descriptionSource": "authored",
       "tags": [
         "feature"
       ],
@@ -731,6 +871,26 @@
         "document"
       ],
       "schema": "featureMirror"
+    },
+    {
+      "name": "solidworks_fillet",
+      "workerCommand": "fillet",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Constant-radius fillet on edges chosen by selector (nearest-point, filters, or all edges of a face). No prior UI selection needed.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "fillet"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelFillet"
     },
     {
       "name": "solidworks_get_assembly_degrees_of_freedom",
@@ -989,6 +1149,68 @@
       "schema": "optionalPath"
     },
     {
+      "name": "solidworks_helix",
+      "workerCommand": "helix",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Helix/spiral curve from a base circle (pitch + height or revolutions). Sweep a profile along it with solidworks_sweep (sweep_path = the helix) for threads, springs, augers.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "helix",
+        "thread"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelHelix"
+    },
+    {
+      "name": "solidworks_hole",
+      "workerCommand": "hole",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Drill one or more holes from a planar face: plain, counterbored, or countersunk; blind or through-all. Positions are model points by default. Good for screw clearance, heat-set insert, and bearing holes.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "hole"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelHole"
+    },
+    {
+      "name": "solidworks_hole_wizard",
+      "workerCommand": "hole_wizard",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Standards-based ISO holes via Hole Wizard: tapped (with cosmetic thread), socket-head counterbore, flat-head countersink, clearance, dowel; one or many positions on a face. Use for machined parts; solidworks_hole for printed parts.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "hole",
+        "thread"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelHoleWizard"
+    },
+    {
       "name": "solidworks_import_step",
       "workerCommand": "import_step",
       "tier": "extended",
@@ -1041,6 +1263,26 @@
         "document"
       ],
       "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_insert_part",
+      "workerCommand": "insert_part",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Insert the solid bodies of another part (e.g. a vendor actuator or bearing), optionally rotated/translated, to design around it or subtract it for an exact pocket (solidworks_combine).",
+      "descriptionSource": "authored",
+      "tags": [
+        "body",
+        "modeling",
+        "derived"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelInsertPart"
     },
     {
       "name": "solidworks_inspect_document",
@@ -1329,6 +1571,26 @@
         "document"
       ],
       "schema": "optionalPath"
+    },
+    {
+      "name": "solidworks_loft",
+      "workerCommand": "loft",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Loft between two or more profiles (sketches on different planes, faces) as a boss or cut, optionally with guide curves.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "loft"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelLoft"
     },
     {
       "name": "solidworks_make_component_independent",
@@ -1726,6 +1988,26 @@
       "schema": "measureDistance"
     },
     {
+      "name": "solidworks_mirror",
+      "workerCommand": "mirror",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Mirror features or bodies about a plane or planar face.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "mirror"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelMirror"
+    },
+    {
       "name": "solidworks_mirror_component",
       "workerCommand": "mirror_component",
       "tier": "extended",
@@ -1760,6 +2042,25 @@
         "document"
       ],
       "schema": "mirrorPartFile"
+    },
+    {
+      "name": "solidworks_move_body",
+      "workerCommand": "move_body",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Translate and/or rotate solid bodies (optionally as a copy).",
+      "descriptionSource": "authored",
+      "tags": [
+        "body",
+        "modeling"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelMoveBody"
     },
     {
       "name": "solidworks_new_document",
@@ -1814,6 +2115,85 @@
         "document"
       ],
       "schema": "packAndGo"
+    },
+    {
+      "name": "solidworks_part_report",
+      "workerCommand": "part_report",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "Read-only part summary: feature tree with rebuild errors, sketches, solid bodies with volume and bounding box, and optionally every face/edge with geometry (filterable) so you can build face/edge selectors. Run after each change to verify the model.",
+      "descriptionSource": "authored",
+      "tags": [
+        "inspect",
+        "modeling"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelPartReport"
+    },
+    {
+      "name": "solidworks_pattern_circular",
+      "workerCommand": "pattern_circular",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Circular pattern of features or bodies about an axis, cylindrical face, or circular edge (bolt circles, spokes, ribs).",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "pattern"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelCircularPattern"
+    },
+    {
+      "name": "solidworks_pattern_linear",
+      "workerCommand": "pattern_linear",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Linear pattern of features or bodies along an edge/axis/plane-normal direction, optionally in a second direction.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "pattern"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelLinearPattern"
+    },
+    {
+      "name": "solidworks_print_check",
+      "workerCommand": "print_check",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "FDM printability: for each axis-aligned build direction, unsupported overhang area, flat down-facing (bridge) area, bed contact area, height, footprint and bed fit; recommends the best orientation; solid mass and filament length for a material.",
+      "descriptionSource": "authored",
+      "tags": [
+        "inspect",
+        "analysis",
+        "3d-printing"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelPrintCheck"
     },
     {
       "name": "solidworks_probe_angle_travel",
@@ -1889,6 +2269,46 @@
       "schema": "rebuildDocument"
     },
     {
+      "name": "solidworks_ref_axis",
+      "workerCommand": "ref_axis",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Create a reference axis from a cylindrical face, a linear edge, two planes, or two points.",
+      "descriptionSource": "authored",
+      "tags": [
+        "reference",
+        "modeling",
+        "axis"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelRefAxis"
+    },
+    {
+      "name": "solidworks_ref_plane",
+      "workerCommand": "ref_plane",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Create a reference plane offset from a plane/face, angled about an axis/edge, or through three points.",
+      "descriptionSource": "authored",
+      "tags": [
+        "reference",
+        "modeling",
+        "plane"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelRefPlane"
+    },
+    {
       "name": "solidworks_rename_component",
       "workerCommand": "rename_component",
       "tier": "extended",
@@ -1924,6 +2344,45 @@
         "document"
       ],
       "schema": "renameFeature"
+    },
+    {
+      "name": "solidworks_render_view",
+      "workerCommand": "render_view",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "Orient the part (isometric/front/top/… ), zoom to fit, and save a PNG/JPG image so you can visually check the geometry.",
+      "descriptionSource": "authored",
+      "tags": [
+        "export",
+        "image",
+        "modeling"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelRenderView"
+    },
+    {
+      "name": "solidworks_reorder_feature",
+      "workerCommand": "reorder_feature",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Move a feature before/after another feature (or to the end) in the tree.",
+      "descriptionSource": "authored",
+      "tags": [
+        "edit",
+        "modeling"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelReorderFeature"
     },
     {
       "name": "solidworks_replace_component_path",
@@ -2031,6 +2490,65 @@
         "document"
       ],
       "schema": "restoreFromCheckpoint"
+    },
+    {
+      "name": "solidworks_revolve",
+      "workerCommand": "revolve",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Revolve a sketch profile about its centerline (or an axis/edge) as a boss or cut. Use for shafts, pulleys, bushings, bearing seats, grooves.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "revolve"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelRevolve"
+    },
+    {
+      "name": "solidworks_rib",
+      "workerCommand": "rib",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Rib/web from an open sketch line: stiffen brackets, bosses, and enclosure walls. Tries the other material side automatically if the first fails.",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "rib"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelRib"
+    },
+    {
+      "name": "solidworks_rollback",
+      "workerCommand": "rollback",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Move the rollback bar before/after a feature so new features are inserted mid-tree (e.g. add a fillet before a shell); call with no before/after to roll forward to the end.",
+      "descriptionSource": "authored",
+      "tags": [
+        "edit",
+        "modeling"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelRollback"
     },
     {
       "name": "solidworks_round_side_arms_from_circle",
@@ -2213,6 +2731,26 @@
       "schema": "setDimension"
     },
     {
+      "name": "solidworks_set_dimensions",
+      "workerCommand": "set_dimensions",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Change one or more driving dimensions of an existing part (D1@Boss-Extrude1, D2@Sketch3, ...) in one rebuild; lengths in units, angles in degrees. Every change is reverted if the part fails to rebuild. Get names from solidworks_feature_details.",
+      "descriptionSource": "authored",
+      "tags": [
+        "dimension",
+        "modeling",
+        "edit"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelSetDimensions"
+    },
+    {
       "name": "solidworks_set_feature_suppression",
       "workerCommand": "set_feature_suppression",
       "tier": "extended",
@@ -2325,6 +2863,66 @@
       "schema": "setSketchCircleDiameter"
     },
     {
+      "name": "solidworks_shell",
+      "workerCommand": "shell",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Hollow the part to a wall thickness, removing the selected faces (open boxes, enclosures, covers).",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "shell"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelShell"
+    },
+    {
+      "name": "solidworks_simulate_static",
+      "workerCommand": "simulate_static",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "Linear static FEA (SOLIDWORKS Simulation) on a part: material (printed PLA/PETG/ABS/ASA/PC/CF-nylon, aluminum, steel, library or custom), fixtures and forces/pressures on selector-chosen faces, mesh, solve; returns max von Mises stress and where, max displacement and where, factor of safety, mesh size. The study is removed afterwards unless keep_study. Use it to check and compare design changes for strength and stiffness.",
+      "descriptionSource": "authored",
+      "tags": [
+        "analysis",
+        "fea",
+        "simulation",
+        "strength"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelSimulateStatic"
+    },
+    {
+      "name": "solidworks_sketch",
+      "workerCommand": "sketch",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Create (or extend) a sketch in one call: pick a plane or planar face with `on`, then add a batch of entities (line, centerline, circle, arc, arc3, rectangle, center_rectangle with corner_radius, polyline with corner_radius, slot, polygon, spline, point, ellipse). Inference is off so geometry lands exactly at the given coordinates. Returns the sketch name, closed-region count, and the sketch frame in model space. Start every boss/cut/revolve here.",
+      "descriptionSource": "authored",
+      "tags": [
+        "sketch",
+        "modeling"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelSketch"
+    },
+    {
       "name": "solidworks_sketch_circle",
       "workerCommand": "sketch_circle",
       "tier": "extended",
@@ -2332,8 +2930,8 @@
       "destructive": false,
       "confirmRequired": false,
       "autoCheckpoint": true,
-      "description": "Create circle.",
-      "descriptionSource": "derived",
+      "description": "Legacy: add a circle (meters) to the currently active sketch. Prefer solidworks_sketch.",
+      "descriptionSource": "authored",
       "tags": [
         "sketch"
       ],
@@ -2350,8 +2948,8 @@
       "destructive": false,
       "confirmRequired": false,
       "autoCheckpoint": true,
-      "description": "Create exit.",
-      "descriptionSource": "derived",
+      "description": "Legacy: close the active sketch. Not needed with solidworks_sketch.",
+      "descriptionSource": "authored",
       "tags": [
         "sketch"
       ],
@@ -2368,8 +2966,8 @@
       "destructive": false,
       "confirmRequired": false,
       "autoCheckpoint": true,
-      "description": "Create line.",
-      "descriptionSource": "derived",
+      "description": "Legacy: add a line (meters) to the currently active sketch. Prefer solidworks_sketch.",
+      "descriptionSource": "authored",
       "tags": [
         "sketch"
       ],
@@ -2386,8 +2984,8 @@
       "destructive": true,
       "confirmRequired": true,
       "autoCheckpoint": true,
-      "description": "Create rectangle.",
-      "descriptionSource": "derived",
+      "description": "Legacy: add a corner rectangle (meters) to the currently active sketch. Prefer solidworks_sketch.",
+      "descriptionSource": "authored",
       "tags": [
         "sketch"
       ],
@@ -2395,6 +2993,65 @@
         "document"
       ],
       "schema": "sketchRectangle"
+    },
+    {
+      "name": "solidworks_split_body",
+      "workerCommand": "split_body",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Split solid bodies with a plane, face, or sketch (e.g. cut an enclosure into base and lid).",
+      "descriptionSource": "authored",
+      "tags": [
+        "body",
+        "modeling"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelSplitBody"
+    },
+    {
+      "name": "solidworks_sweep",
+      "workerCommand": "sweep",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Sweep a closed profile sketch along a path sketch/edges as a boss or cut (tubes, cable channels, handles).",
+      "descriptionSource": "authored",
+      "tags": [
+        "feature",
+        "modeling",
+        "sweep"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelSweep"
+    },
+    {
+      "name": "solidworks_thickness_check",
+      "workerCommand": "thickness_check",
+      "tier": "core",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "Wall-thickness analysis by ray casting: thinnest wall, percentiles, surface share below a minimum wall, and the locations of thin spots. Use with simulate_static to find weak or unprintable regions.",
+      "descriptionSource": "authored",
+      "tags": [
+        "inspect",
+        "analysis",
+        "3d-printing"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelThicknessCheck"
     },
     {
       "name": "solidworks_transform_component",

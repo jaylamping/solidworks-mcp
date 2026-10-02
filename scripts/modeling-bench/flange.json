@@ -1,0 +1,187 @@
+{
+  "name": "flange",
+  "description": "Revolved flange: centerline revolve, counterbored bolt circle, circular pattern, ref plane set-screw hole, ref axis",
+  "expect": {
+    "volume_mm3": 20241.01,
+    "bodies": 1
+  },
+  "steps": [
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": "Front Plane",
+        "name": "FlangeProfile",
+        "entities": [
+          {
+            "type": "centerline",
+            "from": [
+              0,
+              -5
+            ],
+            "to": [
+              0,
+              30
+            ]
+          },
+          {
+            "type": "polyline",
+            "closed": true,
+            "points": [
+              [
+                6,
+                0
+              ],
+              [
+                30,
+                0
+              ],
+              [
+                30,
+                6
+              ],
+              [
+                12,
+                6
+              ],
+              [
+                12,
+                20
+              ],
+              [
+                6,
+                20
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_revolve",
+      "args": {
+        "path": "$PART",
+        "sketch": "FlangeProfile",
+        "name": "FlangeBody"
+      }
+    },
+    {
+      "tool": "solidworks_hole",
+      "args": {
+        "path": "$PART",
+        "on": {
+          "face": {
+            "near": [
+              22,
+              6,
+              0
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ]
+          }
+        },
+        "positions": [
+          [
+            22,
+            6,
+            0
+          ]
+        ],
+        "diameter": 3.4,
+        "counterbore": {
+          "diameter": 6.5,
+          "depth": 3
+        },
+        "name": "BoltHole"
+      }
+    },
+    {
+      "tool": "solidworks_pattern_circular",
+      "args": {
+        "path": "$PART",
+        "features": [
+          "BoltHole_CBore",
+          "BoltHole_Drill"
+        ],
+        "axis": {
+          "face": {
+            "near": [
+              12,
+              13,
+              0
+            ],
+            "type": "cylinder"
+          }
+        },
+        "count": 6,
+        "name": "BoltCircle"
+      }
+    },
+    {
+      "tool": "solidworks_chamfer",
+      "args": {
+        "path": "$PART",
+        "distance": 0.5,
+        "edges": {
+          "edge": {
+            "near": [
+              6,
+              20,
+              0
+            ],
+            "type": "circle"
+          }
+        },
+        "name": "BoreChamfer"
+      }
+    },
+    {
+      "tool": "solidworks_ref_plane",
+      "args": {
+        "path": "$PART",
+        "from": "Right Plane",
+        "offset": 13,
+        "name": "SetScrewPlane"
+      }
+    },
+    {
+      "tool": "solidworks_hole",
+      "args": {
+        "path": "$PART",
+        "on": "SetScrewPlane",
+        "positions": [
+          [
+            13,
+            13,
+            0
+          ]
+        ],
+        "diameter": 2.5,
+        "depth": 9,
+        "name": "SetScrew"
+      }
+    },
+    {
+      "tool": "solidworks_ref_axis",
+      "args": {
+        "path": "$PART",
+        "from": [
+          {
+            "face": {
+              "near": [
+                12,
+                13,
+                5
+              ],
+              "type": "cylinder"
+            }
+          }
+        ],
+        "name": "HubAxis"
+      }
+    }
+  ]
+}

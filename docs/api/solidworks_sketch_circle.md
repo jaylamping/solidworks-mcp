@@ -1,6 +1,6 @@
 # solidworks_sketch_circle
 
-Create circle.
+Legacy: add a circle (meters) to the currently active sketch. Prefer solidworks_sketch.
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Create circle.
 | Read only | false |
 | Destructive | false |
 | Confirm required | false |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 

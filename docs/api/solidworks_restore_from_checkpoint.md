@@ -2,8 +2,6 @@
 
 Worker command: restore_from_checkpoint
 
-Restore an assembly/part from a `.checkpoints` snapshot. Stages a `pre_restore` checkpoint of the current target first.
-
 | Field | Value |
 |-------|-------|
 | Worker command | `restore_from_checkpoint` |
@@ -11,21 +9,22 @@ Restore an assembly/part from a `.checkpoints` snapshot. Stages a `pre_restore` 
 | Read only | false |
 | Destructive | true |
 | Confirm required | true |
+| Description source | derived |
 
-## Args
+## Parameters
 
-| Name | Type | Required | Notes |
-|------|------|----------|-------|
-| `checkpoint_path` | string | yes | Path under `.checkpoints/` |
-| `path` | string | no | Target document; inferred from checkpoint filename when omitted |
-| `close_open_document` | boolean | no | Close the open doc before overwrite (default true) |
-| `confirm` | `true` | yes | Required for this destructive restore |
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `checkpoint_path` | string | yes | - | Value for checkpoint path. |
+| `path` | string | no | - | Value for path. (allowed root) |
+| `close_open_document` | boolean | no | - | Value for close open document. |
+| `confirm` | const `true` | yes | `true` | Value for confirm. |
 
 ## Tags
 
-- checkpoint
 - restore
 
 ## Domains
 
 - document
+

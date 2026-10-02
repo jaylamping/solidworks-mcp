@@ -2,8 +2,6 @@
 
 Worker command: list_checkpoints
 
-List recent staged rollback snapshots for a document.
-
 | Field | Value |
 |-------|-------|
 | Worker command | `list_checkpoints` |
@@ -11,17 +9,19 @@ List recent staged rollback snapshots for a document.
 | Read only | true |
 | Destructive | false |
 | Confirm required | false |
+| Description source | derived |
 
-## Args
+## Parameters
 
-| Name | Type | Required | Notes |
-|------|------|----------|-------|
-| `path` | string | yes | Working assembly/part path |
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `path` | string | yes | - | Value for path. (allowed root) |
 
 ## Tags
 
-- checkpoint
+- list
 
 ## Domains
 
 - document
+

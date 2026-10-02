@@ -1,6 +1,6 @@
 # solidworks_feature_chamfer
 
-Manage chamfer.
+Legacy: chamfer whatever edges are already selected in the UI. Prefer solidworks_chamfer.
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Manage chamfer.
 | Read only | false |
 | Destructive | true |
 | Confirm required | true |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 

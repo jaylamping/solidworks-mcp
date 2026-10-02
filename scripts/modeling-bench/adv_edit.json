@@ -1,0 +1,19 @@
+{
+  "name": "adv_edit",
+  "description": "Editing an existing design: remove a hole from an undimensioned sketch and re-add it elsewhere at a new size (downstream extrude rebuilds), negative remove test, equations add/remove",
+  "expect": { "volume_mm3": 7497.35, "bodies": 1 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "Plate", "entities": [
+      { "type": "center_rectangle", "center": [0, 0], "width": 40, "height": 20 },
+      { "type": "circle", "center": [10, 0], "diameter": 6 }
+    ] }, "expect": { "regions": 2 } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Plate", "depth": 10, "name": "PlateBody" }, "expect": { "volume": 7717.26 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "edit_sketch": "Plate", "remove": [{ "near": [13, 0] }], "entities": [{ "type": "circle", "center": [-10, 0], "diameter": 8 }] }, "expect": { "fields": { "removed.0.kind": "circle", "downstreamErrors": [] } } },
+    { "tool": "solidworks_part_report", "args": { "path": "$PART" }, "expect": { "volume": 7497.35 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "edit_sketch": "Plate", "remove": [{ "near": [0, 40] }] }, "expect_error": "SKETCH_ENTITY_NOT_FOUND" },
+    { "tool": "solidworks_equations", "args": { "path": "$PART", "globals": { "PlateDepth": 10 }, "links": { "D1@PlateBody": "\"PlateDepth\"" } }, "expect": { "volume": 7497.35 } },
+    { "tool": "solidworks_equations", "args": { "path": "$PART", "globals": { "PlateDepth": 12 } }, "expect": { "volume": 8996.82 } },
+    { "tool": "solidworks_equations", "args": { "path": "$PART", "remove": ["D1@PlateBody", "PlateDepth"] }, "expect": { "fields": { "equations": [] } } },
+    { "tool": "solidworks_set_dimensions", "args": { "path": "$PART", "values": { "D1@PlateBody": 10 } }, "expect": { "volume": 7497.35 } }
+  ]
+}

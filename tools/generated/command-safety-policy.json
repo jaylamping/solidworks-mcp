@@ -2166,6 +2166,429 @@
         "kind": "none"
       },
       "exposure": "mcp"
+    },
+    {
+      "command": "sketch",
+      "csharpHandler": "Program.Sketch",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "extrude",
+      "csharpHandler": "Program.Extrude",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "revolve",
+      "csharpHandler": "Program.Revolve",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "sweep",
+      "csharpHandler": "Program.Sweep",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "loft",
+      "csharpHandler": "Program.Loft",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "shell",
+      "csharpHandler": "Program.Shell",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "fillet",
+      "csharpHandler": "Program.Fillet",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "chamfer",
+      "csharpHandler": "Program.Chamfer",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "hole",
+      "csharpHandler": "Program.Hole",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "pattern_linear",
+      "csharpHandler": "Program.PatternLinear",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "pattern_circular",
+      "csharpHandler": "Program.PatternCircular",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "mirror",
+      "csharpHandler": "Program.Mirror",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "ref_plane",
+      "csharpHandler": "Program.RefPlane",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "ref_axis",
+      "csharpHandler": "Program.RefAxis",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "delete_body",
+      "csharpHandler": "Program.DeleteBody",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "move_body",
+      "csharpHandler": "Program.MoveBody",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "rollback",
+      "csharpHandler": "Program.Rollback",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "reorder_feature",
+      "csharpHandler": "Program.ReorderFeature",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "equations",
+      "csharpHandler": "Program.Equations",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "rib",
+      "csharpHandler": "Program.Rib",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "draft",
+      "csharpHandler": "Program.Draft",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "helix",
+      "csharpHandler": "Program.Helix",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "insert_part",
+      "csharpHandler": "Program.InsertPart",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "split_body",
+      "csharpHandler": "Program.SplitBody",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "combine",
+      "csharpHandler": "Program.Combine",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "hole_wizard",
+      "csharpHandler": "Program.HoleWizard",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "thickness_check",
+      "csharpHandler": "Program.ThicknessCheck",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "set_dimensions",
+      "csharpHandler": "Program.SetDimensions",
+      "safety": {
+        "kind": "modelMutation",
+        "destructive": false,
+        "checkpoint": "auto"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "feature_details",
+      "csharpHandler": "Program.FeatureDetails",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "print_check",
+      "csharpHandler": "Program.PrintCheck",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "simulate_static",
+      "csharpHandler": "Program.SimulateStatic",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "Creates a temporary Simulation study and deletes it; geometry is not changed."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "part_report",
+      "csharpHandler": "Program.PartReport",
+      "safety": {
+        "kind": "read"
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
+    },
+    {
+      "command": "render_view",
+      "csharpHandler": "Program.RenderView",
+      "safety": {
+        "kind": "nonModelSideEffect",
+        "destructive": false,
+        "checkpoint": "notApplicable",
+        "rationale": "Writes an image file and changes the view orientation only."
+      },
+      "selection": {
+        "kind": "none"
+      },
+      "exposure": "mcp"
     }
   ]
 }

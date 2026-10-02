@@ -1,0 +1,17 @@
+{
+  "name": "adv_link",
+  "description": "Hollow robot link: round-to-rounded-rect loft between a plane and an offset plane, shelled open at both ends, lightening slot cut through both walls (mid-plane from the Right Plane), thickness and FEA checks",
+  "expect": { "bodies": 1 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "Root", "entities": [{ "type": "circle", "center": [0, 0], "diameter": 30 }] } },
+    { "tool": "solidworks_ref_plane", "args": { "path": "$PART", "from": "Front Plane", "offset": 80, "name": "TipPlane" } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "TipPlane", "name": "Tip", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 20, "height": 16, "corner_radius": 3 }] } },
+    { "tool": "solidworks_loft", "args": { "path": "$PART", "profiles": ["Root", "Tip"], "name": "LinkBody" }, "expect": { "volume": { "min": 30000, "max": 45000 } } },
+    { "tool": "solidworks_shell", "args": { "path": "$PART", "thickness": 2, "remove_faces": [{ "face": { "near": [0, 0, 0], "normal": [0, 0, -1] } }, { "face": { "near": [0, 0, 80], "normal": [0, 0, 1] } }], "name": "LinkShell" }, "expect": { "volume": { "min": 8000, "max": 13000 } } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Right Plane", "space": "model", "name": "SlotSk", "entities": [{ "type": "slot", "start": [0, 0, 25], "end": [0, 0, 55], "width": 6 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "SlotSk", "mode": "cut", "end": "mid_plane", "depth": 60, "name": "Lightening" }, "expect": { "bodies": 1 } },
+    { "tool": "solidworks_thickness_check", "args": { "path": "$PART", "min_wall": 1.2 }, "expect": { "fields": { "median": { "approx": 2.0, "tol": 0.05 } } } },
+    { "tool": "solidworks_simulate_static", "args": { "path": "$PART", "material": "PA-CF", "fixtures": [{ "faces": { "faces": { "box": [-20, -20, -0.01, 20, 20, 0.01] } } }], "loads": [{ "faces": { "faces": { "box": [-12, -10, 79.99, 12, 10, 80.01] } }, "value_n": 50, "direction": [0, -1, 0] }], "mesh_quality": "draft" }, "expect": { "fields": { "results.factorOfSafety": { "min": 1 } } } },
+    { "tool": "solidworks_render_view", "args": { "path": "$PART", "output_path": "$OUT/adv_link_iso.png", "view": "isometric" } }
+  ]
+}

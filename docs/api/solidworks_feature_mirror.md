@@ -1,6 +1,6 @@
 # solidworks_feature_mirror
 
-Manage mirror.
+Legacy: mirror one feature about a named plane. Prefer solidworks_mirror (features or bodies, faces as planes).
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Manage mirror.
 | Read only | false |
 | Destructive | true |
 | Confirm required | true |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 

@@ -1,0 +1,12 @@
+{
+  "name": "adv_bodies",
+  "description": "Multi-body ops: copy + rotate 45 deg + translate (two Move/Copy features, translate applied to the copy), copy + translate, boolean common of overlapping blocks",
+  "expect": { "volume_mm3": 12000, "bodies": 2 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "BlockSk", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 20, "height": 20 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "BlockSk", "depth": 20, "name": "BlockA" }, "expect": { "volume": 8000 } },
+    { "tool": "solidworks_move_body", "args": { "path": "$PART", "bodies": [{ "near": [0, 0, 10] }], "copy": true, "rotate": { "axis_point": [0, 0, 0], "axis_direction": [0, 0, 1], "angle_deg": 45 }, "translate": [30, 0, 0], "name": "Diamond" }, "expect": { "volume": 16000, "bodies": 2, "fields": { "outcome.part.boundingBox.max.0": { "approx": 44.142, "tol": 0.002 } } } },
+    { "tool": "solidworks_move_body", "args": { "path": "$PART", "bodies": [{ "near": [-9, 0, 10] }], "copy": true, "translate": [10, 0, 0], "name": "Shifted" }, "expect": { "volume": 24000, "bodies": 3 } },
+    { "tool": "solidworks_combine", "args": { "path": "$PART", "operation": "common", "target": [{ "near": [-9, 0, 10] }], "tools": [{ "near": [15, 0, 10] }], "name": "Overlap" }, "expect": { "volume": 12000, "bodies": 2 } }
+  ]
+}

@@ -1,6 +1,6 @@
 # solidworks_create_sketch
 
-Create sketch.
+Legacy: open a sketch on a named plane and leave it active for the sketch_line/circle/rectangle tools. Prefer solidworks_sketch (one call, faces too, closes the sketch).
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Create sketch.
 | Read only | false |
 | Destructive | true |
 | Confirm required | true |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 

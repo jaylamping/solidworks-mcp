@@ -1,0 +1,227 @@
+{
+  "name": "bracket",
+  "description": "L-bracket: extrude, fillets, counterbored and plain holes, chamfers, filtered-edge fillet",
+  "expect": {
+    "volume_mm3": 9909.742,
+    "bodies": 1
+  },
+  "steps": [
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": "Front Plane",
+        "name": "L_Profile",
+        "entities": [
+          {
+            "type": "polyline",
+            "closed": true,
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                50,
+                0
+              ],
+              [
+                50,
+                4
+              ],
+              [
+                4,
+                4
+              ],
+              [
+                4,
+                40
+              ],
+              [
+                0,
+                40
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_extrude",
+      "args": {
+        "path": "$PART",
+        "sketch": "L_Profile",
+        "end": "mid_plane",
+        "depth": 30,
+        "name": "Body"
+      }
+    },
+    {
+      "tool": "solidworks_fillet",
+      "args": {
+        "path": "$PART",
+        "radius": 3,
+        "edges": {
+          "edge": {
+            "near": [
+              4,
+              4,
+              0
+            ],
+            "direction": [
+              0,
+              0,
+              1
+            ]
+          }
+        },
+        "name": "InnerFillet"
+      }
+    },
+    {
+      "tool": "solidworks_hole",
+      "args": {
+        "path": "$PART",
+        "on": {
+          "face": {
+            "near": [
+              30,
+              4,
+              0
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ]
+          }
+        },
+        "positions": [
+          [
+            20,
+            4,
+            -8
+          ],
+          [
+            40,
+            4,
+            -8
+          ],
+          [
+            20,
+            4,
+            8
+          ],
+          [
+            40,
+            4,
+            8
+          ]
+        ],
+        "diameter": 3.4,
+        "counterbore": {
+          "diameter": 6.5,
+          "depth": 2
+        },
+        "name": "BaseHoles"
+      }
+    },
+    {
+      "tool": "solidworks_hole",
+      "args": {
+        "path": "$PART",
+        "on": {
+          "face": {
+            "near": [
+              0,
+              25,
+              0
+            ],
+            "normal": [
+              -1,
+              0,
+              0
+            ]
+          }
+        },
+        "positions": [
+          [
+            0,
+            28,
+            -8
+          ],
+          [
+            0,
+            28,
+            8
+          ]
+        ],
+        "diameter": 3.4,
+        "name": "WallHoles"
+      }
+    },
+    {
+      "tool": "solidworks_chamfer",
+      "args": {
+        "path": "$PART",
+        "distance": 1,
+        "edges": [
+          {
+            "edge": {
+              "near": [
+                0,
+                40,
+                0
+              ],
+              "direction": [
+                0,
+                0,
+                1
+              ]
+            }
+          },
+          {
+            "edge": {
+              "near": [
+                4,
+                40,
+                0
+              ],
+              "direction": [
+                0,
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "name": "TopChamfer"
+      }
+    },
+    {
+      "tool": "solidworks_fillet",
+      "args": {
+        "path": "$PART",
+        "radius": 4,
+        "edges": {
+          "edges": {
+            "direction": [
+              0,
+              1,
+              0
+            ],
+            "box": [
+              49,
+              0,
+              -16,
+              51,
+              4,
+              16
+            ]
+          }
+        },
+        "name": "EndRounds"
+      }
+    }
+  ]
+}

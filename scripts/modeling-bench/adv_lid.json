@@ -1,0 +1,23 @@
+{
+  "name": "adv_lid",
+  "description": "Enclosure + lid: rounded box shelled, separate lid body 0.5 mm above the rim, lip ring from two offset_edges of the lid underside, embossed text, side-wall draft, feature reorder",
+  "expect": { "bodies": 2 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Top Plane", "name": "Outline", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 60, "height": 40, "corner_radius": 5 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Outline", "depth": 20, "name": "Base" }, "expect": { "volume": 47570.8 } },
+    { "tool": "solidworks_shell", "args": { "path": "$PART", "thickness": 2, "remove_faces": { "face": { "near": [0, 20, 0], "normal": [0, 1, 0] } }, "name": "BaseShell" }, "expect": { "volume": 11421.85 } },
+    { "tool": "solidworks_ref_plane", "args": { "path": "$PART", "from": "Top Plane", "offset": 20.5, "name": "LidPlane" } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "LidPlane", "name": "LidSk", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 60, "height": 40, "corner_radius": 5 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "LidSk", "depth": 2, "merge": false, "name": "Lid" }, "expect": { "volume": 16178.93, "bodies": 2 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": { "face": { "near": [0, 20.5, 0], "normal": [0, -1, 0], "body": "Lid" } }, "name": "LipSk", "entities": [
+      { "type": "offset_edges", "from": { "face": { "near": [0, 20.5, 0], "normal": [0, -1, 0], "body": "Lid" } }, "distance": [-2.2, -3.4] }
+    ] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "LipSk", "depth": 3, "merge_body_name": "Lid", "name": "Lip" }, "expect": { "bodies": 2, "volume": 16804.7 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": { "face": { "near": [0, 22.5, 0], "normal": [0, 1, 0] } }, "space": "model", "name": "LidText", "entities": [{ "type": "text", "at": [-12, 22.5, 3], "text": "LID", "height": 8, "bold": true }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "LidText", "depth": 0.8, "name": "Emboss" }, "expect": { "bodies": 2 } },
+    { "tool": "solidworks_draft", "args": { "path": "$PART", "neutral": { "face": { "near": [0, 0, 0], "normal": [0, -1, 0] } }, "faces": [{ "face": { "near": [30, 10, 0], "normal": [1, 0, 0] } }, { "face": { "near": [-30, 10, 0], "normal": [-1, 0, 0] } }], "angle_deg": 1, "name": "SideDraft" }, "expect": { "bodies": 2 } },
+    { "tool": "solidworks_reorder_feature", "args": { "path": "$PART", "feature": "Emboss", "before": "SideDraft" }, "expect": { "bodies": 2 } },
+    { "tool": "solidworks_part_report", "args": { "path": "$PART" } },
+    { "tool": "solidworks_render_view", "args": { "path": "$PART", "output_path": "$OUT/adv_lid_iso.png", "view": "isometric" } }
+  ]
+}

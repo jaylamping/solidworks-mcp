@@ -1,0 +1,23 @@
+{
+  "name": "adv_enclosure",
+  "description": "Parametric enclosure: equation-driven shell wall changed 2 -> 2.5 mm, outer corner fillets inserted before the shell via rollback, corner gusset rib, engraved text on a wall, split into base + lid, wall-thickness and print checks",
+  "expect": { "bodies": 2 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Top Plane", "name": "Outline", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 60, "height": 40 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Outline", "depth": 30, "name": "BoxBody" }, "expect": { "volume": 72000 } },
+    { "tool": "solidworks_shell", "args": { "path": "$PART", "thickness": 2, "remove_faces": { "face": { "near": [0, 30, 0], "normal": [0, 1, 0] } }, "name": "BoxShell" }, "expect": { "volume": 15552 } },
+    { "tool": "solidworks_equations", "args": { "path": "$PART", "globals": { "Wall": 2 }, "links": { "D1@BoxShell": "\"Wall\"" } }, "expect": { "volume": 15552 } },
+    { "tool": "solidworks_equations", "args": { "path": "$PART", "globals": { "Wall": 2.5 } }, "expect": { "volume": 19062.5 } },
+    { "tool": "solidworks_rollback", "args": { "path": "$PART", "before": "BoxShell" } },
+    { "tool": "solidworks_fillet", "args": { "path": "$PART", "radius": 5, "edges": { "edges": { "direction": [0, 1, 0], "box": [-31, -1, -21, 31, 31, 21] } }, "name": "CornerRounds" } },
+    { "tool": "solidworks_rollback", "args": { "path": "$PART" }, "expect": { "volume": 18566.2 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "GussetLine", "entities": [{ "type": "line", "from": [-27.5, 12.5], "to": [-17.5, 2.5] }] } },
+    { "tool": "solidworks_rib", "args": { "path": "$PART", "sketch": "GussetLine", "thickness": 2, "name": "Gusset" }, "expect": { "volume": 18666.2 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": { "face": { "near": [30, 15, 0], "normal": [1, 0, 0] } }, "space": "model", "name": "Label", "entities": [{ "type": "text", "at": [30, 12, 12], "text": "MCP-01", "height": 6 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Label", "mode": "cut", "depth": 0.6, "name": "Engrave" }, "expect": { "volume": { "approx": 18640, "tol": 0.004 } } },
+    { "tool": "solidworks_ref_plane", "args": { "path": "$PART", "from": "Top Plane", "offset": 25, "name": "SplitPlane" } },
+    { "tool": "solidworks_split_body", "args": { "path": "$PART", "tool": "SplitPlane", "name": "LidSplit" }, "expect": { "bodies": 2 } },
+    { "tool": "solidworks_thickness_check", "args": { "path": "$PART", "min_wall": 1.2 }, "expect": { "fields": { "median": { "approx": 2.5, "tol": 0.03 }, "percentile5": { "min": 1.8, "max": 2.6 }, "thinSpots.0.at.0": { "approx": 29.6, "tol": 0.02 } } } },
+    { "tool": "solidworks_print_check", "args": { "path": "$PART", "material": "PETG" }, "expect": { "fields": { "best.fitsBed": true } } }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "x_derived",
+  "description": "Derived-part pocket: insert the flange bench part into an 80x80x30 block and subtract it for an exact negative (runs after 'flange' so its output exists)",
+  "expect": { "volume_mm3": 171758.99, "bodies": 1 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Top Plane", "name": "BlockSk", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 80, "height": 80 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "BlockSk", "depth": 30, "name": "Block" }, "expect": { "volume": 192000 } },
+    { "tool": "solidworks_insert_part", "args": { "path": "$PART", "source": "$OUT/flange.SLDPRT", "name": "FlangeRef" }, "expect": { "bodies": 2 } },
+    { "tool": "solidworks_combine", "args": { "path": "$PART", "operation": "subtract", "target": [{ "near": [39, 29, 39] }], "tools": [{ "near": [0, 19, 9] }], "name": "Pocket" }, "expect": { "volume": 171758.99, "bodies": 1 } }
+  ]
+}

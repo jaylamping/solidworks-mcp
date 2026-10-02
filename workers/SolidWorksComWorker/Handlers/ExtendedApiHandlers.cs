@@ -385,17 +385,41 @@ internal static partial class Program
         }
 
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        int swType = docType.ToLowerInvariant() switch
+        (int swType, swUserPreferenceStringValue_e templatePref) = docType.ToLowerInvariant() switch
         {
-            "assembly" => (int)swDocumentTypes_e.swDocASSEMBLY,
-            "drawing" => (int)swDocumentTypes_e.swDocDRAWING,
-            _ => (int)swDocumentTypes_e.swDocPART,
+            "assembly" => ((int)swDocumentTypes_e.swDocASSEMBLY, swUserPreferenceStringValue_e.swDefaultTemplateAssembly),
+            "drawing" => ((int)swDocumentTypes_e.swDocDRAWING, swUserPreferenceStringValue_e.swDefaultTemplateDrawing),
+            _ => ((int)swDocumentTypes_e.swDocPART, swUserPreferenceStringValue_e.swDefaultTemplatePart),
         };
 
-        ModelDoc2? doc = Try(() => app.NewDocument("", swType, 0, 0)) as ModelDoc2;
+        // NewDocument needs a real template path; an empty string fails on most installs.
+        string? template = StringArg(args, "template");
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            template = Try(() => app.GetUserPreferenceStringValue((int)templatePref)) as string;
+        }
+
+        if (string.IsNullOrWhiteSpace(template) || !File.Exists(template))
+        {
+            template = Try(() => app.GetDocumentTemplate(swType, "", 0, 0, 0)) as string;
+        }
+
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            throw WorkerException.Worker(
+                "TEMPLATE_NOT_FOUND",
+                $"No default {docType} template is configured in SolidWorks.",
+                new Dictionary<string, object?> { ["docType"] = docType },
+                ["Set Tools > Options > Default Templates, or pass template: <path to .prtdot/.asmdot/.drwdot>."]);
+        }
+
+        ModelDoc2? doc = Try(() => app.NewDocument(template, 0, 0, 0)) as ModelDoc2;
         if (doc is null)
         {
-            throw new InvalidOperationException($"Failed to create new {docType} document.");
+            throw WorkerException.Worker(
+                "NEW_DOCUMENT_FAILED",
+                $"SolidWorks failed to create a new {docType} from template {template}.",
+                new Dictionary<string, object?> { ["template"] = template });
         }
 
         bool saved = false;
@@ -405,9 +429,17 @@ internal static partial class Program
             int errors = 0;
             int warnings = 0;
             saved = doc.Extension.SaveAs(outputPath, 0, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref errors, ref warnings);
+            if (!saved)
+            {
+                throw WorkerException.Worker(
+                    "SAVE_AS_FAILED",
+                    $"Created the {docType} but could not save it to {outputPath} (errors={errors}, warnings={warnings}).",
+                    new Dictionary<string, object?> { ["outputPath"] = outputPath, ["errors"] = errors, ["warnings"] = warnings, ["document"] = DescribeDocument(doc) },
+                    ["Is a document with the same file name already open in SolidWorks? Close it or pick another name."]);
+            }
         }
 
-        return new { document = DescribeDocument(doc), docType, outputPath, saved };
+        return new { document = DescribeDocument(doc), docType, outputPath, template, saved };
     }
 
     private static object CloseDocument(JsonElement? args)
@@ -449,7 +481,7 @@ internal static partial class Program
     private static object CreateSketch(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "create_sketch");
         string planeName = StringArg(args, "plane_name") ?? "Front Plane";
 
         doc.ClearSelection2(true);
@@ -466,7 +498,7 @@ internal static partial class Program
     private static object SketchRectangle(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "sketch_rectangle");
         double x1 = DoubleArg(args, "x1_m", -0.01);
         double y1 = DoubleArg(args, "y1_m", -0.01);
         double x2 = DoubleArg(args, "x2_m", 0.01);
@@ -480,7 +512,7 @@ internal static partial class Program
     private static object FeatureExtrudeBoss(JsonElement? args)
     {
         ISldWorks app = AttachSolidWorks(startIfMissing: true);
-        ModelDoc2 doc = ResolveDocument(app, args);
+        ModelDoc2 doc = RequirePartDocument(app, args, "feature_extrude_boss");
         double depthM = DoubleArg(args, "depth_m", 0.01);
         bool merge = BoolArg(args, "merge", defaultValue: true);
         bool flip = BoolArg(args, "flip", defaultValue: false);

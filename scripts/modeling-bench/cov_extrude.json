@@ -1,0 +1,28 @@
+{
+  "name": "cov_extrude",
+  "description": "Every extrude option: up_to_face, direction2, draft, thin open profile, start offset, separate bodies, cut through_all / up_to_next / offset_from_face / mid_plane",
+  "expect": { "volume_mm3": 19328.21, "bodies": 3 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "Base", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 40, "height": 40 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Base", "depth": 10, "name": "Box" }, "expect": { "volume": 16000, "bodies": 1 } },
+    { "tool": "solidworks_ref_plane", "args": { "path": "$PART", "from": "Front Plane", "offset": 30, "name": "Ceiling" } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "PostSk", "entities": [{ "type": "circle", "center": [0, 0], "diameter": 10 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "PostSk", "end": "up_to_face", "up_to": "Ceiling", "name": "Post" }, "expect": { "volume": 17570.80 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "TwoWaySk", "entities": [{ "type": "rectangle", "corner1": [10, 10], "corner2": [20, 20] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "TwoWaySk", "depth": 15, "direction2": { "depth": 5 }, "name": "TwoWay" }, "expect": { "volume": 18570.80 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "DraftSk", "entities": [{ "type": "circle", "center": [-12, -12], "diameter": 8 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "DraftSk", "depth": 20, "draft_deg": 5, "name": "Drafted" }, "expect": { "volume": 18799.74 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "WallSk", "entities": [{ "type": "line", "from": [-20, 30], "to": [20, 30] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "WallSk", "depth": 10, "merge": false, "thin": { "thickness": 2, "side": "mid" }, "name": "Wall" }, "expect": { "volume": 19599.74, "bodies": 2 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "FloatSk", "entities": [{ "type": "circle", "center": [0, -30], "diameter": 6 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "FloatSk", "depth": 5, "start_offset": 20, "merge": false, "name": "Floater" }, "expect": { "volume": 19741.11, "bodies": 3 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": { "face": { "near": [12, -12, 10], "normal": [0, 0, 1] } }, "space": "model", "name": "ThruSk", "entities": [{ "type": "circle", "center": [12, -12, 10], "diameter": 4 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "ThruSk", "mode": "cut", "end": "through_all", "name": "ThruCut" }, "expect": { "volume": 19615.45 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": { "face": { "near": [-5, -15, 10], "normal": [0, 0, 1] } }, "space": "model", "name": "NextSk", "entities": [{ "type": "circle", "center": [-5, -15, 10], "diameter": 3 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "NextSk", "mode": "cut", "end": "up_to_next", "name": "NextCut" }, "expect": { "volume": 19544.76 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": { "face": { "near": [5, -15, 10], "normal": [0, 0, 1] } }, "space": "model", "name": "OffSk", "entities": [{ "type": "circle", "center": [5, -15, 10], "diameter": 3 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "OffSk", "mode": "cut", "end": "offset_from_face", "up_to": { "face": { "near": [0, -5, 0], "normal": [0, 0, -1] } }, "depth": 2, "name": "OffsetCut" }, "expect": { "volume": 19488.21 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Right Plane", "space": "model", "name": "SlotSk", "entities": [{ "type": "rectangle", "corner1": [0, 0, 4], "corner2": [0, 2, 6] }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "SlotSk", "mode": "cut", "end": "mid_plane", "depth": 50, "name": "SlotCut" }, "expect": { "volume": 19328.21, "bodies": 3 } }
+  ]
+}

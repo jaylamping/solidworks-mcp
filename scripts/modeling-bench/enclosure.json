@@ -1,0 +1,237 @@
+{
+  "name": "enclosure",
+  "description": "Enclosure: shell, face sketch standoffs, double mirror, vent slots, linear pattern with vector",
+  "expect": {
+    "volume_mm3": 21633.073,
+    "bodies": 1
+  },
+  "steps": [
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": "Top Plane",
+        "name": "BoxOutline",
+        "entities": [
+          {
+            "type": "center_rectangle",
+            "center": [
+              0,
+              0
+            ],
+            "width": 80,
+            "height": 50,
+            "corner_radius": 6
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_extrude",
+      "args": {
+        "path": "$PART",
+        "sketch": "BoxOutline",
+        "depth": 30,
+        "name": "BoxBody"
+      }
+    },
+    {
+      "tool": "solidworks_shell",
+      "args": {
+        "path": "$PART",
+        "thickness": 2,
+        "remove_faces": {
+          "face": {
+            "near": [
+              0,
+              30,
+              0
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ]
+          }
+        },
+        "name": "BoxShell"
+      }
+    },
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": {
+          "face": {
+            "near": [
+              0,
+              2,
+              0
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ]
+          }
+        },
+        "space": "model",
+        "name": "StandoffSketch",
+        "entities": [
+          {
+            "type": "circle",
+            "center": [
+              -30,
+              2,
+              -15
+            ],
+            "diameter": 6
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_extrude",
+      "args": {
+        "path": "$PART",
+        "sketch": "StandoffSketch",
+        "depth": 6,
+        "name": "Standoff"
+      }
+    },
+    {
+      "tool": "solidworks_hole",
+      "args": {
+        "path": "$PART",
+        "on": {
+          "face": {
+            "near": [
+              -30,
+              8,
+              -13
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ]
+          }
+        },
+        "positions": [
+          [
+            -30,
+            8,
+            -15
+          ]
+        ],
+        "diameter": 2.5,
+        "depth": 5,
+        "name": "StandoffHole"
+      }
+    },
+    {
+      "tool": "solidworks_mirror",
+      "args": {
+        "path": "$PART",
+        "plane": "Right Plane",
+        "features": [
+          "Standoff",
+          "StandoffHole_Drill"
+        ],
+        "name": "MirrorX"
+      }
+    },
+    {
+      "tool": "solidworks_mirror",
+      "args": {
+        "path": "$PART",
+        "plane": "Front Plane",
+        "features": [
+          "Standoff",
+          "StandoffHole_Drill",
+          "MirrorX"
+        ],
+        "name": "MirrorZ"
+      }
+    },
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": {
+          "face": {
+            "near": [
+              40,
+              15,
+              0
+            ],
+            "normal": [
+              1,
+              0,
+              0
+            ]
+          }
+        },
+        "space": "model",
+        "name": "VentSketch",
+        "entities": [
+          {
+            "type": "slot",
+            "start": [
+              40,
+              10,
+              -15
+            ],
+            "end": [
+              40,
+              22,
+              -15
+            ],
+            "width": 3
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_extrude",
+      "args": {
+        "path": "$PART",
+        "sketch": "VentSketch",
+        "mode": "cut",
+        "depth": 3,
+        "name": "Vent"
+      }
+    },
+    {
+      "tool": "solidworks_pattern_linear",
+      "args": {
+        "path": "$PART",
+        "features": [
+          "Vent"
+        ],
+        "direction": {
+          "edge": {
+            "near": [
+              40,
+              0,
+              0
+            ],
+            "direction": [
+              0,
+              0,
+              1
+            ]
+          }
+        },
+        "count": 6,
+        "vector": [
+          0,
+          0,
+          1
+        ],
+        "spacing": 6,
+        "name": "VentRow"
+      }
+    }
+  ]
+}

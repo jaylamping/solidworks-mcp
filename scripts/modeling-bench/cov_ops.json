@@ -1,0 +1,22 @@
+{
+  "name": "cov_ops",
+  "description": "Countersink hole, distance-distance and angle chamfers, angled and 3-point ref planes, axis from two planes, separate body + move/copy, mirror bodies, linear/circular body patterns, delete body",
+  "expect": { "volume_mm3": 26899.89, "bodies": 5 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "Base", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 60, "height": 40 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Base", "depth": 10, "name": "Block" }, "expect": { "volume": 24000 } },
+    { "tool": "solidworks_hole", "args": { "path": "$PART", "on": { "face": { "near": [0, 0, 10], "normal": [0, 0, 1] } }, "positions": [[-20, 0, 10]], "diameter": 3.4, "countersink": { "diameter": 7, "angle_deg": 90 }, "name": "Csk" }, "expect": { "volume": 23885.79 } },
+    { "tool": "solidworks_chamfer", "args": { "path": "$PART", "distance": 2, "distance2": 1, "edges": { "edge": { "near": [0, 20, 10], "direction": [1, 0, 0] } }, "name": "ChamferDD" }, "expect": { "volume": 23825.79 } },
+    { "tool": "solidworks_chamfer", "args": { "path": "$PART", "distance": 1.5, "edges": { "edge": { "near": [0, -20, 10], "direction": [1, 0, 0] } }, "name": "ChamferAD" }, "expect": { "volume": 23758.29 } },
+    { "tool": "solidworks_ref_axis", "args": { "path": "$PART", "from": ["Front Plane", "Right Plane"], "name": "YAxis" } },
+    { "tool": "solidworks_ref_plane", "args": { "path": "$PART", "from": "Right Plane", "angle_deg": 30, "about": "YAxis", "name": "Angled" }, "expect": { "fields": { "featureType": "RefPlane" } } },
+    { "tool": "solidworks_ref_plane", "args": { "path": "$PART", "through": [{ "vertex": { "near": [-30, -20, 0] } }, { "vertex": { "near": [30, -20, 0] } }, { "vertex": { "near": [30, 20, 0] } }], "name": "ThreePoint" }, "expect": { "fields": { "featureType": "RefPlane" } } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "PinSk", "entities": [{ "type": "circle", "center": [50, 0], "diameter": 10 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "PinSk", "depth": 10, "merge": false, "name": "Pin" }, "expect": { "volume": 24543.69, "bodies": 2 } },
+    { "tool": "solidworks_move_body", "args": { "path": "$PART", "bodies": [{ "near": [50, 0, 5] }], "translate": [0, 30, 0], "copy": true, "name": "PinCopy" }, "expect": { "volume": 25329.09, "bodies": 3 } },
+    { "tool": "solidworks_mirror", "args": { "path": "$PART", "plane": "Right Plane", "bodies": [{ "near": [50, 0, 5] }], "merge": false, "name": "PinMirror" }, "expect": { "volume": 26114.49, "bodies": 4 } },
+    { "tool": "solidworks_pattern_linear", "args": { "path": "$PART", "bodies": [{ "near": [50, 0, 5] }], "direction": { "edge": { "near": [0, -20, 0], "direction": [1, 0, 0] } }, "vector": [1, 0, 0], "count": 2, "spacing": 15, "name": "PinRow" }, "expect": { "volume": 26899.89, "bodies": 5, "fields": { "instanceDirection": [1, 0, 0] } } },
+    { "tool": "solidworks_pattern_circular", "args": { "path": "$PART", "bodies": [{ "near": [50, 0, 5] }], "axis": "YAxis", "count": 2, "name": "PinTurn" }, "expect": { "volume": 27685.29, "bodies": 6 } },
+    { "tool": "solidworks_delete_body", "args": { "path": "$PART", "bodies": [{ "near": [50, 30, 5] }], "name": "DropCopy" }, "expect": { "volume": 26899.89, "bodies": 5 } }
+  ]
+}

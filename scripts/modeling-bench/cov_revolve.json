@@ -1,0 +1,16 @@
+{
+  "name": "cov_revolve",
+  "description": "Revolve about a reference axis, mid-plane partial revolve, revolve cut, thin revolve of an open profile",
+  "expect": { "volume_mm3": 39898.23, "bodies": 3 },
+  "steps": [
+    { "tool": "solidworks_ref_axis", "args": { "path": "$PART", "from": ["Front Plane", "Right Plane"], "name": "Spin" } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "TubeSk", "entities": [{ "type": "rectangle", "corner1": [10, 0], "corner2": [20, 30] }] } },
+    { "tool": "solidworks_revolve", "args": { "path": "$PART", "sketch": "TubeSk", "axis": "Spin", "name": "Tube" }, "expect": { "volume": 28274.33 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "HalfSk", "entities": [{ "type": "centerline", "from": [0, 0], "to": [0, 10] }, { "type": "rectangle", "corner1": [25, 0], "corner2": [30, 10] }] } },
+    { "tool": "solidworks_revolve", "args": { "path": "$PART", "sketch": "HalfSk", "angle_deg": 180, "mid_plane": true, "name": "HalfRing" }, "expect": { "volume": 32594.02, "bodies": 2 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "GrooveSk", "entities": [{ "type": "centerline", "from": [0, 0], "to": [0, 30] }, { "type": "rectangle", "corner1": [15, 10], "corner2": [24, 15] }] } },
+    { "tool": "solidworks_revolve", "args": { "path": "$PART", "sketch": "GrooveSk", "mode": "cut", "name": "Groove" }, "expect": { "volume": 29845.13 } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "ShellSk", "entities": [{ "type": "centerline", "from": [0, 0], "to": [0, 20] }, { "type": "line", "from": [40, 0], "to": [40, 20] }] } },
+    { "tool": "solidworks_revolve", "args": { "path": "$PART", "sketch": "ShellSk", "thin": { "thickness": 2, "side": "mid" }, "merge": false, "name": "Sleeve" }, "expect": { "volume": 39898.23, "bodies": 3 } }
+  ]
+}

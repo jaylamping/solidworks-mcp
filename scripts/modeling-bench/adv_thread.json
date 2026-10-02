@@ -1,0 +1,13 @@
+{
+  "name": "adv_thread",
+  "description": "Modeled external thread: rod, helix (pitch 1.25, 25 mm) whose reported startPoint is (0,0,4), 60-degree profile on the Right Plane at that start, sweep-cut along the helix. Groove ~0.32 mm2 x ~460 mm path",
+  "expect": { "bodies": 1 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Top Plane", "name": "RodSk", "entities": [{ "type": "circle", "center": [0, 0], "diameter": 8 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "RodSk", "depth": 30, "name": "Rod" }, "expect": { "volume": 1507.96 } },
+    { "tool": "solidworks_helix", "args": { "path": "$PART", "on": "Top Plane", "center": [0, 0], "diameter": 8, "pitch": 1.25, "height": 25, "name": "ThreadPath" } },
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Right Plane", "space": "model", "name": "ThreadProfile", "entities": [{ "type": "polyline", "closed": true, "points": [[0, 0, 3.25], [0, -0.6, 4.3], [0, 0.6, 4.3]] }] } },
+    { "tool": "solidworks_sweep", "args": { "path": "$PART", "profile": "ThreadProfile", "sweep_path": "ThreadPath", "mode": "cut", "name": "Thread" }, "expect": { "volume": { "min": 1250, "max": 1430 }, "bodies": 1 } }
+  ]
+}
+

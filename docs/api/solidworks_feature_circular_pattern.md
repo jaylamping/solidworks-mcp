@@ -1,6 +1,6 @@
 # solidworks_feature_circular_pattern
 
-Manage circular pattern.
+Legacy: circular pattern about a named axis. Prefer solidworks_pattern_circular (axis, cylindrical face, or circular edge).
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Manage circular pattern.
 | Read only | false |
 | Destructive | true |
 | Confirm required | true |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 

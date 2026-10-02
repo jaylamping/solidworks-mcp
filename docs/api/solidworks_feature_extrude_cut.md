@@ -1,6 +1,6 @@
 # solidworks_feature_extrude_cut
 
-Manage extrude cut.
+Legacy: cut from the active sketch (meters). Prefer solidworks_extrude with mode:"cut".
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Manage extrude cut.
 | Read only | false |
 | Destructive | true |
 | Confirm required | true |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 

@@ -15,6 +15,7 @@
     "test:urdf-math": "node scripts/tests/urdf-math-fixture.mjs",
     "worker:status": "node scripts/worker-status.mjs",
     "demo:build-part": "node scripts/demo-build-part.mjs",
+    "bench:modeling": "node scripts/run-modeling-bench.mjs",
     "demo:record-video": "node scripts/record-demo-video.mjs",
     "generate:tools": "tsx scripts/generate-tools.mjs",
     "generate:urdf": "node scripts/generate-urdf.mjs",

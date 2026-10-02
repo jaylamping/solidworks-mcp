@@ -1,0 +1,371 @@
+{
+  "name": "output_horn",
+  "description": "Actuator output horn: start-offset plate, contact pad, counterbored PCD bolts, bottom dowels, tab inserts, ref geometry",
+  "expect": {
+    "volume_mm3": 12517.898,
+    "bodies": 1
+  },
+  "steps": [
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": "Front Plane",
+        "name": "HornOutline",
+        "entities": [
+          {
+            "type": "line",
+            "from": [
+              19.5959,
+              10
+            ],
+            "to": [
+              50,
+              10
+            ]
+          },
+          {
+            "type": "arc",
+            "center": [
+              50,
+              0
+            ],
+            "start": [
+              50,
+              10
+            ],
+            "end": [
+              50,
+              -10
+            ],
+            "clockwise": true
+          },
+          {
+            "type": "line",
+            "from": [
+              50,
+              -10
+            ],
+            "to": [
+              19.5959,
+              -10
+            ]
+          },
+          {
+            "type": "arc",
+            "center": [
+              0,
+              0
+            ],
+            "start": [
+              19.5959,
+              -10
+            ],
+            "end": [
+              19.5959,
+              10
+            ],
+            "clockwise": true
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_extrude",
+      "args": {
+        "path": "$PART",
+        "sketch": "HornOutline",
+        "depth": 6,
+        "start_offset": 1.5,
+        "name": "HornPlate"
+      }
+    },
+    {
+      "tool": "solidworks_sketch",
+      "args": {
+        "path": "$PART",
+        "on": "Front Plane",
+        "name": "PadSketch",
+        "entities": [
+          {
+            "type": "circle",
+            "center": [
+              0,
+              0
+            ],
+            "diameter": 29
+          }
+        ]
+      }
+    },
+    {
+      "tool": "solidworks_extrude",
+      "args": {
+        "path": "$PART",
+        "sketch": "PadSketch",
+        "depth": 1.5,
+        "name": "ContactPad"
+      }
+    },
+    {
+      "tool": "solidworks_fillet",
+      "args": {
+        "path": "$PART",
+        "radius": 4,
+        "edges": [
+          {
+            "edge": {
+              "near": [
+                19.5959,
+                10,
+                4.5
+              ],
+              "direction": [
+                0,
+                0,
+                1
+              ]
+            }
+          },
+          {
+            "edge": {
+              "near": [
+                19.5959,
+                -10,
+                4.5
+              ],
+              "direction": [
+                0,
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "name": "TabRoots"
+      }
+    },
+    {
+      "tool": "solidworks_hole",
+      "args": {
+        "path": "$PART",
+        "on": {
+          "face": {
+            "near": [
+              30,
+              0,
+              7.5
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          }
+        },
+        "positions": [
+          [
+            0,
+            0,
+            7.5
+          ]
+        ],
+        "diameter": 12,
+        "name": "CableBore"
+      }
+    },
+    {
+      "tool": "solidworks_hole",
+      "args": {
+        "path": "$PART",
+        "on": {
+          "face": {
+            "near": [
+              30,
+              0,
+              7.5
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          }
+        },
+        "positions": [
+          [
+            12,
+            0,
+            7.5
+          ],
+          [
+            6,
+            10.3923,
+            7.5
+          ],
+          [
+            -6,
+            10.3923,
+            7.5
+          ],
+          [
+            -12,
+            0,
+            7.5
+          ],
+          [
+            -6,
+            -10.3923,
+            7.5
+          ],
+          [
+            6,
+            -10.3923,
+            7.5
+          ]
+        ],
+        "diameter": 3.4,
+        "counterbore": {
+          "diameter": 6.5,
+          "depth": 3.3
+        },
+        "name": "OutputBolts"
+      }
+    },
+    {
+      "tool": "solidworks_hole",
+      "args": {
+        "path": "$PART",
+        "on": {
+          "face": {
+            "near": [
+              0,
+              13.5,
+              0
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ]
+          }
+        },
+        "positions": [
+          [
+            0,
+            12,
+            0
+          ],
+          [
+            -10.3923,
+            -6,
+            0
+          ],
+          [
+            10.3923,
+            -6,
+            0
+          ]
+        ],
+        "diameter": 4.1,
+        "depth": 3,
+        "name": "Dowels"
+      }
+    },
+    {
+      "tool": "solidworks_hole",
+      "args": {
+        "path": "$PART",
+        "on": {
+          "face": {
+            "near": [
+              30,
+              0,
+              7.5
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          }
+        },
+        "positions": [
+          [
+            38,
+            0,
+            7.5
+          ],
+          [
+            50,
+            0,
+            7.5
+          ]
+        ],
+        "diameter": 4.0,
+        "depth": 5.5,
+        "name": "TabInserts"
+      }
+    },
+    {
+      "tool": "solidworks_chamfer",
+      "args": {
+        "path": "$PART",
+        "distance": 0.5,
+        "edges": {
+          "edge": {
+            "near": [
+              14.5,
+              0,
+              0
+            ],
+            "type": "circle"
+          }
+        },
+        "name": "PadLeadIn"
+      }
+    },
+    {
+      "tool": "solidworks_ref_plane",
+      "args": {
+        "path": "$PART",
+        "from": {
+          "face": {
+            "near": [
+              0,
+              13.5,
+              0
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ]
+          }
+        },
+        "offset": 0,
+        "name": "mount_face"
+      }
+    },
+    {
+      "tool": "solidworks_ref_axis",
+      "args": {
+        "path": "$PART",
+        "from": [
+          {
+            "face": {
+              "near": [
+                6,
+                0,
+                4
+              ],
+              "type": "cylinder",
+              "radius": 6
+            }
+          }
+        ],
+        "name": "joint_axis"
+      }
+    }
+  ]
+}

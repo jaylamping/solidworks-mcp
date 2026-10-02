@@ -1,6 +1,6 @@
 # solidworks_sketch_line
 
-Create line.
+Legacy: add a line (meters) to the currently active sketch. Prefer solidworks_sketch.
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Create line.
 | Read only | false |
 | Destructive | false |
 | Confirm required | false |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 

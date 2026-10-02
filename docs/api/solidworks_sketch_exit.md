@@ -1,6 +1,6 @@
 # solidworks_sketch_exit
 
-Create exit.
+Legacy: close the active sketch. Not needed with solidworks_sketch.
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,7 @@ Create exit.
 | Read only | false |
 | Destructive | false |
 | Confirm required | false |
-| Description source | derived |
+| Description source | authored |
 
 ## Parameters
 
