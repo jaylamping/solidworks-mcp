@@ -192,7 +192,31 @@ internal static partial class Program
         ModelDoc2 doc = RequirePartDocument(app, args, "insert_part");
         double s = UnitScale(args);
         EnsureNoActiveSketch(doc);
-        string source = PathGuard.NormalizeCadPath(RequiredStringArg(args, "source"));
+
+        // Assembly context: take the component's file and its placement in the assembly.
+        double[]? placement = null;
+        double[]? componentBox = null;
+        string? sourceArg = StringArg(args, "source");
+        if (Prop(args, "from_assembly") is JsonElement fa)
+        {
+            string asmPath = Str(fa, "assembly") ?? throw new ArgumentException("from_assembly.assembly is required");
+            string componentName = Str(fa, "component") ?? throw new ArgumentException("from_assembly.component is required");
+            ModelDoc2 asm = OpenDocument(app, asmPath);
+            if (asm.GetType() != (int)swDocumentTypes_e.swDocASSEMBLY)
+            {
+                throw WorkerException.Validation("ASSEMBLY_REQUIRED", $"{asmPath} is not an assembly.", new Dictionary<string, object?>());
+            }
+
+            Component2 component = FindComponent((IAssemblyDoc)asm, null, componentName)
+                ?? throw WorkerException.Validation("COMPONENT_NOT_FOUND", $"Component not found: {componentName}", new Dictionary<string, object?>(),
+                    ["List components with solidworks_list_components."]);
+            sourceArg = component.GetPathName();
+            placement = ((MathTransform)component.Transform2).ArrayData as double[];
+            componentBox = Try(() => component.GetBox(false, false)) as double[];
+            doc = OpenDocument(app, PathGuard.NormalizeCadPath(RequiredStringArg(args, "path")));
+        }
+
+        string source = PathGuard.NormalizeCadPath(sourceArg ?? throw new ArgumentException("source or from_assembly is required"));
         if (!File.Exists(source))
         {
             throw WorkerException.Validation("SOURCE_NOT_FOUND", $"Part not found: {source}", new Dictionary<string, object?>());
@@ -212,7 +236,11 @@ internal static partial class Program
         TryVoid(() => doc.EditRebuild3());
         var inserted = SolidBodies(doc).Where(b => !before.Contains(BoxKey(b))).ToList();
         var moves = new List<string>();
-        if (inserted.Count > 0 && (Prop(args, "rotate") is not null || Prop(args, "translate") is not null))
+        if (inserted.Count > 0 && placement is { Length: >= 12 })
+        {
+            moves.AddRange(ApplyRigidTransform(doc, inserted, placement));
+        }
+        else if (inserted.Count > 0 && (Prop(args, "rotate") is not null || Prop(args, "translate") is not null))
         {
             moves.AddRange(MoveBodies(doc, inserted, args, s));
         }
@@ -228,8 +256,48 @@ internal static partial class Program
                 boundingBox = Try(() => b.GetBodyBox()) is double[] bb ? new { min = Round(bb[..3], s), max = Round(bb[3..6], s) } : null,
             }).ToList(),
             moveFeatures = moves,
+            componentBoxInAssembly = componentBox is { Length: >= 6 } ? new { min = Round(componentBox[..3], s), max = Round(componentBox[3..6], s) } : null,
             part = PartGeometrySummary(doc, s),
         };
+    }
+
+    /// <summary>
+    /// Applies a SolidWorks MathTransform (row-vector convention: p' = p·R + t) to bodies as successive
+    /// single-axis rotations about the origin (X, then Y, then Z) followed by a translation.
+    /// </summary>
+    private static List<string> ApplyRigidTransform(ModelDoc2 doc, List<Body2> bodies, double[] t)
+    {
+        // Column-vector matrix M = R^T, so M[r][c] = t[c*3 + r]; decompose M = Rz(g) * Ry(b) * Rx(a).
+        double m20 = t[2], m21 = t[5], m22 = t[8], m10 = t[1], m00 = t[0];
+        double b = Math.Asin(Math.Clamp(-m20, -1, 1));
+        double a = Math.Atan2(m21, m22);
+        double g = Math.Atan2(m10, m00);
+        var features = new List<string>();
+        foreach ((double angle, double[] axis) in new[] { (a, new[] { 1.0, 0, 0 }), (b, new[] { 0.0, 1, 0 }), (g, new[] { 0.0, 0, 1 }) })
+        {
+            if (Math.Abs(angle) < 1e-9)
+            {
+                continue;
+            }
+
+            var step = JsonSerializer.SerializeToElement(new { rotate = new { axis_point = new[] { 0.0, 0, 0 }, axis_direction = axis, angle_deg = angle * 180 / Math.PI } });
+            var names = SolidBodies(doc).Select(x => Try(() => x.Name) as string ?? "").ToHashSet();
+            features.AddRange(MoveBodies(doc, bodies, step, 1.0));
+            TryVoid(() => doc.EditRebuild3());
+            var produced = SolidBodies(doc).Where(x => !names.Contains(Try(() => x.Name) as string ?? "")).ToList();
+            if (produced.Count == bodies.Count)
+            {
+                bodies = produced;
+            }
+        }
+
+        if (Math.Abs(t[9]) + Math.Abs(t[10]) + Math.Abs(t[11]) > 1e-12)
+        {
+            var step = JsonSerializer.SerializeToElement(new { translate = new[] { t[9], t[10], t[11] } });
+            features.AddRange(MoveBodies(doc, bodies, step, 1.0));
+        }
+
+        return features;
     }
 
     /// <summary>Rotate then translate bodies (SolidWorks applies only one of them per Move/Copy feature).</summary>
@@ -242,7 +310,18 @@ internal static partial class Program
             bool append = false;
             foreach (Body2 b in bodies)
             {
-                b.Select2(append, NewSelectData(doc, 1));
+                // Body2.Select2 can silently fail (e.g. inserted/derived bodies); fall back to the body name.
+                bool ok = (Try(() => b.Select2(append, NewSelectData(doc, 1))) as bool?) == true;
+                if (!ok && Try(() => b.Name) is string bodyName)
+                {
+                    ok = doc.Extension.SelectByID2(bodyName, "SOLIDBODY", 0, 0, 0, append, 1, null, 0);
+                }
+
+                if (!ok)
+                {
+                    throw WorkerException.Worker("BODY_SELECT_FAILED", $"Could not select body {Try(() => b.Name)} to move it.", new Dictionary<string, object?>());
+                }
+
                 append = true;
             }
         }

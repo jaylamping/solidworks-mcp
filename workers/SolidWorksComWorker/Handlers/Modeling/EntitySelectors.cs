@@ -419,37 +419,70 @@ internal static partial class Program
         };
     }
 
+    /// <summary>
+    /// Staged edge filter: every COM call costs ~10 ms out of process, so reject on the cheapest
+    /// facts first (curve kind, then line direction / circle radius and axis) and only compute the
+    /// full geometry when a box filter needs the midpoint.
+    /// </summary>
     private static bool EdgeMatches(Edge edge, JsonElement filter, double scale)
     {
-        EdgeGeom g = DescribeEdgeGeometry(edge);
         string? type = Str(filter, "type");
-        if (type is not null && type != "any" && !string.Equals(type, g.Kind, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
+        JsonElement? dEl = Prop(filter, "direction");
+        JsonElement? aEl = Prop(filter, "axis");
+        double? r = OptNum(filter, "radius");
+        JsonElement? boxEl = Prop(filter, "box");
+        bool wantsLine = string.Equals(type, "line", StringComparison.OrdinalIgnoreCase) || dEl is not null;
+        bool wantsCircle = string.Equals(type, "circle", StringComparison.OrdinalIgnoreCase) || aEl is not null || r is not null;
 
-        if (Prop(filter, "direction") is JsonElement dEl)
+        if (wantsLine || wantsCircle || (type is not null && type != "any"))
         {
-            if (g.Kind != "line" || Math.Abs(Dot3(g.Direction!, Normalize3(Vec(dEl, 3)))) < DirectionDotTolerance)
+            Curve? curve = Try(() => edge.GetCurve()) as Curve;
+            if (curve is null)
             {
                 return false;
             }
-        }
 
-        if (Prop(filter, "axis") is JsonElement aEl)
-        {
-            if (g.Kind != "circle" || Math.Abs(Dot3(g.Direction!, Normalize3(Vec(aEl, 3)))) < DirectionDotTolerance)
+            if (wantsLine)
             {
-                return false;
+                if (Try(() => curve.IsLine()) as bool? != true)
+                {
+                    return false;
+                }
+
+                if (dEl is JsonElement d && (Try(() => curve.LineParams) is not double[] lp || lp.Length < 6
+                    || Math.Abs(Dot3(Normalize3(lp[3..6]), Normalize3(Vec(d, 3)))) < DirectionDotTolerance))
+                {
+                    return false;
+                }
+            }
+            else if (wantsCircle)
+            {
+                if (Try(() => curve.IsCircle()) as bool? != true || Try(() => curve.CircleParams) is not double[] cp || cp.Length < 7)
+                {
+                    return false;
+                }
+
+                if (r is double rr && Math.Abs(cp[6] - rr * scale) > Math.Max(1e-6, rr * scale * 1e-3))
+                {
+                    return false;
+                }
+
+                if (aEl is JsonElement a && Math.Abs(Dot3(Normalize3(cp[3..6]), Normalize3(Vec(a, 3)))) < DirectionDotTolerance)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                // type: "curve" (neither line nor circle).
+                if (Try(() => curve.IsLine()) as bool? == true || Try(() => curve.IsCircle()) as bool? == true)
+                {
+                    return false;
+                }
             }
         }
 
-        if (OptNum(filter, "radius") is double r && (g.Radius is null || Math.Abs(g.Radius.Value - r * scale) > Math.Max(1e-6, r * scale * 1e-3)))
-        {
-            return false;
-        }
-
-        if (Prop(filter, "box") is JsonElement boxEl && !InBox(g.Mid, Scaled(Vec(boxEl, 6), scale)))
+        if (boxEl is JsonElement box && !InBox(DescribeEdgeGeometry(edge).Mid, Scaled(Vec(box, 6), scale)))
         {
             return false;
         }

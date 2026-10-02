@@ -17,7 +17,7 @@ Export a CAD document to STEP, STL, PDF, or PNG under an allowed CAD root.
 |------|------|----------|---------|-------------|
 | `path` | string | no | - | Optional source document path under an allowed CAD root. (allowed root) |
 | `output_path` | string | yes | - | Destination file path under an allowed CAD root. (allowed root) |
-| `format` | `sldprt`, `sldasm`, `step`, `stp`, `stl`, `pdf`, `png` | yes | - | Output format. |
+| `format` | `sldprt`, `sldasm`, `step`, `stp`, `stl`, `3mf`, `obj`, `iges`, `igs`, `x_t`, `pdf`, `png`, `jpg` | yes | - | Output format (the output_path extension decides what SolidWorks writes; 3mf is preferred for slicers such as Bambu Studio). |
 | `start_if_missing` | boolean | no | - | Start SolidWorks if no instance is running. |
 
 ## Tags

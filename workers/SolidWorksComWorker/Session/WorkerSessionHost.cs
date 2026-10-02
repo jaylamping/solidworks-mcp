@@ -136,8 +136,33 @@ internal static partial class Program
         CommandSafety.RequireConfirmIfDestructive(command, args);
         object? preCheckpoint = TryAutoCheckpointBeforeMutation(command, args);
         JsonElement? effectiveArgs = ApplyUseSelection(command, args);
-        object data = handler(effectiveArgs);
+        object data = WithCommandInProgress(() => handler(effectiveArgs));
         return AttachPreCheckpoint(data, preCheckpoint);
+    }
+
+    /// <summary>
+    /// Marks a command as in progress while a handler runs: SolidWorks then skips UI/idle work
+    /// between our out-of-process API calls, which otherwise cost several milliseconds each.
+    /// Disable with SOLIDWORKS_MCP_COMMAND_IN_PROGRESS=0.
+    /// </summary>
+    private static object WithCommandInProgress(Func<object> run)
+    {
+        if (Environment.GetEnvironmentVariable("SOLIDWORKS_MCP_COMMAND_IN_PROGRESS") == "0")
+        {
+            return run();
+        }
+
+        SolidWorks.Interop.sldworks.ISldWorks? app = Try(() => AttachSolidWorks(startIfMissing: false)) as SolidWorks.Interop.sldworks.ISldWorks;
+        bool previous = (Try(() => app?.CommandInProgress) as bool?) ?? false;
+        TryVoid(() => { if (app is not null) app.CommandInProgress = true; });
+        try
+        {
+            return run();
+        }
+        finally
+        {
+            TryVoid(() => { if (app is not null) app.CommandInProgress = previous; });
+        }
     }
 
     private static void WriteSessionOk(string id, object data)

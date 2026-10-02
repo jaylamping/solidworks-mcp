@@ -171,6 +171,7 @@ export const WORKER_COMMANDS = [
   "sweep",
   "thickness_check",
   "transform_component",
+  "try_variants",
   "unfix_all_components",
   "urdf_readiness"
 ] as const;

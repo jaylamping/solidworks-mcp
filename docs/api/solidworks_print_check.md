@@ -17,6 +17,7 @@ FDM printability: for each axis-aligned build direction, unsupported overhang ar
 |------|------|----------|---------|-------------|
 | `path` | string | yes | - | Part document to edit (.SLDPRT). Required so edits never land in whichever document happens to be active. (allowed root) |
 | `units` | `mm`, `cm`, `m`, `in` | no | - | Length units for every length and coordinate in this call. Default mm. |
+| `bodies` | array | no | - | Analyze only these bodies (e.g. skip an imported vendor model in the same part). |
 | `material` | string | no | - | Filament for mass: PLA (default), PETG, ABS, ASA, TPU, PA/NYLON, PA-CF, PETG-CF, PC. |
 | `density_g_cm3` | number | no | - | Density for unknown materials. |
 | `overhang_deg` | number | no | - | Max printable overhang from vertical (default 45). |

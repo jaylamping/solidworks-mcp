@@ -1,0 +1,27 @@
+{
+  "name": "fea_variants",
+  "description": "What-if engine: PLA cantilever baseline vs shortened (deflection must scale with L^3: 1.143 -> 0.585 mm) vs added end-face fillet step; the part must be restored afterwards",
+  "expect": { "volume_mm3": 10000, "bodies": 1 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Right Plane", "name": "Section", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 10, "height": 10 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "Section", "depth": 100, "name": "Beam" }, "expect": { "volume": 10000 } },
+    { "tool": "solidworks_try_variants", "args": {
+      "path": "$PART",
+      "analysis": {
+        "material": "PLA",
+        "fixtures": [{ "faces": { "faces": { "type": "plane", "normal": [-1, 0, 0] } } }],
+        "loads": [{ "faces": { "faces": { "type": "plane", "normal": [1, 0, 0] } }, "value_n": 10, "direction": [0, -1, 0] }]
+      },
+      "variants": [
+        { "name": "short_80", "dimensions": { "D1@Beam": 80 } },
+        { "name": "root_chamfer", "steps": [{ "tool": "solidworks_chamfer", "args": { "distance": 1, "edges": { "edges": { "direction": [1, 0, 0] } } } }] }
+      ]
+    }, "expect": { "fields": {
+      "restored": true,
+      "variants.0.fea.maxDisplacementMm": { "approx": 1.1429, "tol": 0.06 },
+      "variants.1.fea.maxDisplacementMm": { "approx": 0.5852, "tol": 0.06 },
+      "variants.1.volume": 8000,
+      "variants.2.volume": { "approx": 9800, "tol": 0.01 }
+    } } }
+  ]
+}

@@ -17,7 +17,9 @@ export const openSchema = z.object({
 export const exportSchema = z.object({
   path: z.string().min(1).optional().describe("Optional source document path under an allowed CAD root."),
   output_path: z.string().min(1).describe("Destination file path under an allowed CAD root."),
-  format: z.enum(["sldprt", "sldasm", "step", "stp", "stl", "pdf", "png"]).describe("Output format."),
+  format: z
+    .enum(["sldprt", "sldasm", "step", "stp", "stl", "3mf", "obj", "iges", "igs", "x_t", "pdf", "png", "jpg"])
+    .describe("Output format (the output_path extension decides what SolidWorks writes; 3mf is preferred for slicers such as Bambu Studio)."),
   start_if_missing: z.boolean().optional().describe("Start SolidWorks if no instance is running."),
 });
 

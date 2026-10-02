@@ -17,6 +17,7 @@ Wall-thickness analysis by ray casting: thinnest wall, percentiles, surface shar
 |------|------|----------|---------|-------------|
 | `path` | string | yes | - | Part document to edit (.SLDPRT). Required so edits never land in whichever document happens to be active. (allowed root) |
 | `units` | `mm`, `cm`, `m`, `in` | no | - | Length units for every length and coordinate in this call. Default mm. |
+| `bodies` | array | no | - | Analyze only these bodies (e.g. skip an imported vendor model in the same part). |
 | `min_wall` | number | no | - | Flag walls thinner than this (default 1.2 mm = 3 perimeters of a 0.4 mm nozzle). |
 | `samples` | integer | no | - | Max surface samples (default 3000). |
 

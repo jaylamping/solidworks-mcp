@@ -3072,6 +3072,27 @@
       "schema": "transformComponent"
     },
     {
+      "name": "solidworks_try_variants",
+      "workerCommand": "try_variants",
+      "tier": "core",
+      "readOnly": false,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": true,
+      "description": "Design exploration: for each variant (dimension changes and/or extra modeling steps such as a fillet, rib or thicker wall) apply it, measure volume/mass, FEA (same fixtures and loads for all) and optionally wall thickness, then undo it. Returns a side-by-side table and confirms the part was restored. Use it to compare candidate improvements before committing to one.",
+      "descriptionSource": "authored",
+      "tags": [
+        "analysis",
+        "fea",
+        "design",
+        "optimization"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "modelTryVariants"
+    },
+    {
       "name": "solidworks_unfix_all_components",
       "workerCommand": "unfix_all_components",
       "tier": "extended",

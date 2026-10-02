@@ -43,11 +43,13 @@ internal static partial class Program
                     ?? (Try(() => dim.SystemValue) as double?) ?? 0;
                 bool angular = (Try(() => dim.GetType()) as int?) == (int)swDimensionParamType_e.swDimensionParamTypeDoubleAngular;
                 string fullName = Try(() => dim.FullName) as string ?? "?";
+                int kind = (Try(() => display.Type2) as int?) ?? -1;
                 output.Add(new
                 {
                     name = TrimDocSuffix(fullName),
                     value = angular ? Math.Round(value * 180 / Math.PI, 4) : Math.Round(value / scale, 5),
                     unit = angular ? "deg" : UnitsName(scale),
+                    kind = Enum.IsDefined(typeof(swDimensionType_e), kind) ? ((swDimensionType_e)kind).ToString().Replace("sw", "").Replace("Dimension", "").ToLowerInvariant() : null,
                 });
             }
 

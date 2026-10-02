@@ -153,6 +153,10 @@ export const sketchSchema = z
       .optional()
       .describe("With edit_sketch: delete the line/arc/circle closest to each point (same coordinate space as entities; default max_distance 1) before adding entities. Combine with entities to move/resize geometry in undimensioned sketches."),
     atomic: z.boolean().optional().describe("If any entity fails, delete the new sketch and report (default true)."),
+    fully_define: z
+      .boolean()
+      .optional()
+      .describe("Add relations and baseline dimensions from the origin so the sketch is fully defined and parametric; the result lists the new dimension names (usable with solidworks_set_dimensions / solidworks_equations)."),
   })
   .refine((v) => v.on !== undefined || v.edit_sketch !== undefined, { message: "Provide on or edit_sketch." })
   .refine((v) => (v.entities?.length ?? 0) > 0 || (v.remove?.length ?? 0) > 0, { message: "Provide entities and/or remove." })
@@ -411,6 +415,7 @@ export const setDimensionsSchema = z.object({
 export const printCheckSchema = z.object({
   path: partPathField,
   units: unitsField,
+  bodies: bodyList.optional().describe("Analyze only these bodies (e.g. skip an imported vendor model in the same part)."),
   material: z.string().optional().describe("Filament for mass: PLA (default), PETG, ABS, ASA, TPU, PA/NYLON, PA-CF, PETG-CF, PC."),
   density_g_cm3: z.number().positive().optional().describe("Density for unknown materials."),
   overhang_deg: z.number().min(0).max(89).optional().describe("Max printable overhang from vertical (default 45)."),
@@ -535,7 +540,11 @@ export const helixSchema = z.object({
 export const insertPartSchema = z.object({
   path: partPathField,
   units: unitsField,
-  source: z.string().min(1).describe("Part file whose bodies are inserted (e.g. a vendor actuator) to design around or subtract."),
+  source: z.string().min(1).optional().describe("Part file whose bodies are inserted (e.g. a vendor actuator) to design around or subtract."),
+  from_assembly: z
+    .object({ assembly: z.string().min(1), component: z.string().min(1) })
+    .optional()
+    .describe("Insert this assembly component's part AT its assembly position (this part's origin = the assembly origin), to design a new part in context — e.g. a bracket that must meet two actuators."),
   configuration: z.string().optional(),
   import_planes: z.boolean().optional(),
   import_axes: z.boolean().optional(),
@@ -583,6 +592,31 @@ export const holeWizardSchema = z.object({
 export const thicknessCheckSchema = z.object({
   path: partPathField,
   units: unitsField,
+  bodies: bodyList.optional().describe("Analyze only these bodies (e.g. skip an imported vendor model in the same part)."),
   min_wall: z.number().positive().optional().describe("Flag walls thinner than this (default 1.2 mm = 3 perimeters of a 0.4 mm nozzle)."),
   samples: z.number().int().positive().optional().describe("Max surface samples (default 3000)."),
+});
+
+export const tryVariantsSchema = z.object({
+  path: partPathField,
+  units: unitsField,
+  variants: z
+    .array(
+      z.object({
+        name: z.string().optional(),
+        dimensions: z.record(z.string(), z.number()).optional().describe("Dimension changes, as in solidworks_set_dimensions."),
+        steps: z
+          .array(z.object({ tool: z.string().min(1), args: z.record(z.string(), z.unknown()).optional() }))
+          .optional()
+          .describe("Extra modeling steps, e.g. {tool: \"solidworks_fillet\", args: {...}}; path/units are filled in."),
+      }),
+    )
+    .min(1),
+  analysis: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe("solidworks_simulate_static arguments (material, bodies, fixtures, loads, mesh_quality...) run identically on every variant."),
+  thickness: z.boolean().optional().describe("Also report thinnest / 5th-percentile / median wall per variant."),
+  density_g_cm3: z.number().positive().optional().describe("Mass density for massGrams (defaults from the analysis material)."),
+  include_baseline: z.boolean().optional().describe("Measure the unmodified part first (default true)."),
 });

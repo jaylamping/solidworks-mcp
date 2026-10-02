@@ -224,6 +224,7 @@ export const SCHEMAS = {
   modelSetDimensions: schemaRef("modelSetDimensions", modelingSchemas.setDimensionsSchema),
   modelPrintCheck: schemaRef("modelPrintCheck", modelingSchemas.printCheckSchema),
   modelSimulateStatic: schemaRef("modelSimulateStatic", modelingSchemas.simulateStaticSchema),
+  modelTryVariants: schemaRef("modelTryVariants", modelingSchemas.tryVariantsSchema),
   modelRollback: schemaRef("modelRollback", modelingSchemas.rollbackSchema),
   modelReorderFeature: schemaRef("modelReorderFeature", modelingSchemas.reorderFeatureSchema),
   modelEquations: schemaRef("modelEquations", modelingSchemas.equationsSchema),
@@ -2232,6 +2233,21 @@ export const TOOL_SPECS = [
     "Explain how an existing part is built: every feature with its driving dimensions (full names usable with solidworks_set_dimensions), definition parameters (end conditions, depths, radii, pattern counts), parent features, and each sketch's geometry, relations and constrained status. Start here when asked to review or improve a design."),
   readTool("print_check", "Program.PrintCheck", "solidworks_print_check", "modelPrintCheck", ["inspect", "analysis", "3d-printing"],
     "FDM printability: for each axis-aligned build direction, unsupported overhang area, flat down-facing (bridge) area, bed contact area, height, footprint and bed fit; recommends the best orientation; solid mass and filament length for a material."),
+  tool({
+    implementation: worker("try_variants", "Program.TryVariants"),
+    exposure: mcp({
+      name: "solidworks_try_variants",
+      tier: "core",
+      description:
+        "Design exploration: for each variant (dimension changes and/or extra modeling steps such as a fillet, rib or thicker wall) apply it, measure volume/mass, FEA (same fixtures and loads for all) and optionally wall thickness, then undo it. Returns a side-by-side table and confirms the part was restored. Use it to compare candidate improvements before committing to one.",
+      descriptionSource: "authored",
+      input: SCHEMAS["modelTryVariants"],
+      tags: ["analysis", "fea", "design", "optimization"],
+      domains: ["document"],
+    }),
+    safety: modelMutation({ destructive: false }),
+    selection: noSelection,
+  }),
   tool({
     implementation: worker("simulate_static", "Program.SimulateStatic"),
     exposure: mcp({

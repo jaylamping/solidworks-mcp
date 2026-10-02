@@ -24,6 +24,7 @@ Create (or extend) a sketch in one call: pick a plane or planar face with `on`, 
 | `entities` | array | no | - | Value for entities. |
 | `remove` | object[] | no | - | With edit_sketch: delete the line/arc/circle closest to each point (same coordinate space as entities; default max_distance 1) before adding entities. Combine with entities to move/resize geometry in undimensioned sketches. |
 | `atomic` | boolean | no | - | If any entity fails, delete the new sketch and report (default true). |
+| `fully_define` | boolean | no | - | Add relations and baseline dimensions from the origin so the sketch is fully defined and parametric; the result lists the new dimension names (usable with solidworks_set_dimensions / solidworks_equations). |
 
 ## Tags
 

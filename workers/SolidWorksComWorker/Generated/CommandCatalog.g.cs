@@ -206,6 +206,7 @@ internal static class CommandPolicyCatalog
             ["set_dimensions"] = new CommandPolicy(false, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["feature_details"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["print_check"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
+            ["try_variants"] = new CommandPolicy(false, true, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["simulate_static"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["part_report"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["render_view"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),

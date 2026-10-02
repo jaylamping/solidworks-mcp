@@ -19,24 +19,31 @@ internal static partial class Program
     /// Display tessellation of every solid face. A part opened from disk has none until it is
     /// shown, so retry after rebuilding and redrawing the (activated) document.
     /// </summary>
-    private static List<Tri> TessellatePart(ModelDoc2 doc)
+    private static List<Tri> TessellatePart(ModelDoc2 doc, JsonElement? args = null)
     {
-        List<Tri> tris = TessellateOnce(doc);
+        // Optional `bodies` filter: analyze only some bodies (e.g. skip an imported actuator).
+        HashSet<string>? only = args is not null && Prop(args, "bodies") is not null
+            ? BodiesArg(doc, args, "bodies", UnitScale(args)).Select(b => Try(() => ((Body2)b.Com!).Name) as string ?? "").ToHashSet()
+            : null;
+        List<Tri> tris = FilterTris(TessellateOnce(doc, only), only);
         if (tris.Count == 0 && SolidBodies(doc).Any())
         {
             TryVoid(() => doc.ForceRebuild3(false));
             TryVoid(() => doc.ViewZoomtofit2());
             TryVoid(() => doc.GraphicsRedraw2());
-            tris = TessellateOnce(doc);
+            tris = FilterTris(TessellateOnce(doc, only), only);
         }
 
         if (tris.Count == 0)
         {
-            tris = TessellateFromModel(doc);
+            tris = FilterTris(TessellateFromModel(doc), only);
         }
 
         return tris;
     }
+
+    private static List<Tri> FilterTris(List<Tri> tris, HashSet<string>? only) =>
+        only is null ? tris : tris.Where(t => t.Face is not null && only.Contains(Try(() => ((Body2)t.Face.GetBody()).Name) as string ?? "")).ToList();
 
     /// <summary>Geometry-based tessellation (no graphics needed) for parts that were never displayed.</summary>
     private static List<Tri> TessellateFromModel(ModelDoc2 doc)
@@ -106,11 +113,16 @@ internal static partial class Program
         return tris;
     }
 
-    private static List<Tri> TessellateOnce(ModelDoc2 doc)
+    private static List<Tri> TessellateOnce(ModelDoc2 doc, HashSet<string>? only = null)
     {
         var tris = new List<Tri>();
         foreach (Body2 body in SolidBodies(doc))
         {
+            if (only is not null && !only.Contains(Try(() => body.Name) as string ?? ""))
+            {
+                continue;
+            }
+
             foreach (Face2 face in (Try(() => body.GetFaces()) as object[] ?? Array.Empty<object>()).OfType<Face2>())
             {
                 if (Try(() => face.GetTessTriangles(true)) is not float[] v || Try(() => face.GetTessNorms()) is not float[] n)
@@ -162,7 +174,7 @@ internal static partial class Program
         double s = UnitScale(args);
         double minWall = DoubleArg(args, "min_wall", 1.2) * s;
         int maxSamples = (int)DoubleArg(args, "samples", 3000);
-        List<Tri> tris = TessellatePart(doc);
+        List<Tri> tris = TessellatePart(doc, args);
         if (tris.Count == 0)
         {
             throw WorkerException.Worker("NO_TESSELLATION", "Could not tessellate the part.", new Dictionary<string, object?>());
@@ -287,7 +299,7 @@ internal static partial class Program
         string material = StringArg(args, "material") ?? "PLA";
         double density = FilamentDensity.TryGetValue(material, out double d) ? d : DoubleArg(args, "density_g_cm3", 1.24);
 
-        List<Tri> tris = TessellatePart(doc);
+        List<Tri> tris = TessellatePart(doc, args);
         if (tris.Count == 0)
         {
             throw WorkerException.Worker("NO_TESSELLATION", "Could not tessellate the part (no solid bodies, or SolidWorks is not displaying it).", new Dictionary<string, object?>());

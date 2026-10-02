@@ -1,0 +1,15 @@
+{
+  "name": "adv_parametric",
+  "description": "Parametric sketch: fully_define adds relations + baseline dimensions (reported with kinds); the plate is resized through those dimensions and then by an equation-driven global variable",
+  "expect": { "volume_mm3": 5748.66, "bodies": 1 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "PlateSk", "fully_define": true, "entities": [
+      { "type": "rectangle", "corner1": [0, 0], "corner2": [40, 20] },
+      { "type": "circle", "center": [10, 10], "diameter": 6 }
+    ] }, "expect": { "fields": { "fullyDefined.fullyConstrained": true, "dimensions.0.kind": "diameter", "dimensions.2.value": 40 } } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "PlateSk", "depth": 5, "name": "Plate" }, "expect": { "volume": 3858.63 } },
+    { "tool": "solidworks_feature_details", "args": { "path": "$PART", "features": ["PlateSk"] }, "expect": { "fields": { "features.0.sketch.constrained": "fully_constrained" } } },
+    { "tool": "solidworks_set_dimensions", "args": { "path": "$PART", "values": { "D3@PlateSk": 50, "D1@PlateSk": 8 } }, "expect": { "volume": 4748.66 } },
+    { "tool": "solidworks_equations", "args": { "path": "$PART", "globals": { "Width": 60 }, "links": { "D3@PlateSk": "\"Width\"" } }, "expect": { "volume": 5748.66 } }
+  ]
+}

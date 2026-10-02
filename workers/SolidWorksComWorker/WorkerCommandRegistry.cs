@@ -132,6 +132,7 @@ internal static partial class Program
             ["set_dimensions"] = SetDimensions,
             ["print_check"] = PrintCheck,
             ["simulate_static"] = SimulateStatic,
+            ["try_variants"] = TryVariants,
             ["rollback"] = Rollback,
             ["reorder_feature"] = ReorderFeature,
             ["equations"] = Equations,

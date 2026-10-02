@@ -17,7 +17,8 @@ Insert the solid bodies of another part (e.g. a vendor actuator or bearing), opt
 |------|------|----------|---------|-------------|
 | `path` | string | yes | - | Part document to edit (.SLDPRT). Required so edits never land in whichever document happens to be active. (allowed root) |
 | `units` | `mm`, `cm`, `m`, `in` | no | - | Length units for every length and coordinate in this call. Default mm. |
-| `source` | string | yes | - | Part file whose bodies are inserted (e.g. a vendor actuator) to design around or subtract. |
+| `source` | string | no | - | Part file whose bodies are inserted (e.g. a vendor actuator) to design around or subtract. |
+| `from_assembly` | object | no | - | Insert this assembly component's part AT its assembly position (this part's origin = the assembly origin), to design a new part in context — e.g. a bracket that must meet two actuators. |
 | `configuration` | string | no | - | Value for configuration. |
 | `import_planes` | boolean | no | - | Value for import planes. |
 | `import_axes` | boolean | no | - | Value for import axes. |

@@ -162,6 +162,14 @@ internal static partial class Program
             sm.DisplayWhenAdded = oldDisplay;
         }
 
+        // Optional: add relations + baseline dimensions so the sketch is parametric (editable with
+        // solidworks_set_dimensions / equations) instead of free geometry.
+        object? fullyDefined = null;
+        if (BoolArg(args, "fully_define") && failures.Count == 0)
+        {
+            fullyDefined = FullyDefineActiveSketch(app, doc, sketch);
+        }
+
         int regions = (Try(() => sketch.GetSketchRegionCount()) as int?) ?? -1;
         int contours = (Try(() => (sketch.GetSketchContours() as object[])?.Length) as int?) ?? -1;
         int segmentCount = (Try(() => (sketch.GetSketchSegments() as object[])?.Length) as int?) ?? -1;
@@ -202,6 +210,8 @@ internal static partial class Program
             units = UnitsLabel(args),
             entities = results,
             removed = removed.Count > 0 ? removed : null,
+            fullyDefined,
+            dimensions = fullyDefined is null ? null : FeatureDimensions((Feature)sketch, scale),
             failures,
             downstreamErrors = string.IsNullOrWhiteSpace(editName) ? null : WhatsWrong(doc),
             segmentCount,
@@ -219,6 +229,36 @@ internal static partial class Program
     }
 
     private static double[] Sub(double[] a, double[] b) => new[] { a[0] - b[0], a[1] - b[1], a[2] - b[2] };
+
+    /// <summary>Fully defines the active sketch from the origin (relations + baseline dimensions).</summary>
+    private static object FullyDefineActiveSketch(ISldWorks app, ModelDoc2 doc, ISketch sketch)
+    {
+        const int allRelations = 1023; // every swSketchFullyDefineRelationType_e flag
+        bool prompt = (Try(() => app.GetUserPreferenceToggle((int)swUserPreferenceToggle_e.swInputDimValOnCreate)) as bool?) ?? false;
+        int result;
+        try
+        {
+            // Dimension creation must not pop up value-entry boxes during automation.
+            TryVoid(() => app.SetUserPreferenceToggle((int)swUserPreferenceToggle_e.swInputDimValOnCreate, false));
+            doc.ClearSelection2(true);
+            // Datum: the part origin (marks 2|4 per the documented example).
+            TryVoid(() => doc.Extension.SelectByID2("Point1@Origin", "EXTSKETCHPOINT", 0, 0, 0, false, 6, null, 0));
+            result = doc.SketchManager.FullyDefineSketch(true, true, allRelations, true, 1, null, 1, null, 0, 0);
+        }
+        finally
+        {
+            TryVoid(() => app.SetUserPreferenceToggle((int)swUserPreferenceToggle_e.swInputDimValOnCreate, prompt));
+            doc.ClearSelection2(true);
+        }
+
+        int status = (Try(() => sketch.GetConstrainedStatus()) as int?) ?? 0;
+        return new
+        {
+            status = Enum.IsDefined(typeof(swConstrainedStatus_e), status) ? ((swConstrainedStatus_e)status).ToString() : status.ToString(),
+            fullyConstrained = status == (int)swConstrainedStatus_e.swFullyConstrained,
+            apiResult = result,
+        };
+    }
 
     /// <summary>Closest line/arc/circle segment of the active sketch to a sketch-space point.</summary>
     private static (SketchSegment? Segment, double Distance, string Kind) NearestSketchSegment(ISketch sketch, double[] p)

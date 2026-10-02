@@ -33,7 +33,12 @@ with the SolidWorks error and "what's wrong" list, so the part stays clean and t
      then `solidworks_rollback` with no arguments to roll forward. `solidworks_reorder_feature` moves features.
    - `solidworks_equations` — global variables driving dimensions (one `Wall` value driving shell, ribs, bosses).
    - Add ribs (`solidworks_rib`), fillets at stress risers, thicker walls, gussets, lightening pockets.
-4. Re-run the same analysis and compare.
+4. Re-run the same analysis and compare — or let `solidworks_try_variants` do it: give it the analysis once and
+   a list of variants (`dimensions` and/or `steps` such as a fillet or rib); it applies each, measures volume, mass,
+   FEA (and optionally wall thickness), undoes it, and returns a side-by-side table plus `restored: true`.
+   Use selectors that survive the change (`{faces: {normal: [1,0,0]}}` rather than a point on a face that moves).
+5. Sketches created with `fully_define: true` get relations and named dimensions (with kinds such as `diameter`,
+   `horlinear`), so the result stays parametric for later edits and equations.
 
 ## Units
 
@@ -111,8 +116,18 @@ Body names change as features are added, so prefer `{near: [...]}` for bodies.
 - **mirror**: features or bodies about a plane or planar face.
 - **ref_plane / ref_axis**: offset / angled / three-point planes; axes from cylinders, edges, two planes, two points.
 - **insert_part + combine**: bring a vendor body (actuator, bearing) into a part and `subtract` it for an exact
-  pocket, or design around it. **split_body** cuts a body (enclosure base/lid). **move_body** rotates then
+  pocket, or design around it. With `from_assembly: {assembly, component}` the component is placed exactly where
+  it sits in the assembly (this part's origin = the assembly origin), so a new bracket designed between two
+  inserted actuators fits the real assembly; delete the reference bodies (`delete_body`) when done. **split_body** cuts a body (enclosure base/lid). **move_body** rotates then
   translates (two features, since SolidWorks applies only one per Move/Copy).
+
+## Performance
+
+Every call crosses a process boundary into SOLIDWORKS. The worker wraps each command in
+`ISldWorks.CommandInProgress = true`, which stops SOLIDWORKS doing UI/idle work between API calls (about 14x
+faster on large parts; disable with `SOLIDWORKS_MCP_COMMAND_IN_PROGRESS=0`). Sketch geometry is read with batch
+calls. For parts that embed large vendor models, pass `bodies` to analysis tools and `body` / `of_feature` filters
+to selectors so they do not scan thousands of foreign faces and edges.
 
 ## Regression bench
 
