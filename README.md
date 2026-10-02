@@ -137,6 +137,8 @@ Tool metadata: `src/tool-spec/catalog.ts`. Refresh with `npm run generate:tools`
 | `SOLIDWORKS_MCP_WORKER_MODE` | `session` or omit for ephemeral |
 | `SOLIDWORKS_MCP_AUTO_CHECKPOINT` | `0` disables auto checkpoints |
 | `SOLIDWORKS_MCP_CHECKPOINT_DEBOUNCE_SEC` | Checkpoint reuse window (default `45`) |
+| `SOLIDWORKS_MCP_ANALYSIS_TIMEOUT_MS` | Worker response timeout for FEA/topology/variant sweeps (default 1 h; other commands 5 min) |
+| `SOLIDWORKS_MCP_COMMAND_IN_PROGRESS` | `0` disables the CommandInProgress speed-up |
 
 ```powershell
 npm run typecheck

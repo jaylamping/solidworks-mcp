@@ -11,11 +11,13 @@ internal static partial class Program
     {
         public required Dictionary<int, double[]> Xyz { get; init; } // meters
         public required Dictionary<int, double> VonMises { get; init; } // MPa
+        public required Dictionary<int, double[]> Tensor { get; init; } // SX, SY, SZ, TXY, TXZ, TYZ (MPa)
     }
 
     private static FeaNodes ReadFeaNodes(CWResults results, CWMesh mesh)
     {
-        // GetNodes: [node, x, y, z] (m). GetStress (nodal): [node, SX, SY, SZ, TXY, TYZ, TXZ, P1, P2, P3, VON, INT].
+        // GetNodes: [node, x, y, z] (m). GetStress (nodal): [node, SX, SY, SZ, TXY, TXZ, TYZ, P1, P2, P3, VON, INT]
+        // (shear order verified: only TXZ at index 5 reproduces the reported principal stresses).
         object[] nodes = (object[])mesh.GetNodes();
         var xyz = new Dictionary<int, double[]>(nodes.Length / 4);
         for (int i = 0; i + 3 < nodes.Length; i += 4)
@@ -30,12 +32,16 @@ internal static partial class Program
         }
 
         var vm = new Dictionary<int, double>(stress.Length / 12);
+        var tensor = new Dictionary<int, double[]>(stress.Length / 12);
         for (int i = 0; i + 11 < stress.Length; i += 12)
         {
-            vm[Convert.ToInt32(stress[i])] = Convert.ToDouble(stress[i + 10]);
+            int node = Convert.ToInt32(stress[i]);
+            vm[node] = Convert.ToDouble(stress[i + 10]);
+            tensor[node] = [Convert.ToDouble(stress[i + 1]), Convert.ToDouble(stress[i + 2]), Convert.ToDouble(stress[i + 3]),
+                Convert.ToDouble(stress[i + 4]), Convert.ToDouble(stress[i + 5]), Convert.ToDouble(stress[i + 6])];
         }
 
-        return new FeaNodes { Xyz = xyz, VonMises = vm };
+        return new FeaNodes { Xyz = xyz, VonMises = vm, Tensor = tensor };
     }
 
     private static int[] NodesOn(CWResults results, IEnumerable<ResolvedEntity> faces)
@@ -122,6 +128,42 @@ internal static partial class Program
                 p99_9 = Math.Round(Percentile(sorted, 99.9), 3),
             },
             awayFromFixtures = away,
+        };
+    }
+
+    // FDM layer adhesion: tensile stress normal to the print layers (n . S . n, n = build direction)
+    // against the interlayer strength (a fraction of the in-plane strength), peak and away from fixtures.
+    private static object LayerCheck(FeaNodes fea, CWResults results, List<ResolvedEntity> fixtureFaces, double exclusionM, double s, FeaMaterial material, double[] up, double factor)
+    {
+        double[] n = Normalize3(up);
+        double Normal(double[] t) =>
+            n[0] * n[0] * t[0] + n[1] * n[1] * t[1] + n[2] * n[2] * t[2]
+            + 2 * (n[0] * n[1] * t[3] + n[0] * n[2] * t[4] + n[1] * n[2] * t[5]);
+
+        var normal = fea.Tensor.ToDictionary(kv => kv.Key, kv => Normal(kv.Value));
+        double[][] anchors = NodesOn(results, fixtureFaces).Where(fea.Xyz.ContainsKey).Select(id => fea.Xyz[id]).ToArray();
+        double r2 = exclusionM * exclusionM;
+        bool NearFixture(int node) =>
+            fea.Xyz.TryGetValue(node, out double[]? p) && anchors.Any(a => (p[0] - a[0]) * (p[0] - a[0]) + (p[1] - a[1]) * (p[1] - a[1]) + (p[2] - a[2]) * (p[2] - a[2]) < r2);
+
+        int peak = normal.MaxBy(kv => kv.Value).Key;
+        int away = normal.OrderByDescending(kv => kv.Value).Select(kv => kv.Key).FirstOrDefault(id => !NearFixture(id), peak);
+        double strength = material.YieldPa / 1e6 * factor;
+        object Point(int id) => new
+        {
+            tensileMPa = Math.Round(Math.Max(normal[id], 0), 3),
+            at = fea.Xyz.TryGetValue(id, out double[]? p) ? Round(p, s, 3) : null,
+            factorOfSafety = normal[id] > 1e-9 ? Math.Round(strength / normal[id], 3) : (double?)null,
+        };
+
+        return new
+        {
+            buildDirection = n.Select(v => Math.Round(v, 4)).ToArray(),
+            interlayerStrengthMPa = Math.Round(strength, 2),
+            layerStrengthFactor = factor,
+            peak = Point(peak),
+            awayFromFixtures = Point(away),
+            note = "Tension across the layers (pulling them apart) is the usual failure of FDM parts. Compare build directions and orient the part so the main bending stress runs along the layers.",
         };
     }
 

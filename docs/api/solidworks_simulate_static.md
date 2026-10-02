@@ -26,11 +26,14 @@ FEA (SOLIDWORKS Simulation) on a part. Static: material (printed PLA/PETG/ABS/AS
 | `loads` | object[] | no | - | Loads (required for static). |
 | `probes` | object[] | no | - | Report von Mises stress on these faces (max, mean and where), e.g. a fillet you are sizing. Peaks at fixture edges and sharp corners are mesh singularities; probes on the region you care about are the reliable comparison. |
 | `singularity_exclusion` | number | no | - | distribution.awayFromFixtures ignores nodes within this distance of fixture faces (default 2 element sizes). |
+| `build_direction` | number[] | no | - | FDM layer check: the print's up direction (model vector). Reports tension across the layers vs interlayer strength. |
+| `layer_strength_factor` | number | no | - | Interlayer strength as a fraction of the material strength (default 0.6). |
 | `hotspots` | boolean | no | - | Run SOLIDWORKS stress hot-spot diagnostics and list hot-spot locations (singular or genuinely concentrated). |
 | `plot` | object | no | - | Save a result plot image (stress contour by default). |
 | `gravity` | boolean | no | - | Add self-weight along -Y. |
 | `mesh_quality` | `draft`, `high` | no | - | Value for mesh quality. |
 | `element_size` | number | no | - | Global element size in `units` (default: SOLIDWORKS default). |
+| `mesh_controls` | object[] | no | - | Local mesh refinement on the faces whose stress matters (fillets, notches, holes) — use with probes for converged values. |
 | `bodies` | array | no | - | Analyze only these bodies (e.g. the bracket in a part that also contains an imported actuator). Others are excluded via a temporary Keep Body feature that is removed afterwards. |
 | `keep_study` | boolean | no | - | Leave the study in the part for inspection in the UI (default: delete it). |
 | `study_name` | string | no | - | Value for study name. |

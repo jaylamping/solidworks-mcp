@@ -469,6 +469,7 @@ export const simulateStaticSchema = z.object({
         .optional()
         .describe("Regions to keep (bolt holes, bearing seats, mating faces). Loaded and fixed faces are kept automatically."),
       symmetry: z.object({ planes: z.array(selectorSchema).min(1).max(3) }).optional().describe("Symmetric result about 1-3 planes."),
+      max_iterations: z.number().int().min(5).max(200).optional().describe("Cap optimizer iterations to bound run time (default: until converged)."),
     })
     .optional()
     .describe("Topology optimization settings (analysis = topology)."),
@@ -506,6 +507,12 @@ export const simulateStaticSchema = z.object({
     .positive()
     .optional()
     .describe("distribution.awayFromFixtures ignores nodes within this distance of fixture faces (default 2 element sizes)."),
+  build_direction: z
+    .array(z.number())
+    .length(3)
+    .optional()
+    .describe("FDM layer check: the print's up direction (model vector). Reports tension across the layers vs interlayer strength."),
+  layer_strength_factor: z.number().min(0.1).max(1).optional().describe("Interlayer strength as a fraction of the material strength (default 0.6)."),
   hotspots: z.boolean().optional().describe("Run SOLIDWORKS stress hot-spot diagnostics and list hot-spot locations (singular or genuinely concentrated)."),
   plot: z
     .object({
@@ -524,6 +531,10 @@ export const simulateStaticSchema = z.object({
   gravity: z.boolean().optional().describe("Add self-weight along -Y."),
   mesh_quality: z.enum(["draft", "high"]).optional(),
   element_size: z.number().positive().optional().describe("Global element size in `units` (default: SOLIDWORKS default)."),
+  mesh_controls: z
+    .array(z.object({ faces: selectorList, element_size: z.number().positive().describe("Local element size in `units`."), growth: z.number().min(1.1).max(3).optional().describe("Element growth ratio away from the faces (default 1.5).") }))
+    .optional()
+    .describe("Local mesh refinement on the faces whose stress matters (fillets, notches, holes) — use with probes for converged values."),
   bodies: bodyList
     .optional()
     .describe("Analyze only these bodies (e.g. the bracket in a part that also contains an imported actuator). Others are excluded via a temporary Keep Body feature that is removed afterwards."),

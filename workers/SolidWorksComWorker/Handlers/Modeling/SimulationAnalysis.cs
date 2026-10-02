@@ -188,6 +188,26 @@ internal static partial class Program
                 tolerance *= 1.5;
             }
 
+            // Local refinement (fillets, notches, bolt holes): smaller elements on the given faces.
+            var meshControls = new List<object>();
+            foreach (JsonElement mc in Prop(args, "mesh_controls") is JsonElement mcs ? mcs.EnumerateArray().ToArray() : [])
+            {
+                List<ResolvedEntity> faces = ResolveSelectors(doc, Prop(mc, "faces") ?? throw new ArgumentException("mesh_controls.faces is required"), s, "mesh_controls.faces");
+                double size = Num(mc, "element_size") * s * 1000;
+                CWMeshControl? control = mesh.ApplyMeshControl(Wrap(faces), out int mcErr);
+                if (control is null || mcErr != 0)
+                {
+                    throw WorkerException.Worker("MESH_CONTROL_FAILED", $"ApplyMeshControl failed ({mcErr}).", new Dictionary<string, object?> { ["faces"] = faces.Count });
+                }
+
+                control.MeshControlBeginEdit();
+                control.Units = 0; // mm
+                control.ElementSize = size;
+                control.Ratio = Num(mc, "growth", 1.5);
+                int mcEnd = control.MeshControlEndEdit();
+                meshControls.Add(new { faces = faces.Count, elementSizeMm = size, end = mcEnd });
+            }
+
             err = study.CreateMesh(0 /* mm */, element, tolerance);
             if (err != 0 || mesh.IsMeshFailed2)
             {
@@ -209,6 +229,7 @@ internal static partial class Program
                 elementSizeMm = Math.Round(element, 3),
                 nodes = Try(() => mesh.NodeCount),
                 elements = Try(() => mesh.ElementCount),
+                controls = meshControls.Count > 0 ? meshControls : null,
             };
             if (topology)
             {
@@ -263,6 +284,9 @@ internal static partial class Program
             object? distribution = fea is null ? null : Try(() => StressDistribution(fea, results, fixtureFaces, exclusionM, s, material));
             object? probes = fea is not null && Prop(args, "probes") is JsonElement probeArg ? StressProbes(doc, fea, results, probeArg, s, material) : null;
             object? hotspots = fea is not null && BoolArg(args, "hotspots") ? Try(() => StressHotspots(fea, results, s)) : null;
+            object? layers = fea is not null && Prop(args, "build_direction") is JsonElement upEl
+                ? LayerCheck(fea, results, fixtureFaces, exclusionM, s, material, Vec(upEl, 3), Prop(args, "layer_strength_factor") is not null ? DoubleArg(args, "layer_strength_factor") : 0.6)
+                : null;
             object? plot = Prop(args, "plot") is JsonElement plotArg ? SavePlotImage(app, doc, results, plotArg, frequency: false) : null;
 
             return new
@@ -292,6 +316,7 @@ internal static partial class Program
                 distribution,
                 probes,
                 hotspots,
+                layers,
                 plot,
                 isolatedBodies,
                 seconds = Math.Round(timer.Elapsed.TotalSeconds, 1),

@@ -157,6 +157,14 @@ internal static partial class Program
         }
 
         TryVoid(() => study.TopologyStudyOptions.SetPreservedRegionSetting(2 /* loads and fixtures */));
+        if (Prop(topo, "max_iterations") is not null)
+        {
+            int iterations = IntArg(topo, "max_iterations", 30);
+            TryVoid(() => study.TopologyStudyOptions.SetIterationOption(1 /* user defined */));
+            TryVoid(() => study.TopologyStudyOptions.SetIterationLimit(iterations));
+            report["maxIterations"] = iterations;
+        }
+
         return report;
     }
 

@@ -29,6 +29,19 @@ export interface ComSessionOptions {
   requestTimeoutMs?: number;
 }
 
+// Analyses (FEA, topology optimization, variant sweeps) legitimately run for many minutes; they get
+// a longer response timeout than ordinary commands. SOLIDWORKS_MCP_ANALYSIS_TIMEOUT_MS overrides it.
+const LONG_RUNNING_COMMANDS = new Set(["simulate_static", "try_variants", "thickness_check"]);
+
+export function requestTimeoutFor(command: string, defaultMs: number): number {
+  if (!LONG_RUNNING_COMMANDS.has(command)) {
+    return defaultMs;
+  }
+
+  const override = Number(process.env.SOLIDWORKS_MCP_ANALYSIS_TIMEOUT_MS);
+  return Number.isFinite(override) && override > 0 ? override : Math.max(defaultMs, 3_600_000);
+}
+
 class PersistentComSession implements ComSession {
   private child: ChildProcess | null = null;
   private reader: readline.Interface | null = null;
@@ -98,7 +111,7 @@ class PersistentComSession implements ComSession {
       args: call.args ?? {},
     };
 
-    const responsePromise = this.readResponse(reader, id, this.requestTimeoutMs);
+    const responsePromise = this.readResponse(reader, id, requestTimeoutFor(call.command, this.requestTimeoutMs));
     const written = child.stdin.write(`${JSON.stringify(frame)}\n`);
     if (!written) {
       await new Promise<void>((resolve) => child.stdin?.once("drain", () => resolve()));

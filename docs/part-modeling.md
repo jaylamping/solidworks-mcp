@@ -27,13 +27,19 @@ with the SolidWorks error and "what's wrong" list, so the part stays clean and t
      stiff flange), printed-filament or metal materials. Returns peak von Mises stress and displacement with
      locations, factor of safety, and `distribution.awayFromFixtures` — the peak excluding the singular stress at
      fixture edges, which is the number to compare between variants. `probes` report stress on the faces you
-     are sizing (a fillet, a web); `plot` saves a contour image; `hotspots` runs SOLIDWORKS hot-spot diagnostics.
+     are sizing (a fillet, a web) — add `mesh_controls` (finer elements on those faces) so the probe value is
+     converged (a hole in a plate recovers Peterson's Kt within a few %); `plot` saves a contour image; `hotspots`
+     runs SOLIDWORKS hot-spot diagnostics. For printed parts pass `build_direction` (the print's up vector): `layers`
+     reports the tension pulling the layers apart against the interlayer strength (`layer_strength_factor`, default
+     0.6 of the material strength) — run it for each candidate orientation and print the way that keeps the
+     main bending stress along the layers.
      `analysis: "frequency"` gives natural frequencies, mass participation and a mode-shape image.
      `analysis: "topology"` runs a topology optimization: `topology.goal` stiffness (stiffest layout for
      `mass_reduction_percent`) or min_mass (lightest layout meeting `min_factor_of_safety` / `max_stress_mpa` /
      `max_displacement`), with `min_member_thickness`, `preserve` regions (bolt bosses, bearing seats) and
      `symmetry`. It saves the material plot (`plot.views`) — look at it, then redesign along the kept load paths
-     (ribs/webs/pockets) and verify with a static study. Expect 1–3 minutes per run.
+     (ribs/webs/pockets) and verify with a static study. Expect minutes per run on real parts (`max_iterations`
+     bounds it; analyses get a 1 h worker timeout, `SOLIDWORKS_MCP_ANALYSIS_TIMEOUT_MS`).
      Validated against theory: cantilever deflection within 1%, stress away from the root within 1%, offset
      remote load within 0.2%, torsion twist and shear within 1%, first bending frequency within 0.3%.
    - `solidworks_thickness_check` — thinnest walls and where (ray casting).

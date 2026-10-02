@@ -1,6 +1,6 @@
 {
   "name": "fea_loads",
-  "description": "FEA load types and results against beam theory on a 100x10x10 mm steel cantilever (E 200 GPa, I 833.3 mm^4): remote force 50 mm past the tip (delta = PL^3/3EI + (P*0.05)L^2/2EI = 0.350 mm), stress away from the fixture (60 MPa * (1 - x/L) near x = 5 mm), face probe, plot image, and natural frequency (Euler-Bernoulli f1 = 812 Hz, two equal modes for a square section).",
+  "description": "FEA load types and results against beam theory on a 100x10x10 mm steel cantilever (E 200 GPa, I 833.3 mm^4): remote force 50 mm past the tip (delta = PL^3/3EI + (P*0.05)L^2/2EI = 0.350 mm), stress away from the fixture (60 MPa * (1 - x/L) near x = 5 mm), face probe, plot image, and natural frequency (Euler-Bernoulli f1 = 812 Hz, two equal modes for a square section), and the FDM layer check (PLA, 50 N: bending stress 30 MPa*(1 - x/L) is all across the layers when printed along X, none when printed along Z; interlayer strength 0.6*50 = 30 MPa).",
   "expect": { "volume_mm3": 10000, "bodies": 1 },
   "steps": [
     { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Right Plane", "name": "Section", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 10, "height": 10 }] } },
@@ -22,6 +22,22 @@
       "plot.ok": true,
       "plot.max": { "approx": 63.4, "tol": 0.15 }
     } } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "PLA",
+      "fixtures": [{ "faces": { "face": { "near": [0, 0, 0], "normal": [-1, 0, 0] } } }],
+      "loads": [{ "faces": { "face": { "near": [100, 0, 0], "normal": [1, 0, 0] } }, "value_n": 50, "direction": [0, -1, 0] }],
+      "build_direction": [1, 0, 0]
+    }, "expect": { "fields": {
+      "layers.awayFromFixtures.tensileMPa": { "approx": 28.4, "tol": 0.08 },
+      "layers.interlayerStrengthMPa": 30,
+      "layers.awayFromFixtures.factorOfSafety": { "approx": 1.06, "tol": 0.1 }
+    } } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "PLA",
+      "fixtures": [{ "faces": { "face": { "near": [0, 0, 0], "normal": [-1, 0, 0] } } }],
+      "loads": [{ "faces": { "face": { "near": [100, 0, 0], "normal": [1, 0, 0] } }, "value_n": 50, "direction": [0, -1, 0] }],
+      "build_direction": [0, 0, 1]
+    }, "expect": { "fields": { "layers.awayFromFixtures.tensileMPa": { "max": 5 } } } },
     { "tool": "solidworks_simulate_static", "args": {
       "path": "$PART", "material": "STEEL",
       "fixtures": [{ "faces": { "face": { "near": [0, 0, 0], "normal": [-1, 0, 0] } } }],

@@ -1,0 +1,25 @@
+{
+  "name": "fea_kt",
+  "description": "Stress concentration: 100x40x5 steel plate with a central 10 mm hole in tension (1000 N). Net-section stress 1000/((40-10)*5) = 6.67 MPa; Peterson Kt (d/W = 0.25) = 2.43, so the hole-edge peak is 16.2 MPa. A mesh control on the hole plus a probe recovers it; the far-field stress is 5 MPa.",
+  "expect": { "bodies": 1, "volume_mm3": 19607.3 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "PlateSk", "entities": [
+      { "type": "rectangle", "corner1": [0, -20], "corner2": [100, 20] },
+      { "type": "circle", "center": [50, 0], "radius": 5 }] }, "expect": { "regions": 2 } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "PlateSk", "depth": 5, "name": "Plate" }, "expect": { "volume": { "approx": 19607.3, "tol": 0.001 } } },
+    { "tool": "solidworks_simulate_static", "args": {
+      "path": "$PART", "material": "STEEL",
+      "fixtures": [{ "faces": { "face": { "near": [0, 0, 2.5], "normal": [-1, 0, 0] } } }],
+      "loads": [{ "faces": { "face": { "near": [100, 0, 2.5], "normal": [1, 0, 0] } }, "value_n": 1000, "direction": [1, 0, 0] }],
+      "mesh_controls": [{ "faces": { "face": { "near": [50, 5, 2.5], "type": "cylinder" } }, "element_size": 0.4 }],
+      "probes": [
+        { "name": "hole", "faces": { "face": { "near": [50, 5, 2.5], "type": "cylinder" } } },
+        { "name": "far_field_edge", "faces": { "face": { "near": [80, 20, 2.5], "normal": [0, 1, 0] } } }
+      ]
+    }, "expect": { "fields": {
+      "mesh.controls.0.end": 0,
+      "probes.0.maxVonMisesMPa": { "approx": 16.2, "tol": 0.06 },
+      "probes.0.maxAt.0": { "approx": 50, "tol": 0.02 }
+    } } }
+  ]
+}
