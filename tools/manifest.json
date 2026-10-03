@@ -92,6 +92,25 @@
       "schema": "optionalPath"
     },
     {
+      "name": "solidworks_body_mass_properties",
+      "workerCommand": "body_mass_properties",
+      "tier": "extended",
+      "readOnly": true,
+      "destructive": false,
+      "confirmRequired": false,
+      "autoCheckpoint": false,
+      "description": "Per-body mass properties of a part, or of an assembly component's part: visibility, volume, surface area, mass, centre of mass and inertia for every solid body, plus totals for all, visible and hidden bodies. Hidden bodies (for example embedded reference copies of purchased parts) still count in SOLIDWORKS mass properties; totals.visible leaves them out.",
+      "descriptionSource": "authored",
+      "tags": [
+        "get",
+        "mass"
+      ],
+      "domains": [
+        "document"
+      ],
+      "schema": "bodyMassProperties"
+    },
+    {
       "name": "solidworks_chamfer",
       "workerCommand": "chamfer",
       "tier": "core",

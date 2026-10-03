@@ -99,6 +99,7 @@ internal static partial class Program
             ["get_mass_properties"] = GetMassProperties,
             ["get_material"] = GetMaterial,
             ["list_bodies"] = ListBodies,
+            ["body_mass_properties"] = BodyMassProperties,
             ["get_equations"] = GetEquations,
             ["list_sketches"] = ListSketches,
             ["get_selection"] = GetSelection,

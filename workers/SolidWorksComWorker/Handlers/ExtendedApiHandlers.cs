@@ -65,6 +65,7 @@ internal static partial class Program
                 momentsOfInertia = Normalize(Try(() => compMass.GetMomentOfInertia(0))),
                 momentsOfInertiaFrame = "component, about its centre of mass",
                 note = Math.Abs(((double?)Try(() => compMass.Density) ?? 0) - 1000) < 1 ? "Density is the SOLIDWORKS default (1000 kg/m^3): no material or mass override is set, so this mass is not real." : null,
+                hiddenBodies = HiddenBodySummary(compDoc),
             };
         }
 
@@ -77,6 +78,7 @@ internal static partial class Program
             surfaceArea = Normalize(Try(() => massProperty.SurfaceArea)),
             centerOfMass = Normalize(Try(() => massProperty.CenterOfMass)),
             momentsOfInertia = Normalize(Try(() => massProperty.GetMomentOfInertia(0))),
+            hiddenBodies = HiddenBodySummary(doc),
         };
     }
 

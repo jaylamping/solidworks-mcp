@@ -134,6 +134,7 @@ internal static class CommandPolicyCatalog
             ["get_mass_properties"] = new CommandPolicy(false, false, SelectionPolicyKind.Bindings, [new GeneratedSelectionBinding("component_name", SelectionSource.SelectedComponentName, 1)]),
             ["get_material"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["list_bodies"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
+            ["body_mass_properties"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["get_equations"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["list_sketches"] = new CommandPolicy(false, false, SelectionPolicyKind.None, Array.Empty<GeneratedSelectionBinding>()),
             ["get_selection"] = new CommandPolicy(false, false, SelectionPolicyKind.Context, Array.Empty<GeneratedSelectionBinding>()),

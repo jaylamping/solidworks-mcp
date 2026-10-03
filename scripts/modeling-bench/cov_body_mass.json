@@ -1,0 +1,24 @@
+{
+  "name": "cov_body_mass",
+  "description": "Per-body mass properties: two 20 mm cubes 40 mm apart at the default 1000 kg/m^3; totals use the parallel-axis theorem (cube I = m a^2 / 6, Iyy = Izz add 2 m d^2)",
+  "expect": { "volume_mm3": 16000, "bodies": 2 },
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "CubeSk", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 20, "height": 20 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "CubeSk", "depth": 20, "name": "CubeA" }, "expect": { "volume": 8000 } },
+    { "tool": "solidworks_move_body", "args": { "path": "$PART", "bodies": [{ "near": [0, 0, 10] }], "copy": true, "translate": [40, 0, 0], "name": "CubeB" }, "expect": { "volume": 16000, "bodies": 2 } },
+    { "tool": "solidworks_body_mass_properties", "args": { "path": "$PART" }, "expect": { "fields": {
+      "bodyCount": 2,
+      "bodies.0.volume": { "approx": 8e-6, "tol": 0.001 },
+      "bodies.0.visible": true,
+      "totals.all.volume": { "approx": 1.6e-5, "tol": 0.001 },
+      "totals.all.mass": { "approx": 0.016, "tol": 0.001 },
+      "totals.all.centerOfMass.0": { "approx": 0.02, "tol": 0.001 },
+      "totals.all.centerOfMass.2": { "approx": 0.01, "tol": 0.001 },
+      "totals.all.momentsOfInertia.0": { "approx": 1.06667e-6, "tol": 0.002 },
+      "totals.all.momentsOfInertia.4": { "approx": 7.46667e-6, "tol": 0.002 },
+      "totals.all.momentsOfInertia.8": { "approx": 7.46667e-6, "tol": 0.002 },
+      "totals.visible.count": 2,
+      "totals.hidden.count": 0
+    } } }
+  ]
+}

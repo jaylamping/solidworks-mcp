@@ -105,6 +105,12 @@ export const setMassOverrideSchema = z.object({
   confirm: z.literal(true),
 });
 
+export const bodyMassPropertiesSchema = optionalPathSchema.extend({
+  component_name: z.string().min(1).optional().describe("Assembly component whose part to report (path is the assembly); centres of mass are also given in assembly coordinates."),
+  bodies: z.array(z.string().min(1)).min(1).optional().describe("Only report these solid bodies, by name."),
+  visible_only: z.boolean().optional().describe("Skip hidden bodies. By default they are listed and flagged, because SOLIDWORKS mass properties include them."),
+});
+
 export const saveDocumentSchema = optionalPathSchema.extend({
   skip_mate_validation: z.boolean().optional(),
 });

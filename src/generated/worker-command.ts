@@ -8,6 +8,7 @@ export const WORKER_COMMANDS = [
   "align_component_to_feature",
   "assembly_diagnostics",
   "batch_invoke",
+  "body_mass_properties",
   "chamfer",
   "checkpoint_document",
   "clone_solid_body_part",
