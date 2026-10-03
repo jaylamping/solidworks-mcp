@@ -192,8 +192,8 @@ export const replaceComponentPathSchema = z.object({
 });
 
 export const exportLinkTransformsSchema = z.object({
-  path: z.string().min(1),
-  output_path: z.string().min(1).optional(),
+  path: z.string().min(1).describe("Assembly (.SLDASM) to read."),
+  output_path: z.string().min(1).optional().describe("Also write the result as indented JSON to this file; parent folders are created and an existing file is overwritten."),
 });
 
 export const measureDistanceSchema = z.object({

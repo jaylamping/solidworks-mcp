@@ -57,7 +57,10 @@ async function call(name, args) {
   return data;
 }
 
-/** Per-step assertions: volume (±0.5%), bodies, regions, and arbitrary dotted paths via `fields`. */
+/**
+ * Per-step assertions: volume (±0.5%), bodies, regions, arbitrary dotted paths via `fields`, and
+ * `output_file.fields` checked in the JSON file named by the result's outputPath.
+ */
 function checkStep(expect, data) {
   if (!expect) return [];
   const problems = [];
@@ -82,7 +85,22 @@ function checkStep(expect, data) {
     problems.push(`regions ${data?.regionCount} != ${expect.regions}`);
   }
 
-  for (const [field, wanted] of Object.entries(expect.fields ?? {})) {
+  problems.push(...checkFields(expect.fields, data));
+  if (expect.output_file) {
+    const file = data?.outputPath;
+    if (typeof file !== "string" || !fs.existsSync(file)) {
+      problems.push(`output file not written (outputPath=${JSON.stringify(file)})`);
+    } else {
+      problems.push(...checkFields(expect.output_file.fields, JSON.parse(fs.readFileSync(file, "utf8"))).map((p) => `file ${p}`));
+    }
+  }
+
+  return problems;
+}
+
+function checkFields(fields, data) {
+  const problems = [];
+  for (const [field, wanted] of Object.entries(fields ?? {})) {
     const actual = field.split(".").reduce((o, k) => (o == null ? undefined : o[k]), data);
     let same;
     if (wanted && typeof wanted === "object" && !Array.isArray(wanted)) {
@@ -103,6 +121,13 @@ function checkStep(expect, data) {
   return problems;
 }
 
+/** Replace the $PART / $OUT placeholders in a spec value (forward-slash paths). */
+function fill(value, part) {
+  return JSON.parse(
+    JSON.stringify(value).replaceAll("$PART", part.replaceAll("\\", "/")).replaceAll("$OUT", outDir.replaceAll("\\", "/")),
+  );
+}
+
 const specs = fs
   .readdirSync(benchDir)
   .filter((f) => f.endsWith(".json"))
@@ -118,9 +143,12 @@ for (const spec of specs) {
     await call("solidworks_close_document", { path: part, save: false }).catch(() => {});
     await call("solidworks_new_document", { doc_type: "part", output_path: part, confirm: true });
     for (const [index, step] of spec.steps.entries()) {
-      const args = JSON.parse(
-        JSON.stringify(step.args).replaceAll("$PART", part.replaceAll("\\", "/")).replaceAll("$OUT", outDir.replaceAll("\\", "/")),
-      );
+      const args = fill(step.args, part);
+      if (step.expect?.output_file && typeof args.output_path === "string") {
+        // Remove the previous run's file so the check only passes on one this step wrote.
+        fs.rmSync(args.output_path, { force: true });
+      }
+
       let data;
       try {
         data = await call(step.tool, args);
@@ -167,7 +195,12 @@ for (const spec of specs) {
     await call("solidworks_save_document", { path: part }).catch(() => {});
   }
 
-  // Close each part so dozens of bench runs do not pile up documents (and memory) in SolidWorks.
+  // Close each part so dozens of bench runs do not pile up documents (and memory) in SolidWorks;
+  // documents a spec lists in `close` (e.g. a test assembly) go first so they release the part.
+  for (const doc of fill(spec.close ?? [], part)) {
+    await call("solidworks_close_document", { path: doc, save: false }).catch(() => {});
+  }
+
   await call("solidworks_close_document", { path: part, save: false }).catch(() => {});
   record.seconds = Math.round((Date.now() - started) / 100) / 10;
   results.push(record);

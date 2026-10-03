@@ -1,0 +1,39 @@
+{
+  "name": "cov_link_transforms",
+  "description": "Component placement export: a 20 x 10 x 5 mm block inserted into an assembly, turned +90 deg about X and moved to (50, 20, 10) mm. arrayData rows 0-2 are the component axes in assembly coordinates (Y -> +Z, Z -> -Y) and 9-11 its origin in metres, so p_asm = p_local * R + t puts local z 0..5 mm at assembly y 15..20 mm (the transposed reading would give 20..25). output_path gets the same JSON.",
+  "expect": { "volume_mm3": 1000, "bodies": 1 },
+  "close": ["$OUT/cov_link_transforms_asm.SLDASM"],
+  "steps": [
+    { "tool": "solidworks_sketch", "args": { "path": "$PART", "on": "Front Plane", "name": "BlockSk", "entities": [{ "type": "center_rectangle", "center": [0, 0], "width": 20, "height": 10 }] } },
+    { "tool": "solidworks_extrude", "args": { "path": "$PART", "sketch": "BlockSk", "depth": 5, "name": "Block" }, "expect": { "volume": 1000 } },
+    { "tool": "solidworks_save_document", "args": { "path": "$PART" } },
+    { "tool": "solidworks_new_document", "args": { "doc_type": "assembly", "output_path": "$OUT/cov_link_transforms_asm.SLDASM", "confirm": true } },
+    { "tool": "solidworks_insert_component", "args": { "path": "$OUT/cov_link_transforms_asm.SLDASM", "part_path": "$PART" }, "expect": { "fields": { "component": "cov_link_transforms-1" } } },
+    { "tool": "solidworks_set_component_transform", "args": { "path": "$OUT/cov_link_transforms_asm.SLDASM", "component_name": "cov_link_transforms-1", "matrix": [1, 0, 0, 0, 0, 1, 0, -1, 0, 0.05, 0.02, 0.01, 1, 0, 0, 0] } },
+    { "tool": "solidworks_get_component_box", "args": { "path": "$OUT/cov_link_transforms_asm.SLDASM", "component_name": "cov_link_transforms-1" }, "expect": { "fields": {
+      "boundingBox.0": { "approx": 0.04, "tol": 1e-6 },
+      "boundingBox.1": { "approx": 0.015, "tol": 1e-6 },
+      "boundingBox.2": { "approx": 0.005, "tol": 1e-6 },
+      "boundingBox.3": { "approx": 0.06, "tol": 1e-6 },
+      "boundingBox.4": { "approx": 0.02, "tol": 1e-6 },
+      "boundingBox.5": { "approx": 0.015, "tol": 1e-6 }
+    } } },
+    { "tool": "solidworks_export_link_transforms", "args": { "path": "$OUT/cov_link_transforms_asm.SLDASM", "output_path": "$OUT/cov_link_transforms.json" }, "expect": {
+      "fields": {
+        "transforms.length": 1,
+        "transforms.0.name": "cov_link_transforms-1",
+        "transforms.0.transform.arrayData.5": { "approx": 1, "tol": 1e-9 },
+        "transforms.0.transform.arrayData.7": { "approx": -1, "tol": 1e-9 },
+        "transforms.0.transform.arrayData.9": { "approx": 0.05, "tol": 1e-9 },
+        "transforms.0.transform.arrayData.10": { "approx": 0.02, "tol": 1e-9 },
+        "transforms.0.transform.arrayData.11": { "approx": 0.01, "tol": 1e-9 }
+      },
+      "output_file": { "fields": {
+        "transforms.length": 1,
+        "transforms.0.name": "cov_link_transforms-1",
+        "transforms.0.transform.arrayData.7": { "approx": -1, "tol": 1e-9 },
+        "transforms.0.transform.arrayData.11": { "approx": 0.01, "tol": 1e-9 }
+      } }
+    } }
+  ]
+}

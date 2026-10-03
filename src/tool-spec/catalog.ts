@@ -2182,13 +2182,13 @@ export const TOOL_SPECS = [
     exposure: mcp({
       name: "solidworks_export_link_transforms",
       tier: "extended",
-      description: "Export link transforms.",
-      descriptionSource: "derived",
+      description: "List every component of an assembly (all levels) with its file path and placement. transform.arrayData is the 16-value SOLIDWORKS MathTransform relative to the root assembly: [0..8] are rows 0-2 of R (the component's X, Y and Z axes in assembly coordinates), [9..11] is t (the component origin, in metres), [12] is scale. A component point maps as p_asm = p_local * R + t (row vector). With output_path the same JSON is also written (indented) to that file and the result adds outputPath.",
+      descriptionSource: "authored",
       input: SCHEMAS["exportLinkTransforms"],
       tags: ["export"],
       domains: ["document"],
     }),
-    safety: nonModelSideEffect({ destructive: false, rationale: "The current worker safety policy does not auto-checkpoint this command." }),
+    safety: nonModelSideEffect({ destructive: false, rationale: "Reads component placements; writes a JSON file only when output_path is given." }),
     selection: noSelection,
   }),
   // ---- Selector-driven part modeling (explicit path; units default mm) ----

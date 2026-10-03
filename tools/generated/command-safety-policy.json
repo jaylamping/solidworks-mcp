@@ -2171,7 +2171,7 @@
         "kind": "nonModelSideEffect",
         "destructive": false,
         "checkpoint": "notApplicable",
-        "rationale": "The current worker safety policy does not auto-checkpoint this command."
+        "rationale": "Reads component placements; writes a JSON file only when output_path is given."
       },
       "selection": {
         "kind": "none"
