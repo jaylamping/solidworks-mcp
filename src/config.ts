@@ -10,12 +10,21 @@ export function workerProjectPath(): string {
   return path.join(packageRoot(), "workers/SolidWorksComWorker/SolidWorksComWorker.csproj");
 }
 
-/** Prebuilt worker DLL — use `dotnet exec` instead of `dotnet run` to avoid MSBuild races. */
+/**
+ * Prebuilt worker DLL — use `dotnet exec` instead of `dotnet run` to avoid MSBuild races.
+ * Built to its own folder: running servers hold bin/Debug open and keep their old behaviour until they restart.
+ */
 export function workerDllPath(): string {
-  return path.join(
-    packageRoot(),
-    "workers/SolidWorksComWorker/bin/Debug/net8.0-windows/SolidWorksComWorker.dll",
-  );
+  return path.join(packageRoot(), "workers/SolidWorksComWorker/bin/owned/SolidWorksComWorker.dll");
+}
+
+/** Each MCP server owns one SolidWorks instance, keyed by this process. See OwnedSolidWorks.cs. */
+export function workerEnv(): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    SOLIDWORKS_MCP_OWNED_INSTANCE: "1",
+    SOLIDWORKS_MCP_OWNER_ID: String(process.pid),
+  };
 }
 
 /**

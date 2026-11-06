@@ -165,6 +165,11 @@ internal static partial class Program
             throw new PlatformNotSupportedException("SolidWorks COM automation requires Windows.");
         }
 
+        if (OwnedSolidWorks.Enabled)
+        {
+            return OwnedSolidWorks.Get(startIfMissing);
+        }
+
         Type? swType = Type.GetTypeFromProgID("SldWorks.Application", throwOnError: false);
         if (swType is null)
         {

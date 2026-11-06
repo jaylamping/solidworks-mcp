@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import readline from "node:readline";
 
-import { packageRoot, workerDllPath, workerProjectPath } from "./config.js";
+import { packageRoot, workerDllPath, workerProjectPath, workerEnv } from "./config.js";
 import { parseWorkerError, SolidWorksWorkerError, type WorkerError } from "./errors.js";
 
 const PROTOCOL = 1 as const;
@@ -171,7 +171,7 @@ class PersistentComSession implements ComSession {
         stdio: ["pipe", "pipe", "pipe"],
         windowsHide: true,
         env: {
-          ...process.env,
+          ...workerEnv(),
           SOLIDWORKS_MCP_WORKER_MODE: "session",
         },
       },
