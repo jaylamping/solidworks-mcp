@@ -2,7 +2,7 @@ import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 
 import { sharedPersistentSession } from "./com-session.js";
-import { packageRoot, workerDllPath, workerProjectPath } from "./config.js";
+import { packageRoot, workerDllPath, workerEnv, workerProjectPath } from "./config.js";
 import { parseWorkerError, SolidWorksWorkerError, type WorkerError } from "./errors.js";
 import type { WorkerCommand } from "./generated/worker-command.js";
 
@@ -51,10 +51,30 @@ async function spawnWorkerOnce(request: WorkerRequest): Promise<unknown> {
       cwd: packageRoot(),
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,
+      env: workerEnv(),
     },
   );
 
   return collectWorkerResponse(child, request);
+}
+
+/** Oneshot mode has no worker alive at exit, so close this server's SolidWorks instance here. */
+function releaseOwnedInstance(): void {
+  const dll = workerDllPath();
+  if (!fs.existsSync(dll)) return;
+  spawnSync("dotnet", ["exec", dll], {
+    cwd: packageRoot(),
+    input: JSON.stringify({ command: "__release_instance__", args: {} }),
+    env: workerEnv(),
+    windowsHide: true,
+    timeout: 120_000,
+  });
+}
+
+if (!usePersistentWorker) {
+  process.once("exit", releaseOwnedInstance);
+  process.once("SIGINT", () => process.exit(0));
+  process.once("SIGTERM", () => process.exit(0));
 }
 
 async function collectWorkerResponse(

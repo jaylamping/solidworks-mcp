@@ -29,7 +29,7 @@ internal static partial class Program
             return RunSessionHost();
         }
 
-        using Mutex comLock = new(false, WorkerConstants.ComMutexName);
+        using Mutex comLock = new(false, OwnedSolidWorks.ComMutexName);
         bool acquired;
         try
         {

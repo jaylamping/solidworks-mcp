@@ -190,7 +190,7 @@ internal static partial class Program
         bool mutexHeld = false;
         try
         {
-            using Mutex probe = new(false, WorkerConstants.ComMutexName);
+            using Mutex probe = new(false, OwnedSolidWorks.ComMutexName);
             mutexHeld = !probe.WaitOne(0);
         }
         catch

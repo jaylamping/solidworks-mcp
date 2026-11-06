@@ -22,7 +22,7 @@ internal static partial class Program
 
     private static int RunSessionHost()
     {
-        using Mutex comLock = new(false, WorkerConstants.ComMutexName);
+        using Mutex comLock = new(false, OwnedSolidWorks.ComMutexName);
         Console.Out.WriteLine(JsonSerializer.Serialize(new
         {
             kind = "ready",
@@ -80,6 +80,7 @@ internal static partial class Program
                 if (string.Equals(command, "__shutdown__", StringComparison.Ordinal))
                 {
                     WriteSessionOk(requestId, new { shutdown = true });
+                    ReleaseOwnedInstance();
                     return 0;
                 }
 
@@ -120,11 +121,26 @@ internal static partial class Program
             }
         }
 
+        // Stdin closed: the MCP server has gone.
+        ReleaseOwnedInstance();
         return 0;
+    }
+
+    private static void ReleaseOwnedInstance()
+    {
+        if (OwnedSolidWorks.Enabled)
+        {
+            OwnedSolidWorks.Release();
+        }
     }
 
     private static object DispatchCommand(string command, JsonElement? args)
     {
+        if (command == "__release_instance__" && OwnedSolidWorks.Enabled)
+        {
+            return OwnedSolidWorks.Release();
+        }
+
         if (!CommandRegistry.TryGetValue(command, out Func<JsonElement?, object>? handler))
         {
             throw WorkerException.Validation(

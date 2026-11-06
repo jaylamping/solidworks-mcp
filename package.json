@@ -8,7 +8,7 @@
   "scripts": {
     "build": "npm run clean:dist && npm run build:worker && tsc -p tsconfig.json",
     "clean:dist": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-    "build:worker": "dotnet build workers/SolidWorksComWorker/SolidWorksComWorker.csproj",
+    "build:worker": "dotnet build workers/SolidWorksComWorker/SolidWorksComWorker.csproj -o workers/SolidWorksComWorker/bin/owned",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
